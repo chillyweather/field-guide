@@ -55,6 +55,7 @@
   .tally { font-size: 11px; color: var(--faded); margin-top: 10px; line-height: 1.7; }
   .tally b { color: var(--ink); font-weight: 600; }
   .err { color: var(--unsure); font-size: 11.5px; }
+  .tally .spend { color: var(--faded); font-size: 10.5px; }
   .saw { margin-top: 6px; }
   .saw summary { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faded); }
   .saw p { font-size: 11.5px; line-height: 1.45; margin: 5px 0 0; color: var(--ink); }
@@ -120,6 +121,22 @@ const JEV_MODEL = "jev-latest";
 // JavaScript. proxy.js is the shim. The day that origin is allowed, put
 // https://api.typesafe.ai here and delete the proxy — nothing else changes.
 const DEFAULT_JEV_BASE = "http://localhost:8787";
+
+// Four at a time. Jev allows 1200 requests a minute and the vision host far
+// fewer, so the ceiling here is the vision tier rather than Jev; four is a
+// fourfold speed-up that no reasonable tier refuses. A run of forty regions
+// took over three minutes sequentially, which is long enough that a designer
+// goes and does something else and the Figma window loses focus.
+const CONCURRENCY = 4;
+
+// Per million tokens. Edit if the tariff moves; the panel reports whatever is
+// set here against the usage the two APIs actually returned, so the figure in
+// the tally is measured rather than assumed.
+const PRICES = {
+  visionIn: 2.5,   // gpt-4o
+  visionOut: 10.0,
+  jevIn: 0.042,    // jev-latest; output is not metered
+};
 // Any OpenAI-compatible host, so swapping vision provider is a field in the
 // panel rather than a code change.
 //
@@ -190,52 +207,84 @@ function say(text, isError) {
   const s = el("status"); s.textContent = text; s.className = isError ? "status err" : "status";
 }
 
-async function survey({ specimens: raw, context, reason }) {
-  if (reason === "nothing-selected" || !raw.length) {
+async function survey({ specimens: collected, context, reason }) {
+  if (reason === "nothing-selected" || !collected.length) {
     el("run").disabled = false;
     return say("Nothing selected. Mark some regions first.", true);
   }
   const contextB64 = context ? toB64(context) : null;
-  specimens = [];
 
-  for (const item of raw) {
-    say(`Identifying ${item.index} of ${raw.length}${useMock() ? " (offline)" : ""}…`);
+  // Results are placed by index, never appended. Under concurrency the order of
+  // completion is not the order of the selection, and a list that reshuffles as
+  // it fills is unreadable — and worse, the numbers beside each plate would stop
+  // matching what the designer marked.
+  const slots = new Array(collected.length).fill(null);
+  const spend = { visionIn: 0, visionOut: 0, jevIn: 0 };
+  let done = 0;
+
+  const show = () => { specimens = slots.filter(Boolean); render(); };
+
+  async function identifyOne(item) {
+    const cropB64 = toB64(item.bytes);
     try {
-      const cropB64 = toB64(item.bytes);
       // Offline, a canned case stands in for both calls. The weighing below is
       // the same code either way, which is the only reason the offline run is
       // worth looking at.
       const fixture = useMock() ? FIXTURES.cases[(item.index - 1) % FIXTURES.cases.length] : null;
+
       // The vision model describes and does not decide. Keeping the naming out
       // of this step is what leaves the identification to Jev and the guide,
       // rather than to whatever taxonomy the vision model happens to hold.
-      const raw = fixture ? fixture.description
-        : await describeRegion({ cropB64, contextB64, geometry: item.geometry });
+      let seen = fixture ? { text: fixture.description, usage: null } : null;
+      if (!seen) seen = await describeRegion({ cropB64, contextB64, geometry: item.geometry });
+      if (seen.usage) {
+        spend.visionIn += seen.usage.prompt_tokens || 0;
+        spend.visionOut += seen.usage.completion_tokens || 0;
+      }
+
       // ...and when it decides anyway, the giveaway word goes before the guide
       // ever sees it. Measured rather than assumed — see src-vocabulary.js.
-      const described = maskVocabulary(raw);
-      const answers = fixture ? fixture.answers : await askJev(described.text, item.geometry);
-      const verdict = weigh(answers, TAXONOMY);
-      specimens.push(Object.assign({}, item, verdict, {
+      const described = maskVocabulary(seen.text);
+
+      let judged = fixture ? { answers: fixture.answers, usage: null } : null;
+      if (!judged) judged = await askJev(described.text, item.geometry);
+      if (judged.usage) spend.jevIn += judged.usage.input_tokens || 0;
+
+      slots[item.index - 1] = Object.assign({}, item, weigh(judged.answers, TAXONOMY), {
         description: described.text,
-        rawDescription: raw,
+        rawDescription: seen.text,
         masked: described.masked,
         leaked: described.leaked,
         plate: cropB64,
         offline: Boolean(fixture),
-      }));
+      });
     } catch (error) {
-      specimens.push(Object.assign({}, item, { error: String(error.message || error), plate: toB64(item.bytes) }));
+      // One region failing must not lose the other thirty-nine.
+      slots[item.index - 1] = Object.assign({}, item, {
+        error: String((error && error.message) || error),
+        plate: cropB64,
+      });
     }
-    render();
+    done++;
+    say(`Identified ${done} of ${collected.length}${useMock() ? " (offline)" : ""}…`);
+    show();
   }
 
+  // A fixed set of workers pulling from one queue, rather than chunked batches:
+  // regions differ in cost, and a batch of four only moves on when its slowest
+  // member finishes, leaving three connections idle for as long as that takes.
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(CONCURRENCY, collected.length) }, async () => {
+    while (cursor < collected.length) await identifyOne(collected[cursor++]);
+  });
+  await Promise.all(workers);
+
+  show();
   el("run").disabled = false;
   el("applyAll").hidden = !specimens.some((s) => s.verdict === "confident");
   say(useMock() ? "Survey complete — offline, from fixtures." : "Survey complete.");
-  tally();
+  tally(spend);
 }
-
 /**
  * The one seam to swap if you change vision providers. In, image; out, prose.
  *
@@ -275,7 +324,7 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
   const data = await res.json();
   const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
   if (!text) throw new Error("Vision returned no text: " + JSON.stringify(data).slice(0, 160));
-  return String(text).trim();
+  return { text: String(text).trim(), usage: data.usage || null };
 }
 
 /**
@@ -308,7 +357,8 @@ async function askJev(description, geometry) {
   }
   if (!res.ok) throw new Error("Jev " + res.status + ": " + (await res.text()).slice(0, 160));
 
-  return (await res.json()).answers;
+  const body = await res.json();
+  return { answers: body.answers, usage: body.usage || null };
 }
 
 function render() {
@@ -414,7 +464,7 @@ function card(s) {
 }
 
 /** The numbers the write-up needs, counted rather than remembered. */
-function tally() {
+function tally(spend) {
   const n = specimens.length;
   const named = specimens.filter((s) => s.verdict === "confident").length;
   const checked = specimens.filter((s) => s.verdict === "check").length;
@@ -422,14 +472,32 @@ function tally() {
   const contested = specimens.filter((s) => s.contested).length;
   const failed = specimens.filter((s) => s.error).length;
   const masked = specimens.filter((s) => s.masked).length;
-  el("tally").innerHTML =
-    "<b>" + named + "</b> of <b>" + n + "</b> named automatically<br>" +
-    "<b>" + checked + "</b> to check · <b>" + unsure + "</b> left for you" +
-    (failed ? " · <b>" + failed + "</b> failed" : "") + "<br>" +
-    "<b>" + contested + "</b> contested by the guide itself" +
-    (masked ? "<br><b>" + masked + "</b> had the vision model's vocabulary masked" : "");
-}
 
+  const lines = [
+    "<b>" + named + "</b> of <b>" + n + "</b> named automatically",
+    "<b>" + checked + "</b> to check · <b>" + unsure + "</b> left for you" +
+      (failed ? " · <b>" + failed + "</b> failed" : ""),
+    "<b>" + contested + "</b> contested by the guide itself",
+  ];
+  if (masked) lines.push("<b>" + masked + "</b> had the vision model's vocabulary masked");
+
+  // Reported from the usage the two APIs returned, not from an estimate — the
+  // split is the point. The vision step costs many times what the
+  // identification does, which is the opposite of what the pricing pages
+  // suggest when read separately.
+  if (spend && (spend.visionIn || spend.jevIn)) {
+    const vision = (spend.visionIn * PRICES.visionIn + spend.visionOut * PRICES.visionOut) / 1e6;
+    const jev = (spend.jevIn * PRICES.jevIn) / 1e6;
+    const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
+    lines.push(
+      "<span class='spend'>" + money(vision + jev) + " — vision " + money(vision) +
+      " (" + spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out)" +
+      ", jev " + money(jev) + " (" + spend.jevIn.toLocaleString() + " in)</span>",
+    );
+  }
+
+  el("tally").innerHTML = lines.join("<br>");
+}
 /**
  * Window resizing.
  *

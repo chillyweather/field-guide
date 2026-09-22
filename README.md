@@ -171,6 +171,24 @@ Every specimen carries its description under **What the vision model saw**, with
 spans marked, so a wrong identification can be attributed rather than guessed at — a bad
 answer from a good description is the guide's fault, and the reverse is the model's.
 
+## Speed and cost
+
+The survey runs four regions at a time — a fixed pool of workers pulling from one
+queue, not chunked batches, because regions differ in cost and a batch of four only
+advances when its slowest member finishes. Results are placed by index, never
+appended: under concurrency the completion order is not the selection order, and the
+numbers beside the plates must keep matching what the designer marked.
+
+Every run reports what it actually spent, from the usage both APIs return:
+
+```
+$0.0306 — vision $0.0300 (11,840 in / 430 out), jev $0.0006 (13,400 in)
+```
+
+The split is the point. **The vision step costs roughly fifty times the
+identification it exists to feed** — the hyped model is about 2% of the bill. Prices
+live in `PRICES` at the top of the script; edit them if a tariff moves.
+
 ## Known limits
 
 - One vision call per region. The better shape is a single call over the whole screenshot
