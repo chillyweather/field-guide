@@ -115,18 +115,16 @@ async function listModels() {
   console.log("\nDescribe the test image with one:  node probe-vision.js <model>");
 }
 
-async function describe(model) {
-  const png = toggleImage();
-  fs.writeFileSync(path.join(__dirname, "fixtures", "vision-test.png"), png);
-  console.log("test image: fixtures/vision-test.png (" + png.length + " bytes)\n");
-
-  const started = Date.now();
+async function describeWith(model, png, geometry, capParam) {
+  // Newer models reject max_tokens and want max_completion_tokens. Rather than
+  // keep a list of which is which, send one and switch on the error that says so.
+  const cap = capParam || "max_tokens";
   const res = await fetch(BASE + "/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: "Bearer " + KEY },
     body: JSON.stringify({
       model,
-      max_tokens: 300,
+      [cap]: 300,
       messages: [{ role: "user", content: [
         { type: "text", text: "Next image: the region to describe." },
         { type: "image_url", image_url: { url: "data:image/png;base64," + png.toString("base64") } },
@@ -134,35 +132,55 @@ async function describe(model) {
           "Describe this region of a user interface in 2-3 sentences, factually.\n" +
           "Cover: shape and corner treatment, fill and border, any text and its wording, any icons, " +
           "and any visible state such as a check mark, a sliding thumb, a chevron, or a dismiss affordance.\n" +
-          "Geometry from the design file: 100x44 px; aspect ratio 2.27; spans 8% of the screen width\n\n" +
+          "Geometry from the design file: " + geometry + "\n\n" +
           "Do NOT name the component type and do NOT use design-system vocabulary " +
           "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." },
       ] }],
     }),
   });
-
   const text = await res.text();
-  console.log("HTTP " + res.status + "  " + (Date.now() - started) + "ms  model=" + model);
-  if (!res.ok) { console.error("\n" + text.slice(0, 700)); process.exit(1); }
-
+  if (!res.ok) {
+    if (!capParam && /max_completion_tokens/.test(text)) return describeWith(model, png, geometry, "max_completion_tokens");
+    throw new Error("HTTP " + res.status + " — " + text.slice(0, 400));
+  }
   const body = JSON.parse(text);
   const out = body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content;
-  if (!out) { console.error("No text in response:\n" + JSON.stringify(body, null, 2).slice(0, 700)); process.exit(1); }
+  if (!out) throw new Error("No text in response: " + JSON.stringify(body).slice(0, 300));
+  return { text: String(out).trim(), usage: body.usage };
+}
 
-  console.log("\n--- description ---\n" + out.trim());
+// One word list, shared with the plugin. A probe measuring a different rule from
+// the one production enforces measures nothing.
+const { maskVocabulary } = require("./src-vocabulary");
+const leakedWords = (t) => maskVocabulary(t).leaked;
 
-  const banned = ["button", "chip", "badge", "input", "card", "modal", "toggle", "switch", "checkbox", "slider"];
-  const leaked = banned.filter((w) => new RegExp("\\b" + w + "s?\\b", "i").test(out));
+async function describe(model) {
+  const png = toggleImage();
+  fs.writeFileSync(path.join(__dirname, "fixtures", "vision-test.png"), png);
+  console.log("test image: fixtures/vision-test.png (" + png.length + " bytes)\n");
+
+  const started = Date.now();
+  let out;
+  try { out = await describeWith(model, png, "100x44 px; aspect ratio 2.27; spans 8% of the screen width"); }
+  catch (e) { console.error("FAILED  " + e.message); process.exit(1); }
+  console.log("HTTP 200  " + (Date.now() - started) + "ms  model=" + model);
+  console.log("\n--- description ---\n" + out.text);
+
+  const leaked = leakedWords(out.text);
   console.log("\n--- the rule that matters ---");
   console.log(leaked.length
     ? "LEAKED design-system vocabulary: " + leaked.join(", ") +
       "\nThis model decides instead of describing, which hands the classification to it\n" +
       "rather than to the guide. Try a different model or tighten the instruction."
     : "Clean — no design-system vocabulary. The identification is left to Jev.");
-  if (body.usage) console.log("\ntokens: " + JSON.stringify(body.usage));
+  if (out.usage) console.log("\ntokens: " + JSON.stringify(out.usage));
 }
 
-(MODEL ? describe(MODEL) : listModels()).catch((e) => {
-  console.error("Could not reach " + BASE + " — " + e.message);
-  process.exit(1);
-});
+module.exports = { toggleImage, describeWith, BASE, KEY };
+
+if (require.main === module) {
+  (MODEL ? describe(MODEL) : listModels()).catch((e) => {
+    console.error("Could not reach " + BASE + " — " + e.message);
+    process.exit(1);
+  });
+}

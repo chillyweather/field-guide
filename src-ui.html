@@ -105,6 +105,10 @@ const DEFAULT_VISION_BASE = "https://api.openai.com/v1";
 
 /* __WEIGH__ */
 
+/* __VOCABULARY__ */
+
+/* __QUESTIONS__ */
+
 const el = (id) => document.getElementById(id);
 const useMock = () => el("mockMode").checked;
 const post = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
@@ -174,11 +178,21 @@ async function survey({ specimens: raw, context, reason }) {
       // The vision model describes and does not decide. Keeping the naming out
       // of this step is what leaves the identification to Jev and the guide,
       // rather than to whatever taxonomy the vision model happens to hold.
-      const description = fixture ? fixture.description
+      const raw = fixture ? fixture.description
         : await describeRegion({ cropB64, contextB64, geometry: item.geometry });
-      const answers = fixture ? fixture.answers : await askJev(description, item.geometry);
+      // ...and when it decides anyway, the giveaway word goes before the guide
+      // ever sees it. Measured rather than assumed — see src-vocabulary.js.
+      const described = maskVocabulary(raw);
+      const answers = fixture ? fixture.answers : await askJev(described.text, item.geometry);
       const verdict = weigh(answers, TAXONOMY);
-      specimens.push(Object.assign({}, item, verdict, { description, plate: cropB64, offline: Boolean(fixture) }));
+      specimens.push(Object.assign({}, item, verdict, {
+        description: described.text,
+        rawDescription: raw,
+        masked: described.masked,
+        leaked: described.leaked,
+        plate: cropB64,
+        offline: Boolean(fixture),
+      }));
     } catch (error) {
       specimens.push(Object.assign({}, item, { error: String(error.message || error), plate: toB64(item.bytes) }));
     }
@@ -241,34 +255,13 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
  * the component answer as a reason to distrust a high probability.
  */
 async function askJev(description, geometry) {
-  const criteria = {};
-  for (const [name, entry] of Object.entries(TAXONOMY.components)) {
-    criteria[name] = { what: entry.what, not_for: entry.not_for, examples: entry.examples };
-  }
-  const questions = {
-    component: {
-      type: "choice",
-      instructions: "Which component from this design-system field guide does the described region show?",
-      criteria,
-    },
-    family: {
-      type: "choice",
-      instructions: "What kind of component is the described region, by behaviour?",
-      criteria: TAXONOMY.families,
-    },
-  };
-  for (const [id, statement] of Object.entries(TAXONOMY.probes)) {
-    questions[id] = { type: "noul", instructions: statement };
-  }
-
   const res = await fetch(JEV_ENDPOINT, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: "Bearer " + keys.jev },
     body: JSON.stringify({
       model: JEV_MODEL,
-      state: "A region of a user interface, described by an observer:\n\n" + description +
-             "\n\nGeometry from the design file: " + geometry,
-      questions,
+      state: buildState(description, geometry),
+      questions: buildQuestions(TAXONOMY),
     }),
   });
   if (!res.ok) throw new Error("Jev " + res.status + ": " + (await res.text()).slice(0, 160));
@@ -319,6 +312,13 @@ function card(s) {
 
     body.append(label, meta, bar, runners);
 
+    if (s.masked) {
+      const note = document.createElement("div");
+      note.className = "contested";
+      note.textContent = "Vision model named it (" + s.leaked.join(", ") + ") — masked before identification.";
+      body.appendChild(note);
+    }
+
     if (s.contested) {
       const note = document.createElement("div");
       note.className = "contested";
@@ -350,11 +350,13 @@ function tally() {
   const unsure = specimens.filter((s) => s.verdict === "unsure").length;
   const contested = specimens.filter((s) => s.contested).length;
   const failed = specimens.filter((s) => s.error).length;
+  const masked = specimens.filter((s) => s.masked).length;
   el("tally").innerHTML =
     "<b>" + named + "</b> of <b>" + n + "</b> named automatically<br>" +
     "<b>" + checked + "</b> to check · <b>" + unsure + "</b> left for you" +
     (failed ? " · <b>" + failed + "</b> failed" : "") + "<br>" +
-    "<b>" + contested + "</b> contested by the guide itself";
+    "<b>" + contested + "</b> contested by the guide itself" +
+    (masked ? "<br><b>" + masked + "</b> had the vision model's vocabulary masked" : "");
 }
 
 function toB64(bytes) {

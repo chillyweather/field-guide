@@ -15,6 +15,8 @@ const pieces = [
   { marker: "/* __TAXONOMY__ */ {}", source: ["taxonomy", "components.json"], json: true },
   { marker: "/* __FIXTURES__ */ { cases: [] }", source: ["fixtures", "offline.json"], json: true },
   { marker: "/* __WEIGH__ */", source: ["src-weigh.js"], json: false },
+  { marker: "/* __VOCABULARY__ */", source: ["src-vocabulary.js"], json: false },
+  { marker: "/* __QUESTIONS__ */", source: ["src-questions.js"], json: false },
 ];
 
 let html = read("src-ui.html");
@@ -31,7 +33,7 @@ for (const piece of pieces) {
   html = html.replace(piece.marker, body.trim());
 }
 
-if (html.includes("__TAXONOMY__") || html.includes("__FIXTURES__") || html.includes("__WEIGH__")) {
+if (/__TAXONOMY__|__FIXTURES__|__WEIGH__|__VOCABULARY__|__QUESTIONS__/.test(html)) {
   console.error("build: a marker survived the splice");
   process.exit(1);
 }

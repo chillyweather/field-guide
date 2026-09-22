@@ -53,31 +53,11 @@ if (only && !CASES[only]) {
   process.exit(2);
 }
 
-const criteria = {};
-for (const [name, entry] of Object.entries(taxonomy.components)) {
-  criteria[name] = { what: entry.what, not_for: entry.not_for, examples: entry.examples };
-}
-
-const questions = {
-  component: {
-    type: "choice",
-    instructions: "Which component from this design-system field guide does the described region show?",
-    criteria,
-  },
-  family: {
-    type: "choice",
-    instructions: "What kind of component is the described region, by behaviour?",
-    criteria: taxonomy.families,
-  },
-};
-for (const [id, statement] of Object.entries(taxonomy.probes)) {
-  questions[id] = { type: "noul", instructions: statement };
-}
+const { buildQuestions, buildState } = require("./src-questions");
+const questions = buildQuestions(taxonomy);
 
 async function ask(name) {
-  const state =
-    "A region of a user interface, described by an observer:\n\n" + CASES[name] +
-    "\n\nGeometry from the design file: " + GEOMETRY[name];
+  const state = buildState(CASES[name], GEOMETRY[name]);
 
   const started = Date.now();
   const res = await fetch(ENDPOINT, {

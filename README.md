@@ -99,20 +99,27 @@ network at all; `code.js` only exports regions and renames nodes.
 
 ## The vision half
 
-Any OpenAI-compatible host. The seam is `describeRegion()` in `src-ui.html`, and
-the provider is three fields in the panel — key, base URL, model — not a code change.
+Any OpenAI-compatible host. The seam is `describeRegion()` in `src-ui.html`, and the
+provider is three fields in the panel — key, base URL, model — not a code change.
 
-```
-node probe-vision.js            # what models the host exposes
-node probe-vision.js <model>    # describe a generated test image
-```
+The vision model describes and must not decide. Measured on one image, 22 September
+2026, three identical calls each:
 
-The probe draws its own PNG (a rounded grey track with a white circle at the left),
-so it carries no committed asset and the subject is known exactly. It then checks
-the one rule that matters: the description must contain no design-system vocabulary.
-A model that says 	oggle has done the classifying itself, which hands the decision
-to whatever taxonomy it happens to hold instead of to the guide — and quietly empties
-the project of its point.
+| model | leaked vocabulary | latency | input tokens |
+|---|---|---|---|
+| gpt-4o | 0/3 | 2125 ms | 402 |
+| gpt-5.2 | 0/3 | 4418 ms | 164 |
+| gpt-4o-mini | **1/3** | 2456 ms | **8647** |
+| gpt-5-mini | — | — | unusable: reasoning consumed the cap, empty content |
+
+`gpt-4o` is the default. Two things in that table are worth keeping: the cheap model
+was the expensive one — gpt-4o-mini bills images at roughly twenty times the tokens —
+and it was also the one that leaked.
+
+Because 0/3 is not a guarantee, `src-vocabulary.js` masks design-system nouns out of
+every description before the guide sees it, in production and not only in the probe.
+A description reading "a toggled position" carries the answer, and Jev would then be
+reading a verdict rather than reaching one.
 
 ## Known limits
 
