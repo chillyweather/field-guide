@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --paper: #faf6ed; --ink: #23201a; --faded: #7a7263; --rule: #ddd3c0;
+    --confident: #3f6b45; --check: #96701f; --unsure: #9c4a33; --accent: #1f4d66;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font: 13px/1.5 Iowan Old Style, Palatino, Georgia, serif;
+  }
+  .wrap { padding: 18px 20px 24px; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 4px; }
+  h1 { margin: 0; font-size: 19px; letter-spacing: .02em; font-weight: 600; }
+  .sub { font-size: 11px; color: var(--faded); font-style: italic; margin-top: 2px; }
+  .legend { font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--faded); margin: 16px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  button {
+    font-family: inherit; font-size: 13px; padding: 9px 14px; border: 1px solid var(--ink);
+    background: var(--ink); color: var(--paper); cursor: pointer; border-radius: 2px;
+  }
+  button:disabled { opacity: .4; cursor: default; }
+  button.ghost { background: transparent; color: var(--ink); }
+  input, select {
+    font-family: inherit; font-size: 12px; padding: 6px 8px; width: 100%;
+    border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 2px;
+  }
+  label { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faded); margin-bottom: 3px; }
+  .field { margin-bottom: 10px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  details summary { cursor: pointer; font-size: 11px; color: var(--faded); }
+
+  .specimen { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .num { font-size: 11px; color: var(--faded); min-width: 20px; padding-top: 2px; }
+  .plate { width: 52px; height: 52px; border: 1px solid var(--rule); background: #fff;
+           object-fit: contain; flex-shrink: 0; cursor: pointer; }
+  .body { flex: 1; min-width: 0; }
+  .verdict { font-size: 14px; font-weight: 600; }
+  .verdict.unsure { font-style: italic; color: var(--unsure); font-weight: 500; }
+  .meta { font-size: 10.5px; color: var(--faded); margin-top: 1px; }
+  .bar { height: 3px; background: var(--rule); margin-top: 5px; }
+  .bar > i { display: block; height: 100%; }
+  .confident > i { background: var(--confident); }
+  .check > i { background: var(--check); }
+  .unsure > i { background: var(--unsure); }
+  .contested { font-size: 10.5px; color: var(--unsure); margin-top: 4px; font-style: italic; }
+  .runners { font-size: 10px; color: var(--faded); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .status { font-size: 11.5px; color: var(--faded); margin: 10px 0; min-height: 16px; }
+  .tally { font-size: 11px; color: var(--faded); margin-top: 10px; line-height: 1.7; }
+  .tally b { color: var(--ink); font-weight: 600; }
+  .err { color: var(--unsure); font-size: 11.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Field Guide</h1>
+    <div class="sub">Identification of user-interface components in the wild</div>
+  </header>
+
+  <details id="setup">
+    <summary>Collecting keys &amp; endpoints</summary>
+    <div style="margin-top:10px">
+      <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
+      <div class="field"><label>Vision API key (Anthropic)</label><input id="visionKey" type="password" placeholder="sk-ant-..."></div>
+      <button class="ghost" id="saveKeys">Save keys</button>
+    </div>
+  </details>
+
+  <div class="legend">Survey</div>
+  <div class="row">
+    <button id="run">Identify selection</button>
+    <button class="ghost" id="applyAll" disabled>Apply confident names</button>
+  </div>
+  <div class="status" id="status">Select the regions you marked, then identify them.</div>
+
+  <div id="results"></div>
+  <div class="tally" id="tally"></div>
+</div>
+
+<script>
+const TAXONOMY = /* __TAXONOMY__ */ {};
+
+const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
+const VISION_ENDPOINT = "https://api.anthropic.com/v1/messages";
+const VISION_MODEL = "claude-sonnet-5";
+const JEV_MODEL = "jev-latest";
+
+// Gates. Read-only naming is cheap to undo, so the bar for acting alone sits at
+// the documented high-confidence band and no higher.
+const ACT_ALONE = 0.9;
+const NEEDS_HUMAN = 0.5;
+// Two options within this distance are not a weak answer, they are a taxonomy
+// that does not separate them. That distinction is the point of the exercise.
+const CONTESTED_GAP = 0.15;
+
+const el = (id) => document.getElementById(id);
+const post = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
+let keys = {}, specimens = [], pending = null;
+
+post({ type: "load-keys" });
+
+el("saveKeys").onclick = () => {
+  keys = { jev: el("jevKey").value.trim(), vision: el("visionKey").value.trim() };
+  post({ type: "save-keys", keys });
+  el("setup").open = false;
+};
+el("run").onclick = () => {
+  if (!keys.jev || !keys.vision) { el("setup").open = true; return say("Both keys are needed before a survey.", true); }
+  el("run").disabled = true; el("results").innerHTML = ""; el("tally").textContent = "";
+  say("Collecting selected regions…");
+  post({ type: "collect" });
+};
+el("applyAll").onclick = () => {
+  const names = specimens.filter((s) => s.verdict === "confident").map((s) => ({ id: s.id, name: s.answer }));
+  post({ type: "apply", names });
+};
+
+onmessage = async (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+  if (msg.type === "keys") {
+    keys = msg.keys || {};
+    el("jevKey").value = keys.jev || ""; el("visionKey").value = keys.vision || "";
+    if (!keys.jev || !keys.vision) el("setup").open = true;
+  }
+  if (msg.type === "collected") await survey(msg);
+  if (msg.type === "applied") say(`Applied ${msg.applied} name${msg.applied === 1 ? "" : "s"}.`);
+  if (msg.type === "failed") { el("run").disabled = false; say(msg.message, true); }
+};
+
+function say(text, isError) {
+  const s = el("status"); s.textContent = text; s.className = isError ? "status err" : "status";
+}
+
+async function survey({ specimens: raw, context, reason }) {
+  if (reason === "nothing-selected" || !raw.length) {
+    el("run").disabled = false;
+    return say("Nothing selected. Mark some regions first.", true);
+  }
+  const contextB64 = context ? toB64(context) : null;
+  specimens = [];
+
+  for (const item of raw) {
+    say(`Identifying ${item.index} of ${raw.length}…`);
+    try {
+      const cropB64 = toB64(item.bytes);
+      // The vision model describes and does not decide. Keeping the naming out
+      // of this step is what leaves the identification to Jev and the guide,
+      // rather than to whatever taxonomy the vision model happens to hold.
+      const description = await describeRegion({ cropB64, contextB64, geometry: item.geometry });
+      const verdict = await identify(description, item.geometry);
+      specimens.push(Object.assign({}, item, verdict, { description, plate: cropB64 }));
+    } catch (error) {
+      specimens.push(Object.assign({}, item, { error: String(error.message || error), plate: toB64(item.bytes) }));
+    }
+    render();
+  }
+
+  el("run").disabled = false;
+  el("applyAll").disabled = !specimens.some((s) => s.verdict === "confident");
+  say("Survey complete.");
+  tally();
+}
+
+/** The one seam to swap if you change vision providers. In, image; out, prose. */
+async function describeRegion({ cropB64, contextB64, geometry }) {
+  const content = [];
+  if (contextB64) {
+    content.push({ type: "text", text: "First image: the whole screen, for context only." });
+    content.push({ type: "image", source: { type: "base64", media_type: "image/png", data: contextB64 } });
+  }
+  content.push({ type: "text", text: "Next image: the region to describe." });
+  content.push({ type: "image", source: { type: "base64", media_type: "image/png", data: cropB64 } });
+  content.push({ type: "text", text:
+    "Describe this region of a user interface in 2-3 sentences, factually.\n" +
+    "Cover: shape and corner treatment, fill and border, any text and its wording, any icons, " +
+    "and any visible state such as a check mark, a sliding thumb, a chevron, or a dismiss affordance. " +
+    "If the context image shows it overlaying other content or sitting on a dimmed backdrop, say so.\n" +
+    "Geometry from the design file: " + geometry + "\n\n" +
+    "Do NOT name the component type and do NOT use design-system vocabulary " +
+    "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." });
+
+  const res = await fetch(VISION_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": keys.vision,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({ model: VISION_MODEL, max_tokens: 300, messages: [{ role: "user", content }] }),
+  });
+  if (!res.ok) throw new Error("Vision " + res.status + ": " + (await res.text()).slice(0, 160));
+  const data = await res.json();
+  return (data.content || []).map((c) => c.text || "").join(" ").trim();
+}
+
+/**
+ * One call, several atomic questions.
+ *
+ * The family choice and the probes are not decoration: they are an independent
+ * read on the same state, and code below treats a disagreement between them and
+ * the component answer as a reason to distrust a high probability.
+ */
+async function identify(description, geometry) {
+  const criteria = {};
+  for (const [name, entry] of Object.entries(TAXONOMY.components)) {
+    criteria[name] = { what: entry.what, not_for: entry.not_for, examples: entry.examples };
+  }
+  const questions = {
+    component: {
+      type: "choice",
+      instructions: "Which component from this design-system field guide does the described region show?",
+      criteria,
+    },
+    family: {
+      type: "choice",
+      instructions: "What kind of component is the described region, by behaviour?",
+      criteria: TAXONOMY.families,
+    },
+  };
+  for (const [id, statement] of Object.entries(TAXONOMY.probes)) {
+    questions[id] = { type: "noul", instructions: statement };
+  }
+
+  const res = await fetch(JEV_ENDPOINT, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: "Bearer " + keys.jev },
+    body: JSON.stringify({
+      model: JEV_MODEL,
+      state: "A region of a user interface, described by an observer:\n\n" + description +
+             "\n\nGeometry from the design file: " + geometry,
+      questions,
+    }),
+  });
+  if (!res.ok) throw new Error("Jev " + res.status + ": " + (await res.text()).slice(0, 160));
+
+  const answers = (await res.json()).answers;
+  return weigh(answers);
+}
+
+/** The composition step. Jev answers the questions; this decides what to do. */
+function weigh(answers) {
+  const c = answers.component;
+  const probs = Object.entries(c.probabilities).sort((a, b) => b[1] - a[1]);
+  const [top, second] = probs;
+  const entry = TAXONOMY.components[c.choice] || {};
+
+  const familyAgrees = !entry.family || answers.family.choice === entry.family;
+  const contested = second && top[1] - second[1] < CONTESTED_GAP;
+
+  let verdict = "unsure";
+  if (c.confidence >= ACT_ALONE && familyAgrees && !contested) verdict = "confident";
+  else if (c.confidence >= NEEDS_HUMAN) verdict = "check";
+
+  return {
+    answer: c.choice, confidence: c.confidence, verdict, contested, familyAgrees,
+    family: answers.family.choice, runners: probs.slice(0, 3),
+    probes: Object.fromEntries(Object.keys(TAXONOMY.probes).map((k) => [k, answers[k] && answers[k].noul])),
+  };
+}
+
+function render() {
+  el("results").innerHTML = "";
+  for (const s of specimens) el("results").appendChild(card(s));
+}
+
+function card(s) {
+  const node = document.createElement("div");
+  node.className = "specimen";
+
+  const num = document.createElement("div");
+  num.className = "num"; num.textContent = String(s.index).padStart(2, "0");
+
+  const plate = document.createElement("img");
+  plate.className = "plate"; plate.src = "data:image/png;base64," + s.plate;
+  plate.title = "Show on canvas";
+  plate.onclick = () => post({ type: "focus", id: s.id });
+
+  const body = document.createElement("div");
+  body.className = "body";
+
+  if (s.error) {
+    body.innerHTML = '<div class="verdict unsure">Not identified</div><div class="err">' + esc(s.error) + "</div>";
+  } else {
+    const label = document.createElement("div");
+    label.className = "verdict" + (s.verdict === "unsure" ? " unsure" : "");
+    label.textContent = s.verdict === "unsure" ? "Could not identify" : s.answer;
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = "confidence " + s.confidence.toFixed(2) +
+      (s.verdict === "confident" ? " · named automatically" : " · awaiting your call") +
+      (s.familyAgrees ? "" : " · disagrees with " + s.family);
+
+    const bar = document.createElement("div");
+    bar.className = "bar " + s.verdict;
+    bar.innerHTML = '<i style="width:' + Math.round(s.confidence * 100) + '%"></i>';
+
+    const runners = document.createElement("div");
+    runners.className = "runners";
+    runners.textContent = s.runners.map(([n, p]) => n + " " + p.toFixed(2)).join("   ");
+
+    body.append(label, meta, bar, runners);
+
+    if (s.contested) {
+      const note = document.createElement("div");
+      note.className = "contested";
+      const pair = s.runners.slice(0, 2).map(([n]) => n).join(" / ");
+      note.textContent = "Confusion pair: " + pair + ". The guide does not separate these.";
+      body.appendChild(note);
+    }
+
+    if (s.verdict !== "confident") {
+      const pick = document.createElement("select");
+      pick.style.marginTop = "6px";
+      pick.innerHTML = '<option value="">— name it yourself —</option>' +
+        Object.keys(TAXONOMY.components).map((n) =>
+          '<option' + (n === s.answer ? " selected" : "") + '>' + n + "</option>").join("");
+      pick.onchange = () => { if (pick.value) post({ type: "apply", names: [{ id: s.id, name: pick.value }] }); };
+      body.appendChild(pick);
+    }
+  }
+
+  node.append(num, plate, body);
+  return node;
+}
+
+/** The numbers the write-up needs, counted rather than remembered. */
+function tally() {
+  const n = specimens.length;
+  const named = specimens.filter((s) => s.verdict === "confident").length;
+  const checked = specimens.filter((s) => s.verdict === "check").length;
+  const unsure = specimens.filter((s) => s.verdict === "unsure").length;
+  const contested = specimens.filter((s) => s.contested).length;
+  const failed = specimens.filter((s) => s.error).length;
+  el("tally").innerHTML =
+    "<b>" + named + "</b> of <b>" + n + "</b> named automatically<br>" +
+    "<b>" + checked + "</b> to check · <b>" + unsure + "</b> left for you" +
+    (failed ? " · <b>" + failed + "</b> failed" : "") + "<br>" +
+    "<b>" + contested + "</b> contested by the guide itself";
+}
+
+function toB64(bytes) {
+  let s = "";
+  const arr = new Uint8Array(bytes);
+  for (let i = 0; i < arr.length; i += 0x8000) s += String.fromCharCode.apply(null, arr.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "field-guide",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Figma plugin that identifies UI components from marked regions, and admits when it cannot.",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node -e \"require('fs').watch('src-ui.html',()=>require('child_process').execSync('node build.js',{stdio:'inherit'}));require('fs').watch('taxonomy',()=>require('child_process').execSync('node build.js',{stdio:'inherit'}));console.log('watching…')\""
+  }
+}

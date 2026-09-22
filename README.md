@@ -1,0 +1,73 @@
+# Field Guide
+
+A Figma plugin that identifies user-interface components from regions a designer marks,
+and says plainly when it cannot tell.
+
+You mark regions on a screenshot. The plugin names them — `Button`, `Checkbox`, `Modal Dialog` —
+and flags the ones it could not settle. The dropdown you would have used forty times
+becomes the thing you use five times.
+
+## How it works
+
+Three steps, deliberately separated.
+
+1. **The design file supplies what pixels cannot.** Size, proportion and position on
+   screen go along with the crop. A full-width band at the top of a frame is a header
+   and not a card, and no crop of it says so.
+2. **A vision model describes, and does not decide.** It is asked for shape, fill,
+   text, icons and visible state, and explicitly forbidden from using design-system
+   vocabulary. The identification is not its job.
+3. **[Jev](https://docs.typesafe.ai) identifies.** The guide in
+   `taxonomy/components.json` becomes the `criteria` of a Choice question — each entry
+   already has a `what`, a `not_for` and `examples`, which is the shape Jev asks for and
+   also the shape a field guide entry has always had. A second Choice on behaviour and
+   five Noul probes ride along in the same call, and the composition logic in
+   `weigh()` decides what to do with the answers.
+
+## What confidence is for
+
+The gates follow TypeSafe's published bands: act alone above `0.9`, ask a human below
+`0.5`. Two extra rules do the interesting work.
+
+- If the behaviour answer disagrees with the family recorded for the chosen component,
+  the answer is not trusted however high its probability.
+- **If the top two options sit within `0.15` of each other, that is not a weak answer.
+  It is a taxonomy that does not separate them.** The plugin reports it as a confusion
+  pair and names both.
+
+That last case is the reason the guide contains `Chip` and `Badge`, `Button` and `Link`,
+`Checkbox` and `Toggle`, `Card` and `Modal Dialog`. Design systems argue about these,
+and the probability distribution measures the argument.
+
+## The guide
+
+`taxonomy/components.json` — thirteen entries drawn from Material 3, IBM Carbon,
+Shopify Polaris and shadcn/ui, so that any reader can check them. Where those systems
+genuinely disagree, the entry records the disagreement in `contested` rather than
+resolving it.
+
+Editing the guide is the main way to change this plugin's behaviour. No prompt to tune.
+
+## Running it
+
+```
+node build.js     # stitches the guide into dist/ui.html — no dependencies
+```
+
+Then in the Figma desktop app: **Plugins → Development → Import plugin from manifest**,
+and choose `manifest.json`.
+
+Two API keys are entered in the plugin and kept in `figma.clientStorage`: one for
+TypeSafe, one for the vision model. Neither is committed or bundled.
+
+Network calls happen in the UI iframe, which is the only half of a Figma plugin that has
+network at all; `code.js` only exports regions and renames nodes.
+
+## Known limits
+
+- One vision call per region. The better shape is a single call over the whole screenshot
+  with numbered outlines. Not done here.
+- Overlay is hard to judge from a crop, which is why the context image is sent — and it
+  is still the weakest distinction in the guide (`Card` against `Modal Dialog`).
+- Probabilities are the model's, not a calibrated estimate of correctness. Treat the
+  confusion-pair signal as a prompt to go and look, not as a verdict.
