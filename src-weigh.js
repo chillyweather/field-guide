@@ -33,7 +33,13 @@ function weigh(answers, taxonomy) {
   // the family recorded for the chosen component is a reason to distrust a high
   // probability, not a detail to report beside it.
   const familyAgrees = !entry.family || !answers.family || answers.family.choice === entry.family;
-  const contested = Boolean(second) && second[1] >= CONTESTED_FLOOR;
+  // Only between two real components. A run-off against 'Other' is not a
+  // taxonomy that fails to separate two things, it is the guide failing to
+  // recognise one — a different finding, and reporting it as a confusion pair
+  // says something false about the design system. Seen live on a page heading:
+  // Other 0.39, Button 0.32, printed as 'the guide does not separate these'.
+  const realRunOff = Boolean(second) && c.choice !== "Other" && second[0] !== "Other";
+  const contested = realRunOff && second[1] >= CONTESTED_FLOOR;
 
   let verdict = "unsure";
   if (c.confidence >= ACT_ALONE && familyAgrees && !contested) verdict = "confident";

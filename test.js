@@ -28,7 +28,9 @@ const expected = [
   { answer: 'Tabs', verdict: 'confident', contested: false, familyAgrees: true },
   { answer: 'Toggle', verdict: 'confident', contested: false, familyAgrees: true },
   // Synthetic. No live probe has fallen below the 0.5 confidence threshold.
-  { answer: 'Other', verdict: 'unsure', contested: true, familyAgrees: true },
+  // Not contested: the runner-up is a real component but the winner is 'Other',
+  // which makes this a recognition failure rather than a collision in the guide.
+  { answer: 'Other', verdict: 'unsure', contested: false, familyAgrees: true },
 ];
 
 let failed = 0;

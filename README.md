@@ -180,6 +180,7 @@ answer from a good description is the guide's fault, and the reverse is the mode
 - Probabilities are the model's, not a calibrated estimate of correctness. Treat the
   confusion-pair signal as a prompt to go and look, not as a verdict.
 - Given a region that is not a component at all, the pipeline still answers. `Other` is
-  in the guide for exactly this and does win on plain shapes, but not reliably: blank
-  and near-blank regions have come back as `Toggle` and `Button` at high confidence.
-  Nothing upstream asks whether the region is a component before asking which one.
+  in the guide for exactly this and does win — a page heading came back `Other` at 0.33,
+  correctly — but not reliably: blank shapes have also come back `Toggle` and `Button` at
+  high confidence. Nothing upstream asks whether the region is a component before asking
+  which one.
