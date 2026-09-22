@@ -179,7 +179,8 @@ advances when its slowest member finishes. Results are placed by index, never
 appended: under concurrency the completion order is not the selection order, and the
 numbers beside the plates must keep matching what the designer marked.
 
-Every run reports what it actually spent, from the usage both APIs return:
+Every run reports its wall-clock time and what it actually spent, from the usage both
+APIs return:
 
 ```
 $0.0306 — vision $0.0300 (11,840 in / 430 out), jev $0.0006 (13,400 in)
@@ -188,6 +189,27 @@ $0.0306 — vision $0.0300 (11,840 in / 430 out), jev $0.0006 (13,400 in)
 The split is the point. **The vision step costs roughly fifty times the
 identification it exists to feed** — the hyped model is about 2% of the bill. Prices
 live in `PRICES` at the top of the script; edit them if a tariff moves.
+
+## The run record
+
+A Figma panel is otherwise a place numbers go to die: no scrollback, and nothing
+survives the next run. So every survey writes a **Run record** — a summary plus one
+tab-separated row per region — shown under the tally, copied with one button, and
+also logged to the dev console.
+
+```
+# Field Guide run — 2026-09-22 11:19
+23 regions · 41.2s wall · 4 at a time
+named 15 · check 5 · unsure 3 · contested 2 · masked 4 · failed 0
+vision  median 2172ms  max 3402ms  38,120 in / 1,610 out  $0.1114
+jev     median 858ms  max 1810ms  50,692 in  $0.0021
+total   $0.1135  (vision is 53x jev)
+#	region	answer	confidence	verdict	contested	masked	vision_ms	jev_ms	…
+```
+
+Tab-separated so it lands in a spreadsheet or a Markdown table without reformatting.
+A failed region keeps its row and carries its error, so a run of thirty is still
+reportable when one of them rate-limits.
 
 ## Known limits
 

@@ -56,6 +56,12 @@
   .tally b { color: var(--ink); font-weight: 600; }
   .err { color: var(--unsure); font-size: 11.5px; }
   .tally .spend { color: var(--faded); font-size: 10.5px; }
+  #record { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 10px; }
+  #record summary { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--faded); cursor: pointer; }
+  #record pre { font: 10px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink);
+                background: #fff; border: 1px solid var(--rule); padding: 8px; overflow-x: auto;
+                white-space: pre; margin: 0; }
+  .hint { font-size: 11px; color: var(--faded); }
   .saw { margin-top: 6px; }
   .saw summary { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faded); }
   .saw p { font-size: 11.5px; line-height: 1.45; margin: 5px 0 0; color: var(--ink); }
@@ -103,6 +109,15 @@
 
   <div id="results"></div>
   <div class="tally" id="tally"></div>
+
+  <details id="record" hidden>
+    <summary>Run record</summary>
+    <div class="row" style="margin:8px 0">
+      <button class="ghost" id="copyRecord">Copy</button>
+      <span class="hint" id="copyHint"></span>
+    </div>
+    <pre id="recordText"></pre>
+  </details>
 </div>
 
 <div id="grip" title="Drag to resize">
@@ -177,11 +192,29 @@ el("run").onclick = () => {
     el("setup").open = true;
     return say("Two keys and a vision model name are needed before a live survey.", true);
   }
-  el("run").disabled = true; el("applyAll").hidden = true;
+  el("run").disabled = true; el("applyAll").hidden = true; el("record").hidden = true;
   el("results").innerHTML = ""; el("tally").textContent = "";
   say("Collecting selected regions…");
   post({ type: "collect" });
 };
+el("copyRecord").onclick = async () => {
+  const text = el("recordText").textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    el("copyHint").textContent = "copied";
+  } catch (error) {
+    // The sandbox can refuse clipboard access. Selecting the text is then the
+    // most that can be done for the user, and it is enough.
+    const range = document.createRange();
+    range.selectNodeContents(el("recordText"));
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    el("copyHint").textContent = "selected — press " + (navigator.platform.indexOf("Mac") >= 0 ? "Cmd-C" : "Ctrl-C");
+  }
+  setTimeout(() => { el("copyHint").textContent = ""; }, 4000);
+};
+
 el("applyAll").onclick = () => {
   const names = specimens.filter((s) => s.verdict === "confident").map((s) => ({ id: s.id, name: s.answer }));
   post({ type: "apply", names });
@@ -220,6 +253,10 @@ async function survey({ specimens: collected, context, reason }) {
   // matching what the designer marked.
   const slots = new Array(collected.length).fill(null);
   const spend = { visionIn: 0, visionOut: 0, jevIn: 0 };
+  // Wall clock, not the sum of the stages. With four workers those differ by
+  // roughly the concurrency factor, and the number a designer experiences is
+  // this one.
+  const startedAt = Date.now();
   let done = 0;
 
   const show = () => { specimens = slots.filter(Boolean); render(); };
@@ -235,8 +272,10 @@ async function survey({ specimens: collected, context, reason }) {
       // The vision model describes and does not decide. Keeping the naming out
       // of this step is what leaves the identification to Jev and the guide,
       // rather than to whatever taxonomy the vision model happens to hold.
+      const tVision = Date.now();
       let seen = fixture ? { text: fixture.description, usage: null } : null;
       if (!seen) seen = await describeRegion({ cropB64, contextB64, geometry: item.geometry });
+      const visionMs = Date.now() - tVision;
       if (seen.usage) {
         spend.visionIn += seen.usage.prompt_tokens || 0;
         spend.visionOut += seen.usage.completion_tokens || 0;
@@ -246,8 +285,10 @@ async function survey({ specimens: collected, context, reason }) {
       // ever sees it. Measured rather than assumed — see src-vocabulary.js.
       const described = maskVocabulary(seen.text);
 
+      const tJev = Date.now();
       let judged = fixture ? { answers: fixture.answers, usage: null } : null;
       if (!judged) judged = await askJev(described.text, item.geometry);
+      const jevMs = Date.now() - tJev;
       if (judged.usage) spend.jevIn += judged.usage.input_tokens || 0;
 
       slots[item.index - 1] = Object.assign({}, item, weigh(judged.answers, TAXONOMY), {
@@ -257,6 +298,11 @@ async function survey({ specimens: collected, context, reason }) {
         leaked: described.leaked,
         plate: cropB64,
         offline: Boolean(fixture),
+        visionMs,
+        jevMs,
+        visionIn: (seen.usage && seen.usage.prompt_tokens) || 0,
+        visionOut: (seen.usage && seen.usage.completion_tokens) || 0,
+        jevIn: (judged.usage && judged.usage.input_tokens) || 0,
       });
     } catch (error) {
       // One region failing must not lose the other thirty-nine.
@@ -283,7 +329,9 @@ async function survey({ specimens: collected, context, reason }) {
   el("run").disabled = false;
   el("applyAll").hidden = !specimens.some((s) => s.verdict === "confident");
   say(useMock() ? "Survey complete — offline, from fixtures." : "Survey complete.");
-  tally(spend);
+  const elapsedMs = Date.now() - startedAt;
+  tally(spend, elapsedMs);
+  publishRecord(spend, elapsedMs);
 }
 /**
  * The one seam to swap if you change vision providers. In, image; out, prose.
@@ -463,8 +511,76 @@ function card(s) {
   return node;
 }
 
+/**
+ * The run, as a table that can leave the plugin.
+ *
+ * The tally summarises; this is the evidence. A measured run is only worth
+ * having if the figures can be pasted into a write-up afterwards, and a Figma
+ * panel is otherwise a place numbers go to die — there is no scrollback and
+ * nothing survives the next run.
+ *
+ * Tab-separated, so it lands in a spreadsheet or a Markdown table without
+ * reformatting.
+ */
+function publishRecord(spend, elapsedMs) {
+  const live = specimens.filter((s) => !s.error);
+  const median = (xs) => {
+    if (!xs.length) return 0;
+    const sorted = xs.slice().sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  };
+  const visionMs = live.map((s) => s.visionMs || 0);
+  const jevMs = live.map((s) => s.jevMs || 0);
+  const vision = (spend.visionIn * PRICES.visionIn + spend.visionOut * PRICES.visionOut) / 1e6;
+  const jev = (spend.jevIn * PRICES.jevIn) / 1e6;
+  const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
+
+  const head = [
+    "#", "region", "answer", "confidence", "verdict", "contested", "masked",
+    "vision_ms", "jev_ms", "vision_in", "vision_out", "jev_in",
+  ].join("\t");
+
+  const rows = specimens.map((s) => [
+    String(s.index).padStart(2, "0"),
+    s.name || "",
+    s.error ? "FAILED" : s.answer,
+    s.error ? "" : Number(s.confidence).toFixed(2),
+    s.error ? s.error.slice(0, 60) : s.verdict,
+    s.contested ? "yes" : "no",
+    s.masked ? s.leaked.join("|") : "no",
+    s.visionMs || "", s.jevMs || "",
+    s.visionIn || "", s.visionOut || "", s.jevIn || "",
+  ].join("\t"));
+
+  const summary = [
+    "# Field Guide run — " + new Date().toISOString().slice(0, 16).replace("T", " "),
+    specimens.length + " regions · " + (elapsedMs / 1000).toFixed(1) + "s wall · " +
+      CONCURRENCY + " at a time" + (useMock() ? " · OFFLINE, no calls made" : ""),
+    "named " + specimens.filter((s) => s.verdict === "confident").length +
+      " · check " + specimens.filter((s) => s.verdict === "check").length +
+      " · unsure " + specimens.filter((s) => s.verdict === "unsure").length +
+      " · contested " + specimens.filter((s) => s.contested).length +
+      " · masked " + specimens.filter((s) => s.masked).length +
+      " · failed " + specimens.filter((s) => s.error).length,
+    "vision  median " + median(visionMs) + "ms  max " + Math.max(0, ...visionMs) + "ms  " +
+      spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out  " + money(vision),
+    "jev     median " + median(jevMs) + "ms  max " + Math.max(0, ...jevMs) + "ms  " +
+      spend.jevIn.toLocaleString() + " in  " + money(jev),
+    "total   " + money(vision + jev) +
+      (vision > 0 && jev > 0 ? "  (vision is " + Math.round(vision / jev) + "x jev)" : ""),
+    "",
+  ].join("\n");
+
+  const text = summary + [head].concat(rows).join("\n") + "\n";
+  el("recordText").textContent = text;
+  el("record").hidden = false;
+  // Also to the dev console, which is the one place in Figma with scrollback.
+  console.log(text);
+}
+
 /** The numbers the write-up needs, counted rather than remembered. */
-function tally(spend) {
+function tally(spend, elapsedMs) {
   const n = specimens.length;
   const named = specimens.filter((s) => s.verdict === "confident").length;
   const checked = specimens.filter((s) => s.verdict === "check").length;
@@ -474,7 +590,8 @@ function tally(spend) {
   const masked = specimens.filter((s) => s.masked).length;
 
   const lines = [
-    "<b>" + named + "</b> of <b>" + n + "</b> named automatically",
+    "<b>" + named + "</b> of <b>" + n + "</b> named automatically" +
+      (elapsedMs ? " in <b>" + (elapsedMs / 1000).toFixed(1) + "s</b>" : ""),
     "<b>" + checked + "</b> to check · <b>" + unsure + "</b> left for you" +
       (failed ? " · <b>" + failed + "</b> failed" : ""),
     "<b>" + contested + "</b> contested by the guide itself",
