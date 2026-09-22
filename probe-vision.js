@@ -5,7 +5,7 @@
 //
 // Keys and base URL come from .env.local:
 //   VISION_API_KEY=sk-...
-//   VISION_BASE_URL=https://opencode.ai/zen/go/v1
+//   VISION_BASE_URL=https://api.openai.com/v1
 //
 // The test image is drawn here rather than committed, so the probe carries no
 // assets and the thing being described is known exactly: a rounded grey track
@@ -29,7 +29,7 @@ function loadEnvFile() {
 loadEnvFile();
 
 const KEY = process.env.VISION_API_KEY || process.env.OPENAI_API_KEY;
-const BASE = (process.env.VISION_BASE_URL || "https://opencode.ai/zen/go/v1").replace(/\/+$/, "");
+const BASE = (process.env.VISION_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
 const MODEL = process.argv[2];
 
 if (!KEY) {
