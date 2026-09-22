@@ -12,7 +12,7 @@
     margin: 0; padding: 0; background: var(--paper); color: var(--ink);
     font: 13px/1.5 Iowan Old Style, Palatino, Georgia, serif;
   }
-  .wrap { padding: 14px 16px 20px; }
+  .wrap { padding: 14px 16px 26px; }
   header { border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 4px; }
   h1 { margin: 0; font-size: 18px; letter-spacing: .02em; font-weight: 600; }
   .sub { font-size: 11px; color: var(--faded); font-style: italic; margin-top: 2px; }
@@ -55,6 +55,13 @@
   .tally { font-size: 11px; color: var(--faded); margin-top: 10px; line-height: 1.7; }
   .tally b { color: var(--ink); font-weight: 600; }
   .err { color: var(--unsure); font-size: 11.5px; }
+
+  /* A plugin window has no chrome to drag, so the grip is ours to draw. Fixed to
+     the viewport rather than the document, so it stays put while results scroll. */
+  #grip { position: fixed; right: 0; bottom: 0; width: 16px; height: 16px;
+          cursor: nwse-resize; color: var(--rule); }
+  #grip:hover { color: var(--faded); }
+  #grip svg { display: block; }
   label.inline { display: flex; align-items: center; gap: 6px; margin: 0; text-transform: none;
                  letter-spacing: 0; font-size: 12px; white-space: nowrap; cursor: pointer;
                  color: var(--faded); flex: 0 0 auto; }
@@ -89,6 +96,12 @@
 
   <div id="results"></div>
   <div class="tally" id="tally"></div>
+</div>
+
+<div id="grip" title="Drag to resize">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M15 6 6 15M15 11l-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
 </div>
 
 <script>
@@ -364,6 +377,44 @@ function tally() {
     "<b>" + contested + "</b> contested by the guide itself" +
     (masked ? "<br><b>" + masked + "</b> had the vision model's vocabulary masked" : "");
 }
+
+/**
+ * Window resizing.
+ *
+ * Figma gives a plugin window no draggable chrome, so the grip above is the
+ * whole mechanism: the iframe reports the size it wants and the plugin thread
+ * performs it, because figma.ui.resize does not exist on this side.
+ *
+ * The pointer is captured on the grip, so a fast drag that leaves the 16px
+ * target keeps resizing instead of stopping the moment the cursor outruns it.
+ * Sizes are read straight from the pointer because the window grows from its
+ * top-left corner, which keeps clientX/clientY and the new size the same number.
+ */
+(function enableResize() {
+  const grip = el("grip");
+  let dragging = false;
+
+  grip.addEventListener("pointerdown", (event) => {
+    dragging = true;
+    grip.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  grip.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    post({ type: "resize", width: Math.floor(event.clientX + 8), height: Math.floor(event.clientY + 8) });
+  });
+
+  const stop = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    try { grip.releasePointerCapture(event.pointerId); } catch (e) { /* already released */ }
+    // Persisted only on release, so a drag writes one record rather than one per frame.
+    post({ type: "resize", width: Math.floor(event.clientX + 8), height: Math.floor(event.clientY + 8), remember: true });
+  };
+  grip.addEventListener("pointerup", stop);
+  grip.addEventListener("pointercancel", stop);
+})();
 
 function toB64(bytes) {
   let s = "";

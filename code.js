@@ -6,8 +6,31 @@
 // network at all.
 
 const KEY_STORE = "field-guide.keys";
+const SIZE_STORE = "field-guide.size";
+
+// Wide enough that the survey row does not wrap, tall enough for the settings
+// block plus one specimen. Below either, the panel stops being usable rather
+// than merely cramped.
+const MIN = { width: 380, height: 420 };
+const MAX = { width: 1400, height: 2000 };
+const clamp = (n, lo, hi) => Math.min(Math.max(Math.round(n) || lo, lo), hi);
 
 figma.showUI(__html__, { width: 420, height: 600, themeColors: true });
+
+// clientStorage is async and showUI is not, so the window opens at its default
+// and corrects itself a frame later. Visible only as a small settle on open,
+// which is cheaper than blocking the panel behind a read.
+(async () => {
+  try {
+    const saved = await figma.clientStorage.getAsync(SIZE_STORE);
+    if (saved && saved.width && saved.height) {
+      figma.ui.resize(clamp(saved.width, MIN.width, MAX.width), clamp(saved.height, MIN.height, MAX.height));
+    }
+  } catch (error) {
+    // A bad stored size must not stop the plugin opening.
+    console.warn("[field-guide] could not restore window size", error);
+  }
+})();
 
 figma.ui.onmessage = async (msg) => {
   try {
@@ -30,6 +53,15 @@ figma.ui.onmessage = async (msg) => {
 
       case "focus":
         return focusNode(msg.id);
+
+      case "resize": {
+        const width = clamp(msg.width, MIN.width, MAX.width);
+        const height = clamp(msg.height, MIN.height, MAX.height);
+        figma.ui.resize(width, height);
+        // Written on release only — see the grip handler in the UI.
+        if (msg.remember) await figma.clientStorage.setAsync(SIZE_STORE, { width, height });
+        return;
+      }
     }
   } catch (error) {
     figma.ui.postMessage({ type: "failed", message: String(error && error.message ? error.message : error) });
