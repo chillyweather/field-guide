@@ -9,6 +9,7 @@
     "probe": "node probe.js",
     "probe:vision": "node probe-vision.js",
     "probe:chain": "node probe-chain.js",
-    "fixtures": "node fixtures/make-fixtures.js && node build.js"
+    "fixtures": "node fixtures/make-fixtures.js && node build.js",
+    "proxy": "node proxy.js"
   }
 }

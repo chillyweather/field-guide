@@ -82,6 +82,28 @@ transcript of anyone driving a session here.
 The plugin itself does not use it: keys are entered in the panel and kept in
 `figma.clientStorage`.
 
+## The Jev CORS shim
+
+A Figma plugin's UI runs in a sandboxed iframe whose origin is the literal string
+`null`. TypeSafe runs an origin allowlist and its preflight answers *"Disallowed CORS
+origin"* with a 400, and `Origin` is a forbidden header, so page JavaScript can neither
+set nor remove the one thing being judged. There is nothing to fix on the plugin side.
+
+So Jev is reached through `proxy.js`, a dependency-free shim on `127.0.0.1:8787`:
+
+```
+node proxy.js     # leave running while the plugin is open
+```
+
+It takes the key from the panel if the panel sends one, and otherwise from
+`.env.local` — so the key can stay in one gitignored file rather than also living in
+`figma.clientStorage`.
+
+OpenAI needs none of this: it answers `access-control-allow-origin: null` and is
+called directly. Only Jev is affected. The day `api.typesafe.ai` allows the null
+origin, put it in the panel's Jev base URL field and delete the proxy — nothing else
+changes.
+
 ## Running it
 
 ```

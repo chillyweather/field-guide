@@ -80,6 +80,7 @@
     <div style="margin-top:10px">
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
+      <div class="field"><label>Jev base URL — needs the local shim running</label><input id="jevBase" placeholder="http://127.0.0.1:8787"></div>
       <div class="field"><label>Vision base URL (OpenAI-compatible)</label><input id="visionBase" placeholder="https://api.openai.com/v1"></div>
       <div class="field"><label>Vision model</label><input id="visionModel" placeholder="a vision-capable model id"></div>
       <button class="ghost" id="saveKeys">Save keys</button>
@@ -108,8 +109,12 @@
 const TAXONOMY = /* __TAXONOMY__ */ {};
 const FIXTURES = /* __FIXTURES__ */ { cases: [] };
 
-const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const JEV_MODEL = "jev-latest";
+// Not api.typesafe.ai directly: it runs an origin allowlist and refuses the
+// sandboxed iframe's "null" origin, and Origin cannot be set from page
+// JavaScript. proxy.js is the shim. The day that origin is allowed, put
+// https://api.typesafe.ai here and delete the proxy — nothing else changes.
+const DEFAULT_JEV_BASE = "http://127.0.0.1:8787";
 // Any OpenAI-compatible host, so swapping vision provider is a field in the
 // panel rather than a code change.
 //
@@ -137,6 +142,7 @@ post({ type: "load-keys" });
 el("saveKeys").onclick = () => {
   keys = {
     jev: el("jevKey").value.trim(),
+    jevBase: el("jevBase").value.trim() || DEFAULT_JEV_BASE,
     vision: el("visionKey").value.trim(),
     visionBase: el("visionBase").value.trim() || DEFAULT_VISION_BASE,
     visionModel: el("visionModel").value.trim(),
@@ -165,6 +171,7 @@ onmessage = async (event) => {
   if (msg.type === "keys") {
     keys = msg.keys || {};
     el("jevKey").value = keys.jev || ""; el("visionKey").value = keys.vision || "";
+    el("jevBase").value = keys.jevBase || DEFAULT_JEV_BASE;
     el("visionBase").value = keys.visionBase || DEFAULT_VISION_BASE;
     el("visionModel").value = keys.visionModel || "";
     if (!keys.jev || !keys.vision || !keys.visionModel) el("setup").open = true;
@@ -274,15 +281,26 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
  * the component answer as a reason to distrust a high probability.
  */
 async function askJev(description, geometry) {
-  const res = await fetch(JEV_ENDPOINT, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: "Bearer " + keys.jev },
-    body: JSON.stringify({
-      model: JEV_MODEL,
-      state: buildState(description, geometry),
-      questions: buildQuestions(TAXONOMY),
-    }),
-  });
+  const base = (keys.jevBase || DEFAULT_JEV_BASE).replace(/\/+$/, "");
+  let res;
+  try {
+    res = await fetch(base + "/v1/systemone", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + keys.jev },
+      body: JSON.stringify({
+        model: JEV_MODEL,
+        state: buildState(description, geometry),
+        questions: buildQuestions(TAXONOMY),
+      }),
+    });
+  } catch (networkError) {
+    // A refused connection here is nearly always the shim not running, and the
+    // browser's own message for that says nothing useful.
+    const local = base.indexOf("127.0.0.1") >= 0 || base.indexOf("localhost") >= 0;
+    throw new Error(local
+      ? "Cannot reach the Jev shim at " + base + " — is it running? (node proxy.js)"
+      : "Cannot reach " + base + " — " + networkError.message);
+  }
   if (!res.ok) throw new Error("Jev " + res.status + ": " + (await res.text()).slice(0, 160));
 
   return (await res.json()).answers;
