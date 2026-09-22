@@ -82,7 +82,7 @@ async function collect() {
     return { type: "collected", specimens: [], context: null, reason: "nothing-selected" };
   }
 
-  const context = await exportContext(selection[0]);
+  const context = await exportContext(selection);
   const specimens = [];
 
   for (let i = 0; i < selection.length; i++) {
@@ -114,27 +114,49 @@ function canExport(node) {
 /**
  * The surroundings, exported once and shared by every specimen.
  *
- * The first version walked up for a containing frame and gave up when it found
- * the page. That is the ordinary case, not the edge case: a designer marking up
- * a screenshot drops the image on the page and draws slices over it, so both sit
- * directly on the page and there is no frame to find. The context image was
- * therefore silently absent on every run for the first day of this project,
- * while the code claimed to send it.
+ * Two wrong versions preceded this one, and both failed silently.
  *
- * So: the containing frame if there is one, and otherwise the largest node on
- * the page that actually contains the region — which is the screenshot itself.
- * Absent is still a legal answer, and the panel says so rather than pretending.
+ * The first walked up for a containing frame and gave up at the page. That is
+ * the ordinary case: marking up a screenshot means dropping the image on the
+ * page and drawing slices over it, so neither has a frame.
+ *
+ * The second looked for the largest page node enclosing `selection[0]` — and
+ * the first selected node is very often the screenshot itself, which nothing
+ * encloses. It returned null for exactly the arrangement it was written for.
+ *
+ * So the question is asked of the whole selection at once: the smallest box
+ * covering every marked region, then the largest node on the page that contains
+ * it. The screenshot qualifies whether or not it was itself selected, which is
+ * the property both earlier versions lacked.
  */
-async function exportContext(node) {
-  const framed = enclosingFrame(node);
-  const source = framed || largestEnclosing(node);
+async function exportContext(nodes) {
+  const union = unionBox(nodes);
+  if (!union) return null;
+
+  const framed = enclosingFrame(nodes[0]);
+  const source = framed || largestContaining(union);
   if (!source || typeof source.exportAsync !== "function") return null;
 
-  // Scale 1, and no larger than needed: this image is re-sent with every region
-  // in the run, so its size is multiplied by the selection count. On an
-  // 18-region run a 1,000-token context is 18,000 tokens.
+  // Scale 1: this image is re-sent with every region in the run, so its size is
+  // multiplied by the selection count. On eighteen regions a 1,000-token context
+  // is 18,000 tokens, which would roughly double the run.
   const image = await source.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } });
   return { image, box: source.absoluteBoundingBox, name: source.name, framed: Boolean(framed) };
+}
+
+/** The smallest box covering every marked region. */
+function unionBox(nodes) {
+  let box = null;
+  for (const node of nodes) {
+    const b = node.absoluteBoundingBox;
+    if (!b) continue;
+    if (!box) { box = { x: b.x, y: b.y, right: b.x + b.width, bottom: b.y + b.height }; continue; }
+    box.x = Math.min(box.x, b.x);
+    box.y = Math.min(box.y, b.y);
+    box.right = Math.max(box.right, b.x + b.width);
+    box.bottom = Math.max(box.bottom, b.y + b.height);
+  }
+  return box;
 }
 
 function enclosingFrame(node) {
@@ -145,21 +167,24 @@ function enclosingFrame(node) {
   return frame && frame.type !== "PAGE" && typeof frame.exportAsync === "function" ? frame : null;
 }
 
-/** The biggest thing on the page that the region sits inside, by area. */
-function largestEnclosing(node) {
-  const box = node.absoluteBoundingBox;
-  if (!box) return null;
+/**
+ * The biggest page node containing the whole selection.
+ *
+ * Slices are excluded: a slice large enough to contain the others is a marked
+ * region, not the screen behind them, and exporting one would send the crop
+ * back as its own context.
+ */
+function largestContaining(union) {
   let best = null;
   let bestArea = 0;
   for (const candidate of figma.currentPage.children) {
-    if (candidate === node || typeof candidate.exportAsync !== "function") continue;
-    const other = candidate.absoluteBoundingBox;
-    if (!other) continue;
-    const contains = other.x <= box.x && other.y <= box.y &&
-      other.x + other.width >= box.x + box.width &&
-      other.y + other.height >= box.y + box.height;
+    if (candidate.type === "SLICE" || typeof candidate.exportAsync !== "function") continue;
+    const b = candidate.absoluteBoundingBox;
+    if (!b) continue;
+    const contains = b.x <= union.x && b.y <= union.y &&
+      b.x + b.width >= union.right && b.y + b.height >= union.bottom;
     if (!contains) continue;
-    const area = other.width * other.height;
+    const area = b.width * b.height;
     if (area > bestArea) { best = candidate; bestArea = area; }
   }
   return best;
