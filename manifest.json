@@ -9,11 +9,11 @@
   ],
   "networkAccess": {
     "allowedDomains": [
-      "https://api.openai.com",
-      "http://127.0.0.1:8787",
-      "http://localhost:8787",
-      "https://api.typesafe.ai"
+      "https://api.openai.com"
     ],
-    "reasoning": "The vision model is called directly from the UI iframe. Jev is reached through a local CORS shim, because api.typesafe.ai refuses the sandboxed iframe origin \"null\" and Origin cannot be set by page JavaScript."
+    "devAllowedDomains": [
+      "http://localhost:8787"
+    ],
+    "reasoning": "The vision model is called directly from the UI iframe. Jev is reached through a local CORS shim during development, because api.typesafe.ai refuses the sandboxed iframe origin \"null\" and Origin cannot be set by page JavaScript."
   }
 }

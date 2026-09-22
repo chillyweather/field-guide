@@ -89,11 +89,17 @@ A Figma plugin's UI runs in a sandboxed iframe whose origin is the literal strin
 origin"* with a 400, and `Origin` is a forbidden header, so page JavaScript can neither
 set nor remove the one thing being judged. There is nothing to fix on the plugin side.
 
-So Jev is reached through `proxy.js`, a dependency-free shim on `127.0.0.1:8787`:
+So Jev is reached through `proxy.js`, a dependency-free shim on `localhost:8787`:
 
 ```
 node proxy.js     # leave running while the plugin is open
 ```
+
+Figma rejects a bare IP in `allowedDomains`, so the plugin calls the name `localhost` and
+the shim binds both loopback addresses — on macOS that name resolves to `::1` as readily
+as to `127.0.0.1`, and listening on only one fails intermittently in a way that looks
+like a CORS problem all over again. The entry lives in `devAllowedDomains`, so it is a
+development affordance and never ships in a published build.
 
 It takes the key from the panel if the panel sends one, and otherwise from
 `.env.local` — so the key can stay in one gitignored file rather than also living in

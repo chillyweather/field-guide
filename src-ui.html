@@ -80,7 +80,7 @@
     <div style="margin-top:10px">
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
-      <div class="field"><label>Jev base URL — needs the local shim running</label><input id="jevBase" placeholder="http://127.0.0.1:8787"></div>
+      <div class="field"><label>Jev base URL — needs the local shim running</label><input id="jevBase" placeholder="http://localhost:8787"></div>
       <div class="field"><label>Vision base URL (OpenAI-compatible)</label><input id="visionBase" placeholder="https://api.openai.com/v1"></div>
       <div class="field"><label>Vision model</label><input id="visionModel" placeholder="a vision-capable model id"></div>
       <button class="ghost" id="saveKeys">Save keys</button>
@@ -114,7 +114,7 @@ const JEV_MODEL = "jev-latest";
 // sandboxed iframe's "null" origin, and Origin cannot be set from page
 // JavaScript. proxy.js is the shim. The day that origin is allowed, put
 // https://api.typesafe.ai here and delete the proxy — nothing else changes.
-const DEFAULT_JEV_BASE = "http://127.0.0.1:8787";
+const DEFAULT_JEV_BASE = "http://localhost:8787";
 // Any OpenAI-compatible host, so swapping vision provider is a field in the
 // panel rather than a code change.
 //

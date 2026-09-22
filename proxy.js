@@ -80,8 +80,24 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log("Jev CORS shim on http://127.0.0.1:" + PORT + " -> " + UPSTREAM);
-  console.log("key: " + (process.env.TYPESAFE_API_KEY ? ".env.local (panel key overrides)" : "expected from the panel"));
-  console.log("Leave this running while the plugin is open.");
-});
+// Bound to both loopback addresses, not just 127.0.0.1.
+//
+// Figma rejects a bare IP in allowedDomains, so the plugin has to call the name
+// "localhost" — and on macOS that resolves to ::1 as readily as to 127.0.0.1.
+// A shim listening on only one of them fails intermittently and looks like a
+// CORS problem all over again. Neither binding leaves this machine.
+let listening = 0;
+for (const host of ["127.0.0.1", "::1"]) {
+  const instance = host === "127.0.0.1" ? server : http.createServer(server.listeners("request")[0]);
+  instance.listen(PORT, host, () => {
+    if (listening++ === 0) {
+      console.log("Jev CORS shim on http://localhost:" + PORT + " -> " + UPSTREAM);
+      console.log("key: " + (process.env.TYPESAFE_API_KEY ? ".env.local (panel key overrides)" : "expected from the panel"));
+      console.log("Leave this running while the plugin is open.");
+    }
+  });
+  instance.on("error", (error) => {
+    if (error.code === "EADDRINUSE") { console.error("Port " + PORT + " is already in use on " + host + "."); process.exit(1); }
+    if (error.code !== "EAFNOSUPPORT" && error.code !== "EADDRNOTAVAIL") console.warn("[" + host + "] " + error.message);
+  });
+}
