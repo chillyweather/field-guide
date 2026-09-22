@@ -55,6 +55,11 @@
   .tally { font-size: 11px; color: var(--faded); margin-top: 10px; line-height: 1.7; }
   .tally b { color: var(--ink); font-weight: 600; }
   .err { color: var(--unsure); font-size: 11.5px; }
+  .saw { margin-top: 6px; }
+  .saw summary { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faded); }
+  .saw p { font-size: 11.5px; line-height: 1.45; margin: 5px 0 0; color: var(--ink); }
+  .saw p.raw { color: var(--faded); font-style: italic; }
+  .saw mark { background: none; color: var(--unsure); font-style: italic; }
 
   /* A plugin window has no chrome to drag, so the grip is ours to draw. Fixed to
      the viewport rather than the document, so it stays put while results scroll. */
@@ -363,6 +368,35 @@ function card(s) {
       note.textContent = "Confusion pair: " + pair + ". The guide does not separate these.";
       body.appendChild(note);
     }
+
+    // What the vision model actually said, on demand. Every wrong
+    // identification is diagnosed here first: a bad answer from a good
+    // description is the guide's fault, and the reverse is the model's.
+    const saw = document.createElement("details");
+    saw.className = "saw";
+    const sum = document.createElement("summary");
+    sum.textContent = "What the vision model saw";
+    saw.appendChild(sum);
+
+    const said = document.createElement("p");
+    if (s.masked) {
+      for (const part of String(s.description).split(/(\[element\])/g)) {
+        if (part === "[element]") {
+          const m = document.createElement("mark");
+          m.textContent = "[element]";
+          said.appendChild(m);
+        } else said.appendChild(document.createTextNode(part));
+      }
+    } else said.textContent = s.description;
+    saw.appendChild(said);
+
+    if (s.masked) {
+      const raw = document.createElement("p");
+      raw.className = "raw";
+      raw.textContent = "Before masking: " + s.rawDescription;
+      saw.appendChild(raw);
+    }
+    body.appendChild(saw);
 
     if (s.verdict !== "confident") {
       const pick = document.createElement("select");

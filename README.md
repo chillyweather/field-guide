@@ -149,6 +149,24 @@ every description before the guide sees it, in production and not only in the pr
 A description reading "a toggled position" carries the answer, and Jev would then be
 reading a verdict rather than reaching one.
 
+## What masking does not fix
+
+Masking removes the word, not the framing. Observed on the first live run,
+22 September 2026: a blank rectangle drew the description *"...suggesting a toggle..."*,
+the mask replaced the noun, and Jev still answered **Toggle at 0.97** — because the rest
+of the sentence had already been written by a model that had made up its mind. A
+description of "a rounded track with a circle resting at one end" carries the verdict
+whether or not the noun survives.
+
+So the mask is a floor, not a fix. It stops the guide from simply reading an answer off
+the page; it cannot stop a description from being *shaped* by one. The honest version of
+the claim is therefore narrower than "the vision model only describes": it describes,
+and its framing still leaks.
+
+Every specimen carries its description under **What the vision model saw**, with masked
+spans marked, so a wrong identification can be attributed rather than guessed at — a bad
+answer from a good description is the guide's fault, and the reverse is the model's.
+
 ## Known limits
 
 - One vision call per region. The better shape is a single call over the whole screenshot
@@ -157,3 +175,7 @@ reading a verdict rather than reaching one.
   is still the weakest distinction in the guide (`Card` against `Modal Dialog`).
 - Probabilities are the model's, not a calibrated estimate of correctness. Treat the
   confusion-pair signal as a prompt to go and look, not as a verdict.
+- Given a region that is not a component at all, the pipeline still answers. `Other` is
+  in the guide for exactly this and does win on plain shapes, but not reliably: blank
+  and near-blank regions have come back as `Toggle` and `Button` at high confidence.
+  Nothing upstream asks whether the region is a component before asking which one.
