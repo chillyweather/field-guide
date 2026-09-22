@@ -169,7 +169,8 @@
       ],
       "family": "container",
       "confused_with": [
-        "Modal Dialog"
+        "Modal Dialog",
+        "Sidebar"
       ],
       "source": "m3, polaris, shadcn"
     },
@@ -181,7 +182,8 @@
       ],
       "family": "container",
       "confused_with": [
-        "Card"
+        "Card",
+        "Sidebar"
       ],
       "contested": "Judging overlay from a cropped image is often impossible. The surrounding context, not the crop, is what distinguishes these two.",
       "source": "m3, carbon, shadcn"
@@ -200,6 +202,22 @@
       ],
       "contested": "A row of chips and a tab bar are frequently the same picture: several rounded labels side by side with one highlighted. What separates them is whether the selection switches a view or filters a set, and a crop rarely shows that. Material further splits Tabs from a bottom navigation bar on exactly this question, and the two look alike too.",
       "source": "m3, carbon, polaris, shadcn"
+    },
+    "Sidebar": {
+      "what": "A tall panel anchored to the left or right edge of the screen, running most or all of its height, holding a vertical list of destinations or supplementary controls. Usually narrow relative to the screen, often on a tinted or bordered surface, with the current destination marked. Also called a side nav, navigation rail or navigation drawer.",
+      "not_for": "A bounded surface about one subject that sits in the page flow (Card). A panel overlaid above the content with a scrim, demanding a decision (Modal Dialog). A horizontal row of destinations (Tabs).",
+      "examples": [
+        "a settings menu listing General, Members, Billing and Security down the left edge",
+        "a documentation index pinned to the side of the page"
+      ],
+      "family": "navigation",
+      "confused_with": [
+        "Card",
+        "Tabs",
+        "Modal Dialog"
+      ],
+      "contested": "Two ambiguities, and the second is the useful one. First, a sidebar is a container that is usually used for navigation, and public systems disagree about which half names it: Carbon files it under the UI shell, Material calls it a navigation drawer or rail, Polaris calls it Navigation. Second, and unlike most entries here, the deciding evidence is rarely in the pixels — a crop of a sidebar and a crop of a tall card look alike, and what separates them is being anchored to an edge and running the full height. That is geometry, which the design file supplies and a screenshot does not.",
+      "source": "m3, carbon, polaris"
     },
     "Other": {
       "what": "None of the above, or the region does not contain a single identifiable component. Choose this rather than forcing a poor fit.",

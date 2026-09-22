@@ -46,6 +46,21 @@ module.exports = {
       "have a pale fill with dark text and a thin border. Nothing below the row is visible in the crop.",
     geometry: "396x32 px; aspect ratio 12.38; spans 31% of the screen width; positioned top left of the screen",
   },
+  "clear-sidebar": {
+    description:
+      "A tall narrow panel running the full height of the frame against its left edge, on a very " +
+      "slightly tinted background with a hairline border on its right side. Inside, thirteen short " +
+      "text labels are stacked vertically and evenly spaced, reading 'General', 'API keys', 'People', " +
+      "'Billing' and so on. One of them sits on a pale grey rounded fill; the rest have no fill.",
+    geometry: "260x1040 px; aspect ratio 0.25; spans 20% of the screen width; positioned middle left of the screen",
+  },
+  "sidebar-or-card": {
+    description:
+      "A vertical panel with a thin border and a white fill, taller than it is wide, containing five " +
+      "short text labels stacked one above the other with even spacing. One label is bolder than the " +
+      "others. Nothing outside the panel is visible in the crop.",
+    geometry: "300x420 px; aspect ratio 0.71; spans 23% of the screen width; positioned middle centre of the screen",
+  },
   "checkbox-or-toggle": {
     description:
       "A small control about 40 by 22 pixels with a fully rounded outline, filled pale grey, with a white " +

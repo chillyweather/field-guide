@@ -12,8 +12,11 @@ becomes the thing you use five times.
 Three steps, deliberately separated.
 
 1. **The design file supplies what pixels cannot.** Size, proportion and position on
-   screen go along with the crop. A full-width band at the top of a frame is a header
-   and not a card, and no crop of it says so.
+   screen go along with the crop, and it is measurable: one identical description of a
+   vertical panel, sent with three different geometry lines, answered Sidebar at
+   confidence 0.64, 0.79 and 0.99. Only the edge-anchored, full-height reading cleared
+   the bar to name itself. Geometry did not flip the answer — it decided whether the
+   plugin acted alone or asked.
 2. **A vision model describes, and does not decide.** It is asked for shape, fill,
    text, icons and visible state, and explicitly forbidden from using design-system
    vocabulary. The identification is not its job.
@@ -45,7 +48,7 @@ records one run, never a guarantee.
 
 ## The guide
 
-`taxonomy/components.json` — fourteen entries drawn from Material 3, IBM Carbon,
+`taxonomy/components.json` — fifteen entries drawn from Material 3, IBM Carbon,
 Shopify Polaris and shadcn/ui, so that any reader can check them. Where those systems
 genuinely disagree, the entry records the disagreement in `contested` rather than
 resolving it.
