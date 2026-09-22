@@ -4,3 +4,4 @@ dist/
 fixtures/jev-live.json
 .env.local
 .env
+fixtures/vision-test.png

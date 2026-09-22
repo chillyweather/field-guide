@@ -9,14 +9,20 @@ const taxonomy = JSON.parse(fs.readFileSync(path.join(__dirname, "taxonomy", "co
 const { cases } = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "offline.json"), "utf8"));
 
 const expected = [
-  { answer: "Button", verdict: "confident", contested: false, familyAgrees: true },
-  { answer: "Checkbox", verdict: "confident", contested: false, familyAgrees: true },
-  // Both signals fire at once: the top two are inseparable, and the behaviour
-  // answer leans to the other one of them. Realistic, and the richest case here.
-  { answer: "Chip", verdict: "check", contested: true, familyAgrees: false },
-  { answer: "Card", verdict: "unsure", contested: true, familyAgrees: true },
-  // 0.913 clears the act-alone bar, and is held back only by the family answer.
-  { answer: "Select", verdict: "check", contested: false, familyAgrees: false },
+  // Five captured live on 22 September 2026, one synthetic. Expectations follow
+  // what the API returned, not what the documentation suggested it would.
+  { answer: 'Badge', verdict: 'confident', contested: false, familyAgrees: true },
+  // Jev put everything on Chip, and the behaviour question said 'action' while
+  // the guide files Chip under 'selection'. The cross-check is what holds this
+  // back from acting alone — arguably the guide is the thing that is wrong here.
+  { answer: 'Chip', verdict: 'check', contested: false, familyAgrees: false },
+  { answer: 'Link', verdict: 'confident', contested: false, familyAgrees: true },
+  // The only live case that spread: 0.65 against 0.34, and the one the runner-up
+  // floor exists to catch.
+  { answer: 'Card', verdict: 'check', contested: true, familyAgrees: true },
+  { answer: 'Toggle', verdict: 'confident', contested: false, familyAgrees: true },
+  // Synthetic. No live probe fell below the 0.5 confidence threshold.
+  { answer: 'Other', verdict: 'unsure', contested: true, familyAgrees: true },
 ];
 
 let failed = 0;

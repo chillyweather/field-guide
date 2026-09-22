@@ -43,50 +43,15 @@ if (!KEY) {
 
 const taxonomy = JSON.parse(fs.readFileSync(path.join(__dirname, "taxonomy", "components.json"), "utf8"));
 
-// A control, then four regions written to sit on the fence.
-//
-// The control should be decisive. The other four describe things the guide
-// deliberately does not separate, worded so that the deciding evidence is
-// genuinely absent rather than merely unmentioned. If Jev spreads its
-// probabilities anywhere, it is here; if it does not spread them here, the
-// confusion-pair signal does not exist and should come out of the plugin.
-const CASES = {
-  "control-badge":
-    "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. " +
-    "Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
-
-  "chip-or-badge":
-    "A small pill-shaped element with a pale grey fill and a thin border, about 84 by 24 pixels. " +
-    "Dark text inside reads 'Marketing' and a small x glyph sits at its right edge. " +
-    "Nothing indicates whether the x responds to a click.",
-
-  "button-or-link":
-    "A short run of blue text reading 'Learn more', with no background fill, no border and no rounded " +
-    "container behind it. It is not underlined. It sits on its own line below a paragraph of body text.",
-
-  "card-or-modal":
-    "A white rectangle with rounded corners and a soft drop shadow, containing a bold heading, two lines " +
-    "of body text, and two small rectangles side by side at its lower right. The context image is cropped " +
-    "so that nothing outside this rectangle is visible.",
-
-  "checkbox-or-toggle":
-    "A small control about 40 by 22 pixels with a fully rounded outline, filled pale grey, with a white " +
-    "circle sitting against its left inside edge. Text to its right reads 'Notifications'.",
-};
+const PROBE_CASES = require("./probe-cases");
+const CASES = Object.fromEntries(Object.entries(PROBE_CASES).map(([k, v]) => [k, v.description]));
+const GEOMETRY = Object.fromEntries(Object.entries(PROBE_CASES).map(([k, v]) => [k, v.geometry]));
 
 const only = process.argv[2] && !process.argv[2].startsWith("sk-") ? process.argv[2] : null;
 if (only && !CASES[only]) {
   console.error("Unknown case '" + only + "'. Known: " + Object.keys(CASES).join(", "));
   process.exit(2);
 }
-
-const GEOMETRY = {
-  "control-badge": "60x22 px; aspect ratio 2.73; spans 4% of the screen width; positioned top right of the screen",
-  "chip-or-badge": "84x24 px; aspect ratio 3.50; spans 6% of the screen width; positioned middle left of the screen",
-  "button-or-link": "78x18 px; aspect ratio 4.33; spans 6% of the screen width; positioned middle left of the screen",
-  "card-or-modal": "480x260 px; aspect ratio 1.85; spans 38% of the screen width; positioned middle centre of the screen",
-  "checkbox-or-toggle": "40x22 px; aspect ratio 1.82; spans 3% of the screen width; positioned middle left of the screen",
-};
 
 const criteria = {};
 for (const [name, entry] of Object.entries(taxonomy.components)) {

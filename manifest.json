@@ -4,12 +4,15 @@
   "api": "1.0.0",
   "main": "code.js",
   "ui": "dist/ui.html",
-  "editorType": ["figma"],
+  "editorType": [
+    "figma"
+  ],
   "networkAccess": {
     "allowedDomains": [
       "https://api.typesafe.ai",
-      "https://api.anthropic.com"
+      "https://opencode.ai",
+      "https://api.openai.com"
     ],
-    "reasoning": "Identification runs in the UI iframe: a vision model describes each selected region, and TypeSafe's Jev classifies the description against the field guide taxonomy."
+    "reasoning": "Identification runs in the UI iframe: an OpenAI-compatible vision model describes each selected region, and TypeSafe Jev classifies the description against the field guide taxonomy."
   }
 }

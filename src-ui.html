@@ -67,7 +67,9 @@
     <summary>Collecting keys &amp; endpoints</summary>
     <div style="margin-top:10px">
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
-      <div class="field"><label>Vision API key (Anthropic)</label><input id="visionKey" type="password" placeholder="sk-ant-..."></div>
+      <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
+      <div class="field"><label>Vision base URL (OpenAI-compatible)</label><input id="visionBase" placeholder="https://opencode.ai/zen/v1"></div>
+      <div class="field"><label>Vision model</label><input id="visionModel" placeholder="e.g. qwen3-vl-235b, gpt-4o-mini"></div>
       <button class="ghost" id="saveKeys">Save keys</button>
     </div>
   </details>
@@ -89,9 +91,10 @@ const TAXONOMY = /* __TAXONOMY__ */ {};
 const FIXTURES = /* __FIXTURES__ */ { cases: [] };
 
 const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
-const VISION_ENDPOINT = "https://api.anthropic.com/v1/messages";
-const VISION_MODEL = "claude-sonnet-5";
 const JEV_MODEL = "jev-latest";
+// Any OpenAI-compatible host. Zen, OpenAI itself and most gateways all speak
+// this, so swapping vision provider is a field in the panel, not a code change.
+const DEFAULT_VISION_BASE = "https://opencode.ai/zen/v1";
 
 /* __WEIGH__ */
 
@@ -103,12 +106,20 @@ let keys = {}, specimens = [], pending = null;
 post({ type: "load-keys" });
 
 el("saveKeys").onclick = () => {
-  keys = { jev: el("jevKey").value.trim(), vision: el("visionKey").value.trim() };
+  keys = {
+    jev: el("jevKey").value.trim(),
+    vision: el("visionKey").value.trim(),
+    visionBase: el("visionBase").value.trim() || DEFAULT_VISION_BASE,
+    visionModel: el("visionModel").value.trim(),
+  };
   post({ type: "save-keys", keys });
   el("setup").open = false;
 };
 el("run").onclick = () => {
-  if (!useMock() && (!keys.jev || !keys.vision)) { el("setup").open = true; return say("Both keys are needed before a survey.", true); }
+  if (!useMock() && (!keys.jev || !keys.vision || !keys.visionModel)) {
+    el("setup").open = true;
+    return say("Two keys and a vision model name are needed before a live survey.", true);
+  }
   el("run").disabled = true; el("results").innerHTML = ""; el("tally").textContent = "";
   say("Collecting selected regions…");
   post({ type: "collect" });
@@ -124,7 +135,9 @@ onmessage = async (event) => {
   if (msg.type === "keys") {
     keys = msg.keys || {};
     el("jevKey").value = keys.jev || ""; el("visionKey").value = keys.vision || "";
-    if (!keys.jev || !keys.vision) el("setup").open = true;
+    el("visionBase").value = keys.visionBase || DEFAULT_VISION_BASE;
+    el("visionModel").value = keys.visionModel || "";
+    if (!keys.jev || !keys.vision || !keys.visionModel) el("setup").open = true;
   }
   if (msg.type === "collected") await survey(msg);
   if (msg.type === "applied") say(`Applied ${msg.applied} name${msg.applied === 1 ? "" : "s"}.`);
@@ -171,15 +184,21 @@ async function survey({ specimens: raw, context, reason }) {
   tally();
 }
 
-/** The one seam to swap if you change vision providers. In, image; out, prose. */
+/**
+ * The one seam to swap if you change vision providers. In, image; out, prose.
+ *
+ * Written to the OpenAI chat-completions shape because that is what nearly
+ * every host speaks, Zen and OpenAI included, so the provider is a field in the
+ * panel rather than a rewrite here.
+ */
 async function describeRegion({ cropB64, contextB64, geometry }) {
   const content = [];
   if (contextB64) {
     content.push({ type: "text", text: "First image: the whole screen, for context only." });
-    content.push({ type: "image", source: { type: "base64", media_type: "image/png", data: contextB64 } });
+    content.push({ type: "image_url", image_url: { url: "data:image/png;base64," + contextB64 } });
   }
   content.push({ type: "text", text: "Next image: the region to describe." });
-  content.push({ type: "image", source: { type: "base64", media_type: "image/png", data: cropB64 } });
+  content.push({ type: "image_url", image_url: { url: "data:image/png;base64," + cropB64 } });
   content.push({ type: "text", text:
     "Describe this region of a user interface in 2-3 sentences, factually.\n" +
     "Cover: shape and corner treatment, fill and border, any text and its wording, any icons, " +
@@ -189,19 +208,22 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
     "Do NOT name the component type and do NOT use design-system vocabulary " +
     "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." });
 
-  const res = await fetch(VISION_ENDPOINT, {
+  const base = (keys.visionBase || DEFAULT_VISION_BASE).replace(/\/+$/, "");
+  const res = await fetch(base + "/chat/completions", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": keys.vision,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({ model: VISION_MODEL, max_tokens: 300, messages: [{ role: "user", content }] }),
+    headers: { "content-type": "application/json", authorization: "Bearer " + keys.vision },
+    body: JSON.stringify({
+      model: keys.visionModel,
+      max_tokens: 300,
+      messages: [{ role: "user", content }],
+    }),
   });
   if (!res.ok) throw new Error("Vision " + res.status + ": " + (await res.text()).slice(0, 160));
+
   const data = await res.json();
-  return (data.content || []).map((c) => c.text || "").join(" ").trim();
+  const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!text) throw new Error("Vision returned no text: " + JSON.stringify(data).slice(0, 160));
+  return String(text).trim();
 }
 
 /**

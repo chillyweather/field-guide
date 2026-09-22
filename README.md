@@ -56,7 +56,7 @@ needs it to be up.
 ```
 node test.js                              # the decision logic, against fixtures
 node build.js && tick "work offline"      # the whole plugin, from fixtures
-TYPESAFE_API_KEY=sk-... node probe.js     # one real call; saves the response
+node probe.js                              # five Jev calls, ~$0.0005
 ```
 
 `fixtures/offline.json` holds five specimens chosen to exercise every branch of
@@ -96,6 +96,23 @@ TypeSafe, one for the vision model. Neither is committed or bundled.
 
 Network calls happen in the UI iframe, which is the only half of a Figma plugin that has
 network at all; `code.js` only exports regions and renames nodes.
+
+## The vision half
+
+Any OpenAI-compatible host. The seam is `describeRegion()` in `src-ui.html`, and
+the provider is three fields in the panel — key, base URL, model — not a code change.
+
+```
+node probe-vision.js            # what models the host exposes
+node probe-vision.js <model>    # describe a generated test image
+```
+
+The probe draws its own PNG (a rounded grey track with a white circle at the left),
+so it carries no committed asset and the subject is known exactly. It then checks
+the one rule that matters: the description must contain no design-system vocabulary.
+A model that says 	oggle has done the classifying itself, which hands the decision
+to whatever taxonomy it happens to hold instead of to the guide — and quietly empties
+the project of its point.
 
 ## Known limits
 

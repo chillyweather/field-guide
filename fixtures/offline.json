@@ -1,227 +1,361 @@
 {
   "cases": [
     {
-      "note": "clean identification — acts alone",
-      "description": "A filled rectangle with fully rounded ends and a solid blue background, about three times wider than it is tall. Centred white text reads 'Continue'. No icon, no border, no visible state marker.",
+      "note": "control-badge",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
+      "geometry": "60x22 px; aspect ratio 2.73; spans 4% of the screen width; positioned top right of the screen",
       "answers": {
         "component": {
-          "choice": "Button",
+          "type": "choice",
+          "choice": "Badge",
+          "confidence": 1,
           "probabilities": {
-            "Button": 0.96,
-            "Link": 0.0033,
-            "Chip": 0.0033,
-            "Badge": 0.0033,
-            "Text Input": 0.0033,
-            "Search Field": 0.0033,
-            "Select": 0.0033,
-            "Checkbox": 0.0033,
-            "Radio Button": 0.0033,
-            "Toggle": 0.0033,
-            "Card": 0.0033,
-            "Modal Dialog": 0.0033,
-            "Other": 0.0033
-          },
-          "confidence": 0.9567
+            "Chip": 0,
+            "Modal Dialog": 0,
+            "Text Input": 0,
+            "Select": 0,
+            "Card": 0,
+            "Toggle": 0,
+            "Search Field": 0,
+            "Radio Button": 0,
+            "Button": 0,
+            "Badge": 1,
+            "Other": 0,
+            "Checkbox": 0,
+            "Link": 0
+          }
         },
         "family": {
-          "choice": "action",
-          "probabilities": {},
-          "confidence": 0.9
+          "type": "choice",
+          "choice": "indicator",
+          "confidence": 1,
+          "probabilities": {
+            "selection": 0,
+            "navigation": 0,
+            "text_entry": 0,
+            "indicator": 1,
+            "container": 0,
+            "action": 0
+          }
         },
         "accepts_typed_text": {
-          "noul": 0.01
+          "type": "noul",
+          "noul": 0.02
         },
         "has_binary_on_off_state": {
+          "type": "noul",
+          "noul": 0.41
+        },
+        "contains_other_components": {
+          "type": "noul",
+          "noul": 0.07
+        },
+        "is_overlaid_above_content": {
+          "type": "noul",
+          "noul": 0.18
+        },
+        "is_dismissible": {
+          "type": "noul",
+          "noul": 0.03
+        }
+      }
+    },
+    {
+      "note": "chip-or-badge",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A small pill-shaped element with a pale grey fill and a thin border, about 84 by 24 pixels. Dark text inside reads 'Marketing' and a small x glyph sits at its right edge. Nothing indicates whether the x responds to a click.",
+      "geometry": "84x24 px; aspect ratio 3.50; spans 6% of the screen width; positioned middle left of the screen",
+      "answers": {
+        "component": {
+          "type": "choice",
+          "choice": "Chip",
+          "confidence": 1,
+          "probabilities": {
+            "Modal Dialog": 0,
+            "Checkbox": 0,
+            "Toggle": 0,
+            "Text Input": 0,
+            "Search Field": 0,
+            "Link": 0,
+            "Card": 0,
+            "Chip": 1,
+            "Button": 0,
+            "Radio Button": 0,
+            "Other": 0,
+            "Select": 0,
+            "Badge": 0
+          }
+        },
+        "family": {
+          "type": "choice",
+          "choice": "action",
+          "confidence": 0.3,
+          "probabilities": {
+            "text_entry": 0.01,
+            "container": 0.01,
+            "action": 0.42,
+            "navigation": 0.03,
+            "selection": 0.25,
+            "indicator": 0.28
+          }
+        },
+        "accepts_typed_text": {
+          "type": "noul",
+          "noul": 0.09
+        },
+        "has_binary_on_off_state": {
+          "type": "noul",
+          "noul": 0.09
+        },
+        "contains_other_components": {
+          "type": "noul",
+          "noul": 0.31
+        },
+        "is_overlaid_above_content": {
+          "type": "noul",
+          "noul": 0.17
+        },
+        "is_dismissible": {
+          "type": "noul",
+          "noul": 0.78
+        }
+      }
+    },
+    {
+      "note": "button-or-link",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A short run of blue text reading 'Learn more', with no background fill, no border and no rounded container behind it. It is not underlined. It sits on its own line below a paragraph of body text.",
+      "geometry": "78x18 px; aspect ratio 4.33; spans 6% of the screen width; positioned middle left of the screen",
+      "answers": {
+        "component": {
+          "type": "choice",
+          "choice": "Link",
+          "confidence": 1,
+          "probabilities": {
+            "Chip": 0,
+            "Link": 1,
+            "Select": 0,
+            "Modal Dialog": 0,
+            "Toggle": 0,
+            "Other": 0,
+            "Card": 0,
+            "Badge": 0,
+            "Search Field": 0,
+            "Radio Button": 0,
+            "Button": 0,
+            "Checkbox": 0,
+            "Text Input": 0
+          }
+        },
+        "family": {
+          "type": "choice",
+          "choice": "navigation",
+          "confidence": 0.75,
+          "probabilities": {
+            "action": 0.2,
+            "navigation": 0.79,
+            "text_entry": 0,
+            "selection": 0,
+            "indicator": 0.01,
+            "container": 0
+          }
+        },
+        "accepts_typed_text": {
+          "type": "noul",
+          "noul": 0.02
+        },
+        "has_binary_on_off_state": {
+          "type": "noul",
           "noul": 0.02
         },
         "contains_other_components": {
+          "type": "noul",
           "noul": 0.03
         },
         "is_overlaid_above_content": {
+          "type": "noul",
           "noul": 0.05
         },
         "is_dismissible": {
+          "type": "noul",
           "noul": 0.02
         }
       }
     },
     {
-      "note": "clean identification — acts alone",
-      "description": "A small square outline with a white fill and a thin grey border, roughly 18 by 18 pixels, containing a dark check mark. To its right, dark text reads 'Remember me on this device'.",
+      "note": "card-or-modal",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A white rectangle with rounded corners and a soft drop shadow, containing a bold heading, two lines of body text, and two small rectangles side by side at its lower right. The context image is cropped so that nothing outside this rectangle is visible.",
+      "geometry": "480x260 px; aspect ratio 1.85; spans 38% of the screen width; positioned middle centre of the screen",
       "answers": {
         "component": {
-          "choice": "Checkbox",
-          "probabilities": {
-            "Button": 0.0058,
-            "Link": 0.0058,
-            "Chip": 0.0058,
-            "Badge": 0.0058,
-            "Text Input": 0.0058,
-            "Search Field": 0.0058,
-            "Select": 0.0058,
-            "Checkbox": 0.93,
-            "Radio Button": 0.0058,
-            "Toggle": 0.0058,
-            "Card": 0.0058,
-            "Modal Dialog": 0.0058,
-            "Other": 0.0058
-          },
-          "confidence": 0.9242
-        },
-        "family": {
-          "choice": "selection",
-          "probabilities": {},
-          "confidence": 0.9
-        },
-        "accepts_typed_text": {
-          "noul": 0.01
-        },
-        "has_binary_on_off_state": {
-          "noul": 0.97
-        },
-        "contains_other_components": {
-          "noul": 0.02
-        },
-        "is_overlaid_above_content": {
-          "noul": 0.03
-        },
-        "is_dismissible": {
-          "noul": 0.01
-        }
-      }
-    },
-    {
-      "note": "confusion pair — the guide does not separate these",
-      "description": "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
-      "answers": {
-        "component": {
-          "choice": "Chip",
-          "probabilities": {
-            "Button": 0.0036,
-            "Link": 0.0036,
-            "Chip": 0.54,
-            "Badge": 0.42,
-            "Text Input": 0.0036,
-            "Search Field": 0.0036,
-            "Select": 0.0036,
-            "Checkbox": 0.0036,
-            "Radio Button": 0.0036,
-            "Toggle": 0.0036,
-            "Card": 0.0036,
-            "Modal Dialog": 0.0036,
-            "Other": 0.0036
-          },
-          "confidence": 0.5017
-        },
-        "family": {
-          "choice": "indicator",
-          "probabilities": {},
-          "confidence": 0.9
-        },
-        "accepts_typed_text": {
-          "noul": 0.01
-        },
-        "has_binary_on_off_state": {
-          "noul": 0.08
-        },
-        "contains_other_components": {
-          "noul": 0.02
-        },
-        "is_overlaid_above_content": {
-          "noul": 0.04
-        },
-        "is_dismissible": {
-          "noul": 0.11
-        }
-      }
-    },
-    {
-      "note": "genuinely uncertain — left for the human",
-      "description": "A large white rectangle with rounded corners and a soft drop shadow, occupying much of the frame. It contains a heading, two lines of body text and two smaller rectangles side by side at the bottom right. The surrounding area of the context image appears darkened.",
-      "answers": {
-        "component": {
+          "type": "choice",
           "choice": "Card",
+          "confidence": 0.61,
           "probabilities": {
-            "Button": 0.0336,
-            "Link": 0.0336,
-            "Chip": 0.0336,
-            "Badge": 0.0336,
-            "Text Input": 0.0336,
-            "Search Field": 0.0336,
-            "Select": 0.0336,
-            "Checkbox": 0.0336,
-            "Radio Button": 0.0336,
-            "Toggle": 0.0336,
-            "Card": 0.34,
-            "Modal Dialog": 0.29,
-            "Other": 0.0336
-          },
-          "confidence": 0.285
+            "Modal Dialog": 0.34,
+            "Checkbox": 0,
+            "Text Input": 0,
+            "Chip": 0,
+            "Link": 0,
+            "Other": 0.01,
+            "Toggle": 0,
+            "Select": 0,
+            "Search Field": 0,
+            "Badge": 0,
+            "Button": 0,
+            "Card": 0.65,
+            "Radio Button": 0
+          }
         },
         "family": {
+          "type": "choice",
           "choice": "container",
-          "probabilities": {},
-          "confidence": 0.9
+          "confidence": 0.85,
+          "probabilities": {
+            "container": 0.87,
+            "navigation": 0,
+            "selection": 0.01,
+            "text_entry": 0,
+            "indicator": 0.11,
+            "action": 0.01
+          }
         },
         "accepts_typed_text": {
-          "noul": 0.04
+          "type": "noul",
+          "noul": 0.12
         },
         "has_binary_on_off_state": {
-          "noul": 0.02
+          "type": "noul",
+          "noul": 0.16
         },
         "contains_other_components": {
-          "noul": 0.96
+          "type": "noul",
+          "noul": 0.95
         },
         "is_overlaid_above_content": {
-          "noul": 0.58
+          "type": "noul",
+          "noul": 0.56
         },
         "is_dismissible": {
-          "noul": 0.41
+          "type": "noul",
+          "noul": 0.15
         }
       }
     },
     {
-      "note": "high probability, but the behaviour answer contradicts it — downgraded",
-      "description": "A rectangular field with a thin grey border and a white fill, spanning about a third of the screen width. Grey text on the left reads 'Choose a country' and a small downward chevron sits at the right edge.",
+      "note": "checkbox-or-toggle",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A small control about 40 by 22 pixels with a fully rounded outline, filled pale grey, with a white circle sitting against its left inside edge. Text to its right reads 'Notifications'.",
+      "geometry": "40x22 px; aspect ratio 1.82; spans 3% of the screen width; positioned middle left of the screen",
       "answers": {
         "component": {
-          "choice": "Select",
+          "type": "choice",
+          "choice": "Toggle",
+          "confidence": 0.94,
           "probabilities": {
-            "Button": 0.0067,
-            "Link": 0.0067,
-            "Chip": 0.0067,
-            "Badge": 0.0067,
-            "Text Input": 0.0067,
-            "Search Field": 0.0067,
-            "Select": 0.92,
-            "Checkbox": 0.0067,
-            "Radio Button": 0.0067,
-            "Toggle": 0.0067,
-            "Card": 0.0067,
-            "Modal Dialog": 0.0067,
-            "Other": 0.0067
-          },
-          "confidence": 0.9133
+            "Link": 0,
+            "Badge": 0,
+            "Modal Dialog": 0,
+            "Card": 0,
+            "Chip": 0,
+            "Radio Button": 0.02,
+            "Button": 0.01,
+            "Text Input": 0,
+            "Checkbox": 0.01,
+            "Toggle": 0.96,
+            "Other": 0,
+            "Search Field": 0,
+            "Select": 0
+          }
         },
         "family": {
-          "choice": "text_entry",
-          "probabilities": {},
-          "confidence": 0.9
+          "type": "choice",
+          "choice": "selection",
+          "confidence": 0.82,
+          "probabilities": {
+            "action": 0.06,
+            "indicator": 0.03,
+            "navigation": 0.06,
+            "selection": 0.85,
+            "text_entry": 0,
+            "container": 0
+          }
         },
         "accepts_typed_text": {
-          "noul": 0.44
+          "type": "noul",
+          "noul": 0.05
         },
         "has_binary_on_off_state": {
-          "noul": 0.02
+          "type": "noul",
+          "noul": 0.87
         },
         "contains_other_components": {
-          "noul": 0.03
+          "type": "noul",
+          "noul": 0.28
         },
         "is_overlaid_above_content": {
-          "noul": 0.04
+          "type": "noul",
+          "noul": 0.18
         },
         "is_dismissible": {
+          "type": "noul",
+          "noul": 0.05
+        }
+      }
+    },
+    {
+      "note": "below the acting threshold — synthetic, never observed live",
+      "source": "synthetic",
+      "description": "A rectangular region containing a photograph of a person at a desk, with no text, no border and no visible control of any kind.",
+      "geometry": "320x180 px; aspect ratio 1.78; spans 25% of the screen width; positioned middle centre of the screen",
+      "answers": {
+        "component": {
+          "type": "choice",
+          "choice": "Other",
+          "confidence": 0.31,
+          "probabilities": {
+            "Other": 0.36,
+            "Card": 0.28,
+            "Modal Dialog": 0.12,
+            "Badge": 0.08,
+            "Button": 0.06,
+            "Chip": 0.04,
+            "Link": 0.02,
+            "Text Input": 0.01,
+            "Search Field": 0.01,
+            "Select": 0.01,
+            "Checkbox": 0.005,
+            "Radio Button": 0.005,
+            "Toggle": 0
+          }
+        },
+        "family": {
+          "type": "choice",
+          "choice": "indicator",
+          "confidence": 0.4,
+          "probabilities": {}
+        },
+        "accepts_typed_text": {
+          "type": "noul",
           "noul": 0.02
+        },
+        "has_binary_on_off_state": {
+          "type": "noul",
+          "noul": 0.01
+        },
+        "contains_other_components": {
+          "type": "noul",
+          "noul": 0.22
+        },
+        "is_overlaid_above_content": {
+          "type": "noul",
+          "noul": 0.09
+        },
+        "is_dismissible": {
+          "type": "noul",
+          "noul": 0.03
         }
       }
     }

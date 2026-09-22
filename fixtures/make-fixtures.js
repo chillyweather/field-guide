@@ -1,106 +1,81 @@
-// Builds the offline fixtures.
+// Builds the offline fixtures from responses the API actually returned.
 //
-// Hand-written probability maps drift out of sum-to-1 the moment anyone edits
-// them, and a fixture that could not have come off the wire teaches the UI to
-// handle a response the API will never send. So they are generated: name the
-// interesting options, spread the remainder, derive confidence the way the
-// documentation says it is derived.
+// These began as hand-written probability maps and were wrong in a way that
+// mattered: they assumed Jev spreads its probabilities across near-ties, and it
+// mostly does not. Three of five live cases put everything on one option. A
+// fixture invented from the documentation teaches the UI to handle a response
+// the API will never send, so the live capture is now the source.
+//
+//   node probe.js                 # writes fixtures/jev-live.json
+//   node fixtures/make-fixtures.js
+//
+// jev-live.json is gitignored; offline.json is committed, so the offline mode
+// works on a clean clone with no key.
 
 const fs = require("fs");
 const path = require("path");
 
-const taxonomy = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "taxonomy", "components.json"), "utf8"));
-const NAMES = Object.keys(taxonomy.components);
-const N = NAMES.length;
+const here = __dirname;
+const cases = require("../probe-cases");
+const livePath = path.join(here, "jev-live.json");
 
-/** Confidence from the shape of the distribution, generalised from the docs' 3-option form. */
-const confidenceOf = (pMax) => (N * pMax - 1) / (N - 1);
-
-function distribution(weights) {
-  const named = Object.values(weights).reduce((a, b) => a + b, 0);
-  const rest = NAMES.filter((n) => !(n in weights));
-  const share = (1 - named) / rest.length;
-  const probs = {};
-  for (const n of NAMES) probs[n] = +(n in weights ? weights[n] : share).toFixed(4);
-  return probs;
+if (!fs.existsSync(livePath)) {
+  console.error("No fixtures/jev-live.json. Run `node probe.js` first.");
+  process.exit(1);
 }
 
-function answer(weights, family, probes) {
-  const probabilities = distribution(weights);
-  const choice = Object.entries(probabilities).sort((a, b) => b[1] - a[1])[0][0];
-  return {
-    component: { choice, probabilities, confidence: +confidenceOf(probabilities[choice]).toFixed(4) },
-    family: { choice: family, probabilities: {}, confidence: 0.9 },
-    ...probes,
-  };
+const live = JSON.parse(fs.readFileSync(livePath, "utf8"));
+const out = [];
+
+for (const [name, body] of Object.entries(live)) {
+  if (!cases[name] || !body.answers) continue;
+  out.push({
+    note: name,
+    source: "live " + (body.model || "jev") + ", captured " + new Date().toISOString().slice(0, 10),
+    description: cases[name].description,
+    geometry: cases[name].geometry,
+    answers: body.answers,
+  });
 }
 
-const noul = (v) => ({ noul: v });
+// Not observed live: across five probes Jev never fell below 0.5 confidence,
+// which is itself worth knowing. The branch still has to render, so one case is
+// synthesised for it and labelled as such. Replace it the day a real one appears.
+out.push({
+  note: "below the acting threshold — synthetic, never observed live",
+  source: "synthetic",
+  description:
+    "A rectangular region containing a photograph of a person at a desk, with no text, no border and no " +
+    "visible control of any kind.",
+  geometry: "320x180 px; aspect ratio 1.78; spans 25% of the screen width; positioned middle centre of the screen",
+  answers: {
+    component: {
+      type: "choice",
+      choice: "Other",
+      confidence: 0.31,
+      probabilities: { Other: 0.36, Card: 0.28, "Modal Dialog": 0.12, Badge: 0.08, Button: 0.06,
+        Chip: 0.04, Link: 0.02, "Text Input": 0.01, "Search Field": 0.01, Select: 0.01,
+        Checkbox: 0.005, "Radio Button": 0.005, Toggle: 0.0 },
+    },
+    family: { type: "choice", choice: "indicator", confidence: 0.4, probabilities: {} },
+    accepts_typed_text: { type: "noul", noul: 0.02 },
+    has_binary_on_off_state: { type: "noul", noul: 0.01 },
+    contains_other_components: { type: "noul", noul: 0.22 },
+    is_overlaid_above_content: { type: "noul", noul: 0.09 },
+    is_dismissible: { type: "noul", noul: 0.03 },
+  },
+});
 
-// Five specimens, chosen so that every branch of weigh() is exercised offline.
-const cases = [
-  {
-    note: "clean identification — acts alone",
-    description:
-      "A filled rectangle with fully rounded ends and a solid blue background, about three times wider than it is tall. " +
-      "Centred white text reads 'Continue'. No icon, no border, no visible state marker.",
-    answers: answer({ Button: 0.96 }, "action", {
-      accepts_typed_text: noul(0.01), has_binary_on_off_state: noul(0.02),
-      contains_other_components: noul(0.03), is_overlaid_above_content: noul(0.05), is_dismissible: noul(0.02),
-    }),
-  },
-  {
-    note: "clean identification — acts alone",
-    description:
-      "A small square outline with a white fill and a thin grey border, roughly 18 by 18 pixels, containing a dark check mark. " +
-      "To its right, dark text reads 'Remember me on this device'.",
-    answers: answer({ Checkbox: 0.93 }, "selection", {
-      accepts_typed_text: noul(0.01), has_binary_on_off_state: noul(0.97),
-      contains_other_components: noul(0.02), is_overlaid_above_content: noul(0.03), is_dismissible: noul(0.01),
-    }),
-  },
-  {
-    note: "confusion pair — the guide does not separate these",
-    description:
-      "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. " +
-      "Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
-    answers: answer({ Chip: 0.54, Badge: 0.42 }, "indicator", {
-      accepts_typed_text: noul(0.01), has_binary_on_off_state: noul(0.08),
-      contains_other_components: noul(0.02), is_overlaid_above_content: noul(0.04), is_dismissible: noul(0.11),
-    }),
-  },
-  {
-    note: "genuinely uncertain — left for the human",
-    description:
-      "A large white rectangle with rounded corners and a soft drop shadow, occupying much of the frame. " +
-      "It contains a heading, two lines of body text and two smaller rectangles side by side at the bottom right. " +
-      "The surrounding area of the context image appears darkened.",
-    answers: answer({ Card: 0.34, "Modal Dialog": 0.29 }, "container", {
-      accepts_typed_text: noul(0.04), has_binary_on_off_state: noul(0.02),
-      contains_other_components: noul(0.96), is_overlaid_above_content: noul(0.58), is_dismissible: noul(0.41),
-    }),
-  },
-  {
-    note: "high probability, but the behaviour answer contradicts it — downgraded",
-    description:
-      "A rectangular field with a thin grey border and a white fill, spanning about a third of the screen width. " +
-      "Grey text on the left reads 'Choose a country' and a small downward chevron sits at the right edge.",
-    answers: answer({ Select: 0.92 }, "text_entry", {
-      accepts_typed_text: noul(0.44), has_binary_on_off_state: noul(0.02),
-      contains_other_components: noul(0.03), is_overlaid_above_content: noul(0.04), is_dismissible: noul(0.02),
-    }),
-  },
-];
+fs.writeFileSync(path.join(here, "offline.json"), JSON.stringify({ cases: out }, null, 2) + "\n");
 
-fs.writeFileSync(path.join(__dirname, "offline.json"), JSON.stringify({ cases }, null, 2) + "\n");
-
-for (const c of cases) {
-  const a = c.answers.component;
+const { weigh } = require("../src-weigh");
+const taxonomy = JSON.parse(fs.readFileSync(path.join(here, "..", "taxonomy", "components.json"), "utf8"));
+for (const c of out) {
+  const v = weigh(c.answers, taxonomy);
   console.log(
-    String(a.choice).padEnd(14),
-    "p=" + a.probabilities[a.choice].toFixed(2),
-    "conf=" + a.confidence.toFixed(3),
-    "sum=" + Object.values(a.probabilities).reduce((x, y) => x + y, 0).toFixed(3),
-    " " + c.note,
+    String(v.answer).padEnd(14) + v.verdict.padEnd(11) +
+    "conf " + v.confidence.toFixed(2) +
+    (v.contested ? "  contested" : "") + (v.familyAgrees ? "" : "  family: " + v.family) +
+    "   " + (c.source === "synthetic" ? "[synthetic] " : "") + c.note,
   );
 }

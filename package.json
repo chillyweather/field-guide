@@ -7,6 +7,7 @@
     "build": "node build.js",
     "test": "node test.js",
     "probe": "node probe.js",
+    "probe:vision": "node probe-vision.js",
     "fixtures": "node fixtures/make-fixtures.js && node build.js"
   }
 }
