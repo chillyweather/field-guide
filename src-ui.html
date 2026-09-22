@@ -68,8 +68,8 @@
     <div style="margin-top:10px">
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
-      <div class="field"><label>Vision base URL (OpenAI-compatible)</label><input id="visionBase" placeholder="https://opencode.ai/zen/v1"></div>
-      <div class="field"><label>Vision model</label><input id="visionModel" placeholder="e.g. qwen3-vl-235b, gpt-4o-mini"></div>
+      <div class="field"><label>Vision base URL (OpenAI-compatible)</label><input id="visionBase" placeholder="https://opencode.ai/zen/go/v1"></div>
+      <div class="field"><label>Vision model</label><input id="visionModel" placeholder="e.g. deepseek-v4-flash-vision-exp"></div>
       <button class="ghost" id="saveKeys">Save keys</button>
     </div>
   </details>
@@ -92,9 +92,11 @@ const FIXTURES = /* __FIXTURES__ */ { cases: [] };
 
 const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const JEV_MODEL = "jev-latest";
-// Any OpenAI-compatible host. Zen, OpenAI itself and most gateways all speak
-// this, so swapping vision provider is a field in the panel, not a code change.
-const DEFAULT_VISION_BASE = "https://opencode.ai/zen/v1";
+// Any OpenAI-compatible host, so swapping vision provider is a field in the
+// panel rather than a code change. OpenCode Go is the default because it is the
+// subscription in hand; note that Go and Zen are different products on
+// different paths (/zen/go/v1 against /zen/v1) and carry different catalogues.
+const DEFAULT_VISION_BASE = "https://opencode.ai/zen/go/v1";
 
 /* __WEIGH__ */
 
