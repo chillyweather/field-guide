@@ -172,7 +172,7 @@ const DEFAULT_VISION_BASE = "https://api.openai.com/v1";
 const el = (id) => document.getElementById(id);
 const useMock = () => el("mockMode").checked;
 const post = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
-let keys = {}, specimens = [], pending = null;
+let keys = {}, specimens = [], pending = null, lastContext = null;
 
 post({ type: "load-keys" });
 
@@ -240,12 +240,20 @@ function say(text, isError) {
   const s = el("status"); s.textContent = text; s.className = isError ? "status err" : "status";
 }
 
-async function survey({ specimens: collected, context, reason }) {
+async function survey({ specimens: collected, context, contextName, reason }) {
   if (reason === "nothing-selected" || !collected.length) {
     el("run").disabled = false;
     return say("Nothing selected. Mark some regions first.", true);
   }
   const contextB64 = context ? toB64(context) : null;
+  // Said out loud, because its absence changed every answer on an earlier run
+  // without appearing anywhere in the output.
+  if (!useMock()) {
+    say(contextB64
+      ? "Context: " + contextName + ". Identifying " + collected.length + " regions…"
+      : "No surrounding context found — identifying " + collected.length + " regions from crops alone.");
+  }
+  lastContext = contextB64 ? contextName : null;
 
   // Results are placed by index, never appended. Under concurrency the order of
   // completion is not the order of the selection, and a list that reshuffles as
@@ -522,6 +530,15 @@ function card(s) {
  * Tab-separated, so it lands in a spreadsheet or a Markdown table without
  * reformatting.
  */
+/** The single reason a region was not named, in the order the gates apply. */
+function heldBy(s) {
+  if (s.verdict === "confident") return "-";
+  if (s.confidence < NEEDS_HUMAN) return "low-confidence";
+  if (!s.familyAgrees) return "family";
+  if (s.contested) return "contested";
+  return "below-threshold";
+}
+
 function publishRecord(spend, elapsedMs) {
   const live = specimens.filter((s) => !s.error);
   const median = (xs) => {
@@ -537,7 +554,7 @@ function publishRecord(spend, elapsedMs) {
   const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
 
   const head = [
-    "#", "region", "answer", "confidence", "verdict", "contested", "masked",
+    "#", "region", "answer", "confidence", "verdict", "held_by", "family", "contested", "masked",
     "vision_ms", "jev_ms", "vision_in", "vision_out", "jev_in",
   ].join("\t");
 
@@ -547,6 +564,11 @@ function publishRecord(spend, elapsedMs) {
     s.error ? "FAILED" : s.answer,
     s.error ? "" : Number(s.confidence).toFixed(2),
     s.error ? s.error.slice(0, 60) : s.verdict,
+    // Why it was not named. Without this a row reading "1.00 / check" is a
+    // mystery, and four such rows in an eighteen-region run could not be
+    // explained from the record at all.
+    s.error ? "" : heldBy(s),
+    s.error ? "" : (s.family || ""),
     s.contested ? "yes" : "no",
     s.masked ? s.leaked.join("|") : "no",
     s.visionMs || "", s.jevMs || "",
@@ -557,12 +579,16 @@ function publishRecord(spend, elapsedMs) {
     "# Field Guide run — " + new Date().toISOString().slice(0, 16).replace("T", " "),
     specimens.length + " regions · " + (elapsedMs / 1000).toFixed(1) + "s wall · " +
       CONCURRENCY + " at a time" + (useMock() ? " · OFFLINE, no calls made" : ""),
+    "context " + (lastContext ? lastContext : "NONE — crops only"),
     "named " + specimens.filter((s) => s.verdict === "confident").length +
       " · check " + specimens.filter((s) => s.verdict === "check").length +
       " · unsure " + specimens.filter((s) => s.verdict === "unsure").length +
-      " · contested " + specimens.filter((s) => s.contested).length +
       " · masked " + specimens.filter((s) => s.masked).length +
       " · failed " + specimens.filter((s) => s.error).length,
+    "held by  family " + live.filter((s) => heldBy(s) === "family").length +
+      " · contested " + live.filter((s) => heldBy(s) === "contested").length +
+      " · low-confidence " + live.filter((s) => heldBy(s) === "low-confidence").length +
+      " · below-threshold " + live.filter((s) => heldBy(s) === "below-threshold").length,
     "vision  median " + median(visionMs) + "ms  max " + Math.max(0, ...visionMs) + "ms  " +
       spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out  " + money(vision),
     "jev     median " + median(jevMs) + "ms  max " + Math.max(0, ...jevMs) + "ms  " +

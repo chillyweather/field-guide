@@ -32,7 +32,13 @@ function weigh(answers, taxonomy) {
   // An independent read on the same state. A behaviour answer that contradicts
   // the family recorded for the chosen component is a reason to distrust a high
   // probability, not a detail to report beside it.
-  const familyAgrees = !entry.family || !answers.family || answers.family.choice === entry.family;
+  // 'Other' is exempt. It means 'not a component', which has no behaviour for the
+  // family question to confirm or contradict, so any answer at all looked like a
+  // disagreement. Measured cost of the bug: on an 18-region run it held back an
+  // Other at confidence 0.96 for contradicting a family the entry should never
+  // have carried.
+  const familyAgrees = c.choice === "Other" || !entry.family || !answers.family ||
+    answers.family.choice === entry.family;
   // Only between two real components. A run-off against 'Other' is not a
   // taxonomy that fails to separate two things, it is the guide failing to
   // recognise one — a different finding, and reporting it as a confusion pair

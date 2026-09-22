@@ -97,25 +97,73 @@ async function collect() {
     });
   }
 
-  return { type: "collected", specimens, context: context && context.image, total: specimens.length };
+  return {
+    type: "collected",
+    specimens,
+    context: context && context.image,
+    contextName: context ? context.name : null,
+    contextFramed: context ? context.framed : false,
+    total: specimens.length,
+  };
 }
 
 function canExport(node) {
   return typeof node.exportAsync === "function" && node.width > 0 && node.height > 0;
 }
 
-/** The outermost frame the region sits in, exported once and shared by every specimen. */
+/**
+ * The surroundings, exported once and shared by every specimen.
+ *
+ * The first version walked up for a containing frame and gave up when it found
+ * the page. That is the ordinary case, not the edge case: a designer marking up
+ * a screenshot drops the image on the page and draws slices over it, so both sit
+ * directly on the page and there is no frame to find. The context image was
+ * therefore silently absent on every run for the first day of this project,
+ * while the code claimed to send it.
+ *
+ * So: the containing frame if there is one, and otherwise the largest node on
+ * the page that actually contains the region — which is the screenshot itself.
+ * Absent is still a legal answer, and the panel says so rather than pretending.
+ */
 async function exportContext(node) {
+  const framed = enclosingFrame(node);
+  const source = framed || largestEnclosing(node);
+  if (!source || typeof source.exportAsync !== "function") return null;
+
+  // Scale 1, and no larger than needed: this image is re-sent with every region
+  // in the run, so its size is multiplied by the selection count. On an
+  // 18-region run a 1,000-token context is 18,000 tokens.
+  const image = await source.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } });
+  return { image, box: source.absoluteBoundingBox, name: source.name, framed: Boolean(framed) };
+}
+
+function enclosingFrame(node) {
   let frame = node.parent;
   while (frame && frame.type !== "PAGE" && frame.parent && frame.parent.type !== "PAGE") {
     frame = frame.parent;
   }
-  if (!frame || frame.type === "PAGE" || typeof frame.exportAsync !== "function") return null;
-
-  const image = await frame.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } });
-  return { image, box: frame.absoluteBoundingBox };
+  return frame && frame.type !== "PAGE" && typeof frame.exportAsync === "function" ? frame : null;
 }
 
+/** The biggest thing on the page that the region sits inside, by area. */
+function largestEnclosing(node) {
+  const box = node.absoluteBoundingBox;
+  if (!box) return null;
+  let best = null;
+  let bestArea = 0;
+  for (const candidate of figma.currentPage.children) {
+    if (candidate === node || typeof candidate.exportAsync !== "function") continue;
+    const other = candidate.absoluteBoundingBox;
+    if (!other) continue;
+    const contains = other.x <= box.x && other.y <= box.y &&
+      other.x + other.width >= box.x + box.width &&
+      other.y + other.height >= box.y + box.height;
+    if (!contains) continue;
+    const area = other.width * other.height;
+    if (area > bestArea) { best = candidate; bestArea = area; }
+  }
+  return best;
+}
 /**
  * What the pixels do not say.
  *
