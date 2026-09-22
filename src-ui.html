@@ -12,26 +12,29 @@
     margin: 0; padding: 0; background: var(--paper); color: var(--ink);
     font: 13px/1.5 Iowan Old Style, Palatino, Georgia, serif;
   }
-  .wrap { padding: 18px 20px 24px; }
+  .wrap { padding: 14px 16px 20px; }
   header { border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 4px; }
-  h1 { margin: 0; font-size: 19px; letter-spacing: .02em; font-weight: 600; }
+  h1 { margin: 0; font-size: 18px; letter-spacing: .02em; font-weight: 600; }
   .sub { font-size: 11px; color: var(--faded); font-style: italic; margin-top: 2px; }
   .legend { font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-            color: var(--faded); margin: 16px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+            color: var(--faded); margin: 14px 0 7px; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
   button {
-    font-family: inherit; font-size: 13px; padding: 9px 14px; border: 1px solid var(--ink);
+    font-family: inherit; font-size: 12.5px; padding: 8px 13px; border: 1px solid var(--ink);
     background: var(--ink); color: var(--paper); cursor: pointer; border-radius: 2px;
   }
   button:disabled { opacity: .4; cursor: default; }
   button.ghost { background: transparent; color: var(--ink); }
   input, select {
-    font-family: inherit; font-size: 12px; padding: 6px 8px; width: 100%;
+    font-family: inherit; font-size: 12px; padding: 5px 7px; width: 100%;
     border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 2px;
   }
   label { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faded); margin-bottom: 3px; }
-  .field { margin-bottom: 10px; }
-  .row { display: flex; gap: 8px; align-items: center; }
-  details summary { cursor: pointer; font-size: 11px; color: var(--faded); }
+  .field { margin-bottom: 8px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .row > button { flex: 1 1 auto; white-space: nowrap; }
+  button.wide { display: block; width: 100%; margin-top: 8px; }
+  details summary { cursor: pointer; font-size: 11px; color: var(--faded); margin-bottom: 2px; }
+  details[open] summary { margin-bottom: 8px; }
 
   .specimen { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
   .num { font-size: 11px; color: var(--faded); min-width: 20px; padding-top: 2px; }
@@ -52,8 +55,10 @@
   .tally { font-size: 11px; color: var(--faded); margin-top: 10px; line-height: 1.7; }
   .tally b { color: var(--ink); font-weight: 600; }
   .err { color: var(--unsure); font-size: 11.5px; }
-  label.inline { display: flex; align-items: center; gap: 5px; margin: 0; text-transform: none;
-                 letter-spacing: 0; font-size: 11px; cursor: pointer; }
+  label.inline { display: flex; align-items: center; gap: 6px; margin: 0; text-transform: none;
+                 letter-spacing: 0; font-size: 12px; white-space: nowrap; cursor: pointer;
+                 color: var(--faded); flex: 0 0 auto; }
+  label.inline input { width: auto; }
 </style>
 </head>
 <body>
@@ -64,7 +69,7 @@
   </header>
 
   <details id="setup">
-    <summary>Collecting keys &amp; endpoints</summary>
+    <summary>Keys &amp; endpoints</summary>
     <div style="margin-top:10px">
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
@@ -78,8 +83,8 @@
   <div class="row">
     <button id="run">Identify selection</button>
     <label class="inline"><input type="checkbox" id="mockMode"> work offline</label>
-    <button class="ghost" id="applyAll" disabled>Apply confident names</button>
   </div>
+  <button class="ghost wide" id="applyAll" hidden>Apply confident names</button>
   <div class="status" id="status">Select the regions you marked, then identify them.</div>
 
   <div id="results"></div>
@@ -131,7 +136,8 @@ el("run").onclick = () => {
     el("setup").open = true;
     return say("Two keys and a vision model name are needed before a live survey.", true);
   }
-  el("run").disabled = true; el("results").innerHTML = ""; el("tally").textContent = "";
+  el("run").disabled = true; el("applyAll").hidden = true;
+  el("results").innerHTML = ""; el("tally").textContent = "";
   say("Collecting selected regions…");
   post({ type: "collect" });
 };
@@ -200,7 +206,7 @@ async function survey({ specimens: raw, context, reason }) {
   }
 
   el("run").disabled = false;
-  el("applyAll").disabled = !specimens.some((s) => s.verdict === "confident");
+  el("applyAll").hidden = !specimens.some((s) => s.verdict === "confident");
   say(useMock() ? "Survey complete — offline, from fixtures." : "Survey complete.");
   tally();
 }
