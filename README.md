@@ -72,6 +72,16 @@ response to `fixtures/jev-live.json`, then checks it field by field against what
 `src-weigh.js` and the UI actually read, and names anything that differs. Run it
 before trusting any of this against the live API.
 
+## Keys
+
+Copy `.env.local.example` to `.env.local` and fill it in. That file is gitignored,
+and nothing in this repo prints it. `probe.js` reads it directly rather than taking
+the key from a command line, so it stays out of shell history and out of the
+transcript of anyone driving a session here.
+
+The plugin itself does not use it: keys are entered in the panel and kept in
+`figma.clientStorage`.
+
 ## Running it
 
 ```

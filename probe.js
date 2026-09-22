@@ -10,12 +10,34 @@ const fs = require("fs");
 const path = require("path");
 const { weigh } = require("./src-weigh");
 
+/**
+ * Keys come from .env.local, which is gitignored and never printed.
+ *
+ * The point of the file is that the key stops travelling through command lines:
+ * a key passed as an argument or exported inline lands in shell history, in
+ * process listings, and in the transcript of anyone driving this session.
+ */
+function loadEnvFile() {
+  const file = path.join(__dirname, ".env.local");
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (!match) continue;
+    const value = match[2].replace(/^["']|["']$/g, "").trim();
+    if (value && !process.env[match[1]]) process.env[match[1]] = value;
+  }
+}
+loadEnvFile();
+
 const KEY = process.env.TYPESAFE_API_KEY || process.argv[2];
 const ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const MODEL = process.env.JEV_MODEL || "jev-latest";
 
 if (!KEY) {
-  console.error("Need a key:  TYPESAFE_API_KEY=sk-... node probe.js");
+  console.error("No key found.\n");
+  console.error("Put one in .env.local (gitignored, never printed):");
+  console.error("    TYPESAFE_API_KEY=sk-...");
+  console.error("\nOr pass it for one run:  TYPESAFE_API_KEY=sk-... node probe.js");
   process.exit(2);
 }
 

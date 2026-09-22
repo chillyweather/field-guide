@@ -2,3 +2,5 @@
 node_modules/
 dist/
 fixtures/jev-live.json
+.env.local
+.env
