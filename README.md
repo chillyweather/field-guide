@@ -214,6 +214,21 @@ Tab-separated so it lands in a spreadsheet or a Markdown table without reformatt
 A failed region keeps its row and carries its error, so a run of thirty is still
 reportable when one of them rate-limits.
 
+## The sheet
+
+A survey that only renames layers leaves nothing to look at. **Build sheet on canvas**
+lays the findings out beside the screenshot they came from: one heading per component
+the guide recognised, a count, and under it every region identified as that component,
+exported as a picture on a white card.
+
+Groups are ordered biggest first, because the point of the sheet is which components
+this screen is actually made of. Held-back regions are included and say so on the card
+— *confidence 0.75 · awaiting review* — since a sheet showing only the confident answers
+would read as a cleaner result than the run was.
+
+It is built from the node ids, not from the crops the panel already holds: the bytes
+would have to cross postMessage again for no gain, and the nodes are right there.
+
 ## Known limits
 
 - One vision call per region. The better shape is a single call over the whole screenshot

@@ -54,6 +54,9 @@ figma.ui.onmessage = async (msg) => {
       case "focus":
         return focusNode(msg.id);
 
+      case "sheet":
+        return figma.ui.postMessage(await buildSheet(msg.items || []));
+
       case "resize": {
         const width = clamp(msg.width, MIN.width, MAX.width);
         const height = clamp(msg.height, MIN.height, MAX.height);
@@ -236,4 +239,171 @@ function focusNode(id) {
   if (!node || node.removed) return;
   figma.currentPage.selection = [node];
   figma.viewport.scrollAndZoomIntoView([node]);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * The sheet.
+ *
+ * A survey that only renames layers leaves nothing to look at. This lays the
+ * findings out on the canvas beside the screenshot they came from: one heading
+ * per component the guide recognised, and under it every region identified as
+ * that component, as a picture.
+ *
+ * Built from the node ids rather than from the crops the UI already holds. The
+ * bytes would have to travel back across postMessage for no gain — the nodes
+ * are right here, and re-exporting is cheaper than shipping images twice.
+ * ------------------------------------------------------------------------ */
+
+const SHEET_KEY = "field-guide-sheet";
+
+const PAPER = { r: 0.957, g: 0.945, b: 0.925 };
+const CARD = { r: 1, g: 1, b: 1 };
+const INK = { r: 0.137, g: 0.125, b: 0.102 };
+const MUTED = { r: 0.478, g: 0.447, b: 0.388 };
+
+async function loadSheetFonts() {
+  // Inter is Figma's default and present in almost every file, but a file that
+  // has never used it can still fail the load. Roboto is the fallback, and a
+  // sheet in the wrong typeface beats no sheet at all.
+  for (const family of ["Inter", "Roboto"]) {
+    try {
+      await Promise.all([
+        figma.loadFontAsync({ family, style: "Regular" }),
+        figma.loadFontAsync({ family, style: "Bold" }),
+      ]);
+      return family;
+    } catch (error) {
+      console.warn("[field-guide] could not load " + family, error);
+    }
+  }
+  throw new Error("No usable font: tried Inter and Roboto.");
+}
+
+function column(name, spacing, padding) {
+  const frame = figma.createFrame();
+  frame.name = name;
+  frame.layoutMode = "VERTICAL";
+  frame.itemSpacing = spacing;
+  frame.paddingTop = frame.paddingBottom = frame.paddingLeft = frame.paddingRight = padding || 0;
+  frame.primaryAxisSizingMode = "AUTO";
+  frame.counterAxisSizingMode = "AUTO";
+  frame.fills = [];
+  frame.clipsContent = false;
+  return frame;
+}
+
+function label(text, size, weight, colour, family) {
+  const node = figma.createText();
+  node.fontName = { family, style: weight };
+  node.characters = text;
+  node.fontSize = size;
+  node.fills = [{ type: "SOLID", color: colour }];
+  return node;
+}
+
+/** One region, as a white card with the exported picture centred on it. */
+async function specimenCard(node, width, family, caption, note) {
+  const bytes = await node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } });
+  const image = figma.createImage(bytes);
+
+  const picture = figma.createFrame();
+  picture.name = node.name;
+  picture.resize(Math.max(1, Math.round(node.width)), Math.max(1, Math.round(node.height)));
+  picture.fills = [{ type: "IMAGE", scaleMode: "FIT", imageHash: image.hash }];
+
+  const card = figma.createFrame();
+  card.name = "card";
+  card.layoutMode = "HORIZONTAL";
+  card.primaryAxisAlignItems = "CENTER";
+  card.counterAxisAlignItems = "CENTER";
+  card.paddingTop = card.paddingBottom = 48;
+  card.paddingLeft = card.paddingRight = 48;
+  card.counterAxisSizingMode = "AUTO";
+  card.primaryAxisSizingMode = "FIXED";
+  card.fills = [{ type: "SOLID", color: CARD }];
+  card.appendChild(picture);
+  card.resize(width, card.height);
+
+  const item = column("item", 8);
+  const captionRow = column("caption", 2);
+  captionRow.appendChild(label(caption, 16, "Regular", MUTED, family));
+  if (note) captionRow.appendChild(label(note, 13, "Regular", MUTED, family));
+  item.appendChild(captionRow);
+  item.appendChild(card);
+  return item;
+}
+
+async function buildSheet(items) {
+  if (!items.length) return { type: "sheet-built", count: 0, groups: 0, reason: "nothing-identified" };
+
+  const family = await loadSheetFonts();
+  const resolved = [];
+  for (const item of items) {
+    const node = figma.getNodeById(item.id);
+    if (node && !node.removed && typeof node.exportAsync === "function") resolved.push({ item, node });
+  }
+  if (!resolved.length) return { type: "sheet-built", count: 0, groups: 0, reason: "nothing-identified" };
+
+  // Cards share one width so the sheet reads as a column rather than a ragged
+  // stack, and the widest specimen is what sets it.
+  const widest = Math.max(...resolved.map((r) => Math.round(r.node.width)));
+  const cardWidth = Math.max(480, Math.min(widest + 96, 1200));
+
+  // Grouped by what the guide called them, biggest group first — the point of
+  // the sheet is which components this screen is made of.
+  const groups = new Map();
+  for (const entry of resolved) {
+    const key = entry.item.answer || "Unidentified";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  }
+  const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+
+  const sheet = column("Field Guide — sheet", 80, 80);
+  sheet.fills = [{ type: "SOLID", color: PAPER }];
+  sheet.setPluginData(SHEET_KEY, "1");
+
+  for (const [component, entries] of ordered) {
+    const group = column(component, 12);
+    const heading = label(component, 48, "Bold", INK, family);
+    group.appendChild(heading);
+    const count = label(entries.length === 1 ? "1 region" : entries.length + " regions", 14, "Regular", MUTED, family);
+    group.appendChild(count);
+
+    const stack = column("regions", 24);
+    for (const { item, node } of entries) {
+      // The held-back ones say so. A sheet that shows only the answer and not
+      // its standing would misrepresent a run where a third were guesses.
+      const note = item.verdict === "confident"
+        ? null
+        : "confidence " + Number(item.confidence).toFixed(2) + " · " +
+          (item.verdict === "unsure" ? "not identified" : "awaiting review");
+      stack.appendChild(await specimenCard(node, cardWidth, family, node.name, note));
+    }
+    group.appendChild(stack);
+    sheet.appendChild(group);
+  }
+
+  figma.currentPage.appendChild(sheet);
+  placeLeftOf(sheet, resolved.map((r) => r.node));
+  figma.currentPage.selection = [sheet];
+  figma.viewport.scrollAndZoomIntoView([sheet]);
+
+  return { type: "sheet-built", count: resolved.length, groups: ordered.length };
+}
+
+/**
+ * Beside the screenshot, never on top of it.
+ *
+ * Anchored to the union of the marked regions rather than to the context node,
+ * because the context may be absent — and the regions are what the sheet is
+ * about in either case.
+ */
+function placeLeftOf(sheet, nodes) {
+  const union = unionBox(nodes);
+  if (!union) return;
+  const gap = 160;
+  sheet.x = Math.round(union.x - sheet.width - gap);
+  sheet.y = Math.round(union.y);
 }

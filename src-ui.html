@@ -105,6 +105,7 @@
     <label class="inline"><input type="checkbox" id="mockMode"> work offline</label>
   </div>
   <button class="ghost wide" id="applyAll" hidden>Apply confident names</button>
+  <button class="ghost wide" id="buildSheet" hidden>Build sheet on canvas</button>
   <div class="status" id="status">Select the regions you marked, then identify them.</div>
 
   <div id="results"></div>
@@ -192,11 +193,25 @@ el("run").onclick = () => {
     el("setup").open = true;
     return say("Two keys and a vision model name are needed before a live survey.", true);
   }
-  el("run").disabled = true; el("applyAll").hidden = true; el("record").hidden = true;
+  el("run").disabled = true; el("applyAll").hidden = true;
+  el("buildSheet").hidden = true; el("record").hidden = true;
   el("results").innerHTML = ""; el("tally").textContent = "";
   say("Collecting selected regions…");
   post({ type: "collect" });
 };
+// Everything the guide put a name to, including the held-back ones — they carry
+// their standing on the card. A sheet showing only the confident answers would
+// read as a cleaner result than the run actually was.
+el("buildSheet").onclick = () => {
+  const items = specimens
+    .filter((s) => !s.error && s.answer)
+    .map((s) => ({ id: s.id, name: s.name, answer: s.answer, confidence: s.confidence, verdict: s.verdict }));
+  if (!items.length) return say("Nothing identified to lay out.", true);
+  el("buildSheet").disabled = true;
+  say("Building the sheet…");
+  post({ type: "sheet", items });
+};
+
 el("copyRecord").onclick = async () => {
   const text = el("recordText").textContent;
   try {
@@ -233,6 +248,12 @@ onmessage = async (event) => {
   }
   if (msg.type === "collected") await survey(msg);
   if (msg.type === "applied") say(`Applied ${msg.applied} name${msg.applied === 1 ? "" : "s"}.`);
+  if (msg.type === "sheet-built") {
+    el("buildSheet").disabled = false;
+    say(msg.count
+      ? `Sheet built — ${msg.count} region${msg.count === 1 ? "" : "s"} in ${msg.groups} group${msg.groups === 1 ? "" : "s"}, to the left of the screenshot.`
+      : "Nothing to lay out.", !msg.count);
+  }
   if (msg.type === "failed") { el("run").disabled = false; say(msg.message, true); }
 };
 
@@ -336,6 +357,7 @@ async function survey({ specimens: collected, context, contextName, reason }) {
   show();
   el("run").disabled = false;
   el("applyAll").hidden = !specimens.some((s) => s.verdict === "confident");
+  el("buildSheet").hidden = !specimens.some((s) => !s.error && s.answer);
   say(useMock() ? "Survey complete — offline, from fixtures." : "Survey complete.");
   const elapsedMs = Date.now() - startedAt;
   tally(spend, elapsedMs);
