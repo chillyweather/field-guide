@@ -143,8 +143,16 @@ function checkShape(answers) {
     );
   }
 
+  // Merged, not overwritten. Running one case used to discard every other
+  // capture, and the next fixtures rebuild would then silently shrink the
+  // offline set to whatever was probed last.
+  const livePath = path.join(__dirname, "fixtures", "jev-live.json");
   fs.mkdirSync(path.join(__dirname, "fixtures"), { recursive: true });
-  fs.writeFileSync(path.join(__dirname, "fixtures", "jev-live.json"), JSON.stringify(saved, null, 2) + "\n");
+  let previous = {};
+  if (fs.existsSync(livePath)) {
+    try { previous = JSON.parse(fs.readFileSync(livePath, "utf8")); } catch { previous = {}; }
+  }
+  fs.writeFileSync(livePath, JSON.stringify({ ...previous, ...saved }, null, 2) + "\n");
 
   console.log("-".repeat(86));
   console.log(names.length + " calls, " + tokens + " input tokens, about $" + (tokens / 1e6 * 0.042).toFixed(5));

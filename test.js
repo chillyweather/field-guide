@@ -10,19 +10,24 @@ const taxonomy = JSON.parse(fs.readFileSync(path.join(__dirname, "taxonomy", "co
 const { cases } = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "offline.json"), "utf8"));
 
 const expected = [
-  // Five captured live on 22 September 2026, one synthetic. Expectations follow
-  // what the API returned, not what the documentation suggested it would.
+  // Captured live on 22 September 2026, plus one synthetic. Order follows
+  // fixtures/offline.json, which follows the order of the capture.
+
+  // A row of pills that could filter or could switch a view. Jev is sure it is
+  // Tabs; the behaviour question says 'selection', which is what a filter row is.
+  // The disagreement is the point, and it is what holds this back from acting alone.
+  { answer: 'Tabs', verdict: 'check', contested: false, familyAgrees: false },
   { answer: 'Badge', verdict: 'confident', contested: false, familyAgrees: true },
-  // Jev put everything on Chip, and the behaviour question said 'action' while
-  // the guide files Chip under 'selection'. The cross-check is what holds this
-  // back from acting alone — arguably the guide is the thing that is wrong here.
-  { answer: 'Chip', verdict: 'check', contested: false, familyAgrees: false },
+  // This one answered 'action' on an earlier capture and agreed on this one, from
+  // the identical description. Jev is not deterministic, and the fixture records
+  // one run rather than a guarantee.
+  { answer: 'Chip', verdict: 'confident', contested: false, familyAgrees: true },
   { answer: 'Link', verdict: 'confident', contested: false, familyAgrees: true },
-  // The only live case that spread: 0.65 against 0.34, and the one the runner-up
-  // floor exists to catch.
+  // The one case that reliably spreads: 0.69 against 0.30.
   { answer: 'Card', verdict: 'check', contested: true, familyAgrees: true },
+  { answer: 'Tabs', verdict: 'confident', contested: false, familyAgrees: true },
   { answer: 'Toggle', verdict: 'confident', contested: false, familyAgrees: true },
-  // Synthetic. No live probe fell below the 0.5 confidence threshold.
+  // Synthetic. No live probe has fallen below the 0.5 confidence threshold.
   { answer: 'Other', verdict: 'unsure', contested: true, familyAgrees: true },
 ];
 

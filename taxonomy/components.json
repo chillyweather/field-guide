@@ -20,107 +20,196 @@
     "Button": {
       "what": "An interactive control carrying a short verb label that performs an action when activated. Usually a filled, outlined or tinted rectangle with a corner radius; may carry a leading or trailing icon.",
       "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select).",
-      "examples": ["Save", "Cancel", "Add to cart", "Continue"],
+      "examples": [
+        "Save",
+        "Cancel",
+        "Add to cart",
+        "Continue"
+      ],
       "family": "action",
-      "confused_with": ["Link", "Chip"],
+      "confused_with": [
+        "Link",
+        "Chip"
+      ],
       "source": "m3, carbon, shadcn"
     },
     "Link": {
       "what": "Text that navigates to another page, view or anchor. Typically inline in a sentence or standing alone, distinguished by colour and often an underline, with no filled surface behind it.",
       "not_for": "Anything that changes data or submits rather than navigates, even if it is styled as plain text (Button).",
-      "examples": ["Learn more", "Terms of service", "Back to results"],
+      "examples": [
+        "Learn more",
+        "Terms of service",
+        "Back to results"
+      ],
       "family": "navigation",
-      "confused_with": ["Button"],
+      "confused_with": [
+        "Button"
+      ],
       "contested": "A text-only Button and a Link are frequently indistinguishable by appearance alone. Material and Carbon both resolve this by intent, not by looks, which a picture cannot always supply.",
       "source": "m3, carbon, polaris"
     },
     "Chip": {
       "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
       "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
-      "examples": ["a removable filter token reading 'Under $50 ×'", "a selectable 'Vegetarian' tag in a filter row"],
+      "examples": [
+        "a removable filter token reading 'Under $50 ×'",
+        "a selectable 'Vegetarian' tag in a filter row"
+      ],
       "family": "selection",
-      "confused_with": ["Badge", "Button"],
+      "confused_with": [
+        "Badge",
+        "Button",
+        "Tabs"
+      ],
       "source": "m3, polaris"
     },
     "Badge": {
       "what": "A small non-interactive indicator showing a count, status or short label, frequently attached to the corner of another element such as an icon or avatar.",
       "not_for": "A token the user can select or remove (Chip). Anything clickable.",
-      "examples": ["a red dot with '3' on a bell icon", "a green 'Active' status pill in a table row"],
+      "examples": [
+        "a red dot with '3' on a bell icon",
+        "a green 'Active' status pill in a table row"
+      ],
       "family": "indicator",
-      "confused_with": ["Chip"],
+      "confused_with": [
+        "Chip"
+      ],
       "contested": "Material calls the small count marker a Badge; Polaris uses Badge for status pills that look much like Material's Chips. The visual overlap is real and not a labelling mistake.",
       "source": "m3, polaris, carbon"
     },
     "Text Input": {
       "what": "A single-line field that accepts free text typed by the user. A bordered or underlined box, usually with a label above or inside it and often placeholder text.",
       "not_for": "A field whose purpose is querying, marked by a magnifier icon or 'Search' placeholder (Search Field). A field that opens a list of predefined options instead of accepting typing (Select).",
-      "examples": ["Email address", "Full name", "Street address"],
+      "examples": [
+        "Email address",
+        "Full name",
+        "Street address"
+      ],
       "family": "text_entry",
-      "confused_with": ["Search Field", "Select"],
+      "confused_with": [
+        "Search Field",
+        "Select"
+      ],
       "source": "m3, carbon, shadcn"
     },
     "Search Field": {
       "what": "A text entry control specialised for querying a data set. Recognisable by a magnifier icon, a placeholder naming search, and often a clear affordance or rounded full-width treatment.",
       "not_for": "Generic free-text entry for a form value (Text Input).",
-      "examples": ["a rounded field with a magnifier and 'Search products'"],
+      "examples": [
+        "a rounded field with a magnifier and 'Search products'"
+      ],
       "family": "text_entry",
-      "confused_with": ["Text Input"],
+      "confused_with": [
+        "Text Input"
+      ],
       "source": "m3, carbon"
     },
     "Select": {
       "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
       "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
-      "examples": ["Country ▾", "Sort by: Newest ▾"],
+      "examples": [
+        "Country ▾",
+        "Sort by: Newest ▾"
+      ],
       "family": "selection",
-      "confused_with": ["Text Input", "Button"],
+      "confused_with": [
+        "Text Input",
+        "Button"
+      ],
       "source": "carbon, polaris, shadcn"
     },
     "Checkbox": {
       "what": "A small square control for an independent binary choice, usually with a label beside it. Several may be checked at once within a group. May show a check mark or an indeterminate dash.",
       "not_for": "A circular control where exactly one option in the group may be chosen (Radio Button). A sliding track control that applies immediately (Toggle).",
-      "examples": ["Remember me", "I agree to the terms", "a multi-select filter list"],
+      "examples": [
+        "Remember me",
+        "I agree to the terms",
+        "a multi-select filter list"
+      ],
       "family": "selection",
-      "confused_with": ["Radio Button", "Toggle"],
+      "confused_with": [
+        "Radio Button",
+        "Toggle"
+      ],
       "source": "m3, carbon, shadcn"
     },
     "Radio Button": {
       "what": "A small circular control for choosing exactly one option from a mutually exclusive group. Selected state is shown as a filled inner dot.",
       "not_for": "Independent choices where more than one may be selected (Checkbox).",
-      "examples": ["Delivery method: Standard / Express", "Payment: Card / PayPal"],
+      "examples": [
+        "Delivery method: Standard / Express",
+        "Payment: Card / PayPal"
+      ],
       "family": "selection",
-      "confused_with": ["Checkbox"],
+      "confused_with": [
+        "Checkbox"
+      ],
       "source": "m3, carbon"
     },
     "Toggle": {
       "what": "A switch with a track and a sliding thumb that turns a setting on or off, applying the change immediately rather than on submit.",
       "not_for": "A square control whose value is submitted with a form (Checkbox).",
-      "examples": ["Dark mode", "Enable notifications"],
+      "examples": [
+        "Dark mode",
+        "Enable notifications"
+      ],
       "family": "selection",
-      "confused_with": ["Checkbox"],
+      "confused_with": [
+        "Checkbox"
+      ],
       "contested": "Material calls it Switch, Carbon calls it Toggle, and the two systems also differ on whether a Checkbox may ever apply immediately.",
       "source": "m3, carbon, shadcn"
     },
     "Card": {
       "what": "A bounded surface that groups related content and actions about a single subject, sitting in the normal flow of the page. Usually has a border, elevation or tinted background.",
       "not_for": "A surface that floats above the page content and blocks interaction with it (Modal Dialog).",
-      "examples": ["a product tile with image, title, price and an action", "a dashboard statistic panel"],
+      "examples": [
+        "a product tile with image, title, price and an action",
+        "a dashboard statistic panel"
+      ],
       "family": "container",
-      "confused_with": ["Modal Dialog"],
+      "confused_with": [
+        "Modal Dialog"
+      ],
       "source": "m3, polaris, shadcn"
     },
     "Modal Dialog": {
       "what": "A surface overlaid above the page that requires attention or a decision before the user continues. Usually centred, above a dimmed scrim, with a title, body and one or more actions, and often a close control.",
       "not_for": "An in-flow grouping surface that does not overlay anything (Card). A small transient label appearing on hover (Tooltip).",
-      "examples": ["a 'Delete this file?' confirmation with Cancel and Delete"],
+      "examples": [
+        "a 'Delete this file?' confirmation with Cancel and Delete"
+      ],
       "family": "container",
-      "confused_with": ["Card"],
+      "confused_with": [
+        "Card"
+      ],
       "contested": "Judging overlay from a cropped image is often impossible. The surrounding context, not the crop, is what distinguishes these two.",
       "source": "m3, carbon, shadcn"
+    },
+    "Tabs": {
+      "what": "A row of two or more labels, one of them marked as current by an underline, a filled pill or a heavier weight, which switches the content shown below it. Also called a tab bar. The labels sit on one shared baseline and are usually evenly weighted.",
+      "not_for": "A row of tokens that filter or select without switching a view (Chip). A single isolated label. A row whose items each navigate to a different page rather than swapping content in place.",
+      "examples": [
+        "Overview | Activity | Settings, with Overview underlined",
+        "a segmented row of view switchers above a table"
+      ],
+      "family": "navigation",
+      "confused_with": [
+        "Chip",
+        "Button"
+      ],
+      "contested": "A row of chips and a tab bar are frequently the same picture: several rounded labels side by side with one highlighted. What separates them is whether the selection switches a view or filters a set, and a crop rarely shows that. Material further splits Tabs from a bottom navigation bar on exactly this question, and the two look alike too.",
+      "source": "m3, carbon, polaris, shadcn"
     },
     "Other": {
       "what": "None of the above, or the region does not contain a single identifiable component. Choose this rather than forcing a poor fit.",
       "not_for": "A component that does match one of the entries above, even partially.",
-      "examples": ["a photograph", "a block of body text", "several components at once", "an unrecognisable fragment"],
+      "examples": [
+        "a photograph",
+        "a block of body text",
+        "several components at once",
+        "an unrecognisable fragment"
+      ],
       "family": "indicator",
       "confused_with": [],
       "source": "escape hatch, per TypeSafe guidance on including a none-of-the-above option"

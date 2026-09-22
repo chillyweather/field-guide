@@ -36,12 +36,16 @@ The gates follow TypeSafe's published bands: act alone above `0.9`, ask a human 
   pair and names both.
 
 That last case is the reason the guide contains `Chip` and `Badge`, `Button` and `Link`,
-`Checkbox` and `Toggle`, `Card` and `Modal Dialog`. Design systems argue about these,
-and the probability distribution measures the argument.
+`Checkbox` and `Toggle`, `Card` and `Modal Dialog`, `Tabs` and `Chip`. Design systems argue
+about these, and the probability distribution measures the argument.
+
+Jev is also not deterministic. The same `chip-or-badge` description answered `action` on
+one capture and agreed with the guide on the next, from an identical input — so a fixture
+records one run, never a guarantee.
 
 ## The guide
 
-`taxonomy/components.json` — thirteen entries drawn from Material 3, IBM Carbon,
+`taxonomy/components.json` — fourteen entries drawn from Material 3, IBM Carbon,
 Shopify Polaris and shadcn/ui, so that any reader can check them. Where those systems
 genuinely disagree, the entry records the disagreement in `contested` rather than
 resolving it.

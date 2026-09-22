@@ -1,6 +1,68 @@
 {
   "cases": [
     {
+      "note": "tabs-or-chips",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A horizontal row of four rounded pill shapes, each about 90 by 32 pixels, reading 'All', 'Unread', 'Flagged' and 'Archived'. The first has a dark fill with light text; the other three have a pale fill with dark text and a thin border. Nothing below the row is visible in the crop.",
+      "geometry": "396x32 px; aspect ratio 12.38; spans 31% of the screen width; positioned top left of the screen",
+      "answers": {
+        "component": {
+          "type": "choice",
+          "choice": "Tabs",
+          "confidence": 0.98,
+          "probabilities": {
+            "Other": 0,
+            "Card": 0,
+            "Search Field": 0,
+            "Select": 0,
+            "Modal Dialog": 0,
+            "Badge": 0,
+            "Tabs": 0.98,
+            "Chip": 0.02,
+            "Toggle": 0,
+            "Radio Button": 0,
+            "Link": 0,
+            "Checkbox": 0,
+            "Text Input": 0,
+            "Button": 0
+          }
+        },
+        "family": {
+          "type": "choice",
+          "choice": "selection",
+          "confidence": 0.98,
+          "probabilities": {
+            "indicator": 0,
+            "navigation": 0.02,
+            "action": 0,
+            "text_entry": 0,
+            "container": 0,
+            "selection": 0.98
+          }
+        },
+        "accepts_typed_text": {
+          "type": "noul",
+          "noul": 0.02
+        },
+        "has_binary_on_off_state": {
+          "type": "noul",
+          "noul": 0.1
+        },
+        "contains_other_components": {
+          "type": "noul",
+          "noul": 0.8
+        },
+        "is_overlaid_above_content": {
+          "type": "noul",
+          "noul": 0.1
+        },
+        "is_dismissible": {
+          "type": "noul",
+          "noul": 0.04
+        }
+      }
+    },
+    {
       "note": "control-badge",
       "source": "live jev-1.13.0, captured 2026-09-22",
       "description": "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
@@ -11,19 +73,20 @@
           "choice": "Badge",
           "confidence": 1,
           "probabilities": {
-            "Chip": 0,
-            "Modal Dialog": 0,
+            "Button": 0,
             "Text Input": 0,
-            "Select": 0,
             "Card": 0,
-            "Toggle": 0,
+            "Badge": 1,
+            "Modal Dialog": 0,
+            "Link": 0,
+            "Checkbox": 0,
             "Search Field": 0,
             "Radio Button": 0,
-            "Button": 0,
-            "Badge": 1,
+            "Select": 0,
+            "Tabs": 0,
             "Other": 0,
-            "Checkbox": 0,
-            "Link": 0
+            "Chip": 0,
+            "Toggle": 0
           }
         },
         "family": {
@@ -31,12 +94,12 @@
           "choice": "indicator",
           "confidence": 1,
           "probabilities": {
-            "selection": 0,
-            "navigation": 0,
             "text_entry": 0,
-            "indicator": 1,
             "container": 0,
-            "action": 0
+            "indicator": 1,
+            "action": 0,
+            "navigation": 0,
+            "selection": 0
           }
         },
         "accepts_typed_text": {
@@ -45,15 +108,15 @@
         },
         "has_binary_on_off_state": {
           "type": "noul",
-          "noul": 0.41
+          "noul": 0.4
         },
         "contains_other_components": {
           "type": "noul",
-          "noul": 0.07
+          "noul": 0.06
         },
         "is_overlaid_above_content": {
           "type": "noul",
-          "noul": 0.18
+          "noul": 0.19
         },
         "is_dismissible": {
           "type": "noul",
@@ -74,30 +137,31 @@
           "probabilities": {
             "Modal Dialog": 0,
             "Checkbox": 0,
-            "Toggle": 0,
-            "Text Input": 0,
-            "Search Field": 0,
-            "Link": 0,
-            "Card": 0,
-            "Chip": 1,
             "Button": 0,
+            "Link": 0,
+            "Toggle": 0,
+            "Search Field": 0,
+            "Badge": 0,
+            "Card": 0,
+            "Select": 0,
             "Radio Button": 0,
             "Other": 0,
-            "Select": 0,
-            "Badge": 0
+            "Chip": 1,
+            "Text Input": 0,
+            "Tabs": 0
           }
         },
         "family": {
           "type": "choice",
-          "choice": "action",
-          "confidence": 0.3,
+          "choice": "selection",
+          "confidence": 0.2,
           "probabilities": {
-            "text_entry": 0.01,
+            "indicator": 0.29,
+            "navigation": 0.06,
             "container": 0.01,
-            "action": 0.42,
-            "navigation": 0.03,
-            "selection": 0.25,
-            "indicator": 0.28
+            "selection": 0.33,
+            "text_entry": 0,
+            "action": 0.31
           }
         },
         "accepts_typed_text": {
@@ -106,15 +170,15 @@
         },
         "has_binary_on_off_state": {
           "type": "noul",
-          "noul": 0.09
+          "noul": 0.1
         },
         "contains_other_components": {
           "type": "noul",
-          "noul": 0.31
+          "noul": 0.32
         },
         "is_overlaid_above_content": {
           "type": "noul",
-          "noul": 0.17
+          "noul": 0.16
         },
         "is_dismissible": {
           "type": "noul",
@@ -133,32 +197,33 @@
           "choice": "Link",
           "confidence": 1,
           "probabilities": {
-            "Chip": 0,
-            "Link": 1,
-            "Select": 0,
-            "Modal Dialog": 0,
-            "Toggle": 0,
-            "Other": 0,
             "Card": 0,
-            "Badge": 0,
+            "Other": 0,
             "Search Field": 0,
-            "Radio Button": 0,
-            "Button": 0,
+            "Toggle": 0,
+            "Text Input": 0,
             "Checkbox": 0,
-            "Text Input": 0
+            "Button": 0,
+            "Badge": 0,
+            "Chip": 0,
+            "Tabs": 0,
+            "Select": 0,
+            "Radio Button": 0,
+            "Modal Dialog": 0,
+            "Link": 1
           }
         },
         "family": {
           "type": "choice",
           "choice": "navigation",
-          "confidence": 0.75,
+          "confidence": 0.7,
           "probabilities": {
-            "action": 0.2,
-            "navigation": 0.79,
-            "text_entry": 0,
+            "container": 0,
             "selection": 0,
-            "indicator": 0.01,
-            "container": 0
+            "action": 0.24,
+            "navigation": 0.75,
+            "text_entry": 0,
+            "indicator": 0.01
           }
         },
         "accepts_typed_text": {
@@ -192,33 +257,34 @@
         "component": {
           "type": "choice",
           "choice": "Card",
-          "confidence": 0.61,
+          "confidence": 0.66,
           "probabilities": {
-            "Modal Dialog": 0.34,
-            "Checkbox": 0,
-            "Text Input": 0,
-            "Chip": 0,
-            "Link": 0,
+            "Select": 0,
             "Other": 0.01,
             "Toggle": 0,
-            "Select": 0,
-            "Search Field": 0,
-            "Badge": 0,
+            "Tabs": 0,
             "Button": 0,
-            "Card": 0.65,
-            "Radio Button": 0
+            "Checkbox": 0,
+            "Search Field": 0,
+            "Link": 0,
+            "Modal Dialog": 0.3,
+            "Radio Button": 0,
+            "Card": 0.6900000000000001,
+            "Text Input": 0,
+            "Chip": 0,
+            "Badge": 0
           }
         },
         "family": {
           "type": "choice",
           "choice": "container",
-          "confidence": 0.85,
+          "confidence": 0.88,
           "probabilities": {
-            "container": 0.87,
-            "navigation": 0,
-            "selection": 0.01,
             "text_entry": 0,
-            "indicator": 0.11,
+            "selection": 0.01,
+            "navigation": 0,
+            "indicator": 0.08,
+            "container": 0.9,
             "action": 0.01
           }
         },
@@ -228,7 +294,7 @@
         },
         "has_binary_on_off_state": {
           "type": "noul",
-          "noul": 0.16
+          "noul": 0.17
         },
         "contains_other_components": {
           "type": "noul",
@@ -240,7 +306,69 @@
         },
         "is_dismissible": {
           "type": "noul",
-          "noul": 0.15
+          "noul": 0.16
+        }
+      }
+    },
+    {
+      "note": "clear-tabs",
+      "source": "live jev-1.13.0, captured 2026-09-22",
+      "description": "A horizontal row of three short text labels reading 'Overview', 'Activity' and 'Settings', evenly spaced on one baseline with no fills or borders behind them. A two-pixel dark underline sits beneath the first label only, and a thin hairline runs the full width below all three.",
+      "geometry": "360x44 px; aspect ratio 8.18; spans 28% of the screen width; positioned top left of the screen",
+      "answers": {
+        "component": {
+          "type": "choice",
+          "choice": "Tabs",
+          "confidence": 1,
+          "probabilities": {
+            "Modal Dialog": 0,
+            "Badge": 0,
+            "Tabs": 1,
+            "Toggle": 0,
+            "Button": 0,
+            "Select": 0,
+            "Link": 0,
+            "Card": 0,
+            "Text Input": 0,
+            "Other": 0,
+            "Search Field": 0,
+            "Chip": 0,
+            "Radio Button": 0,
+            "Checkbox": 0
+          }
+        },
+        "family": {
+          "type": "choice",
+          "choice": "navigation",
+          "confidence": 0.97,
+          "probabilities": {
+            "container": 0,
+            "text_entry": 0,
+            "indicator": 0,
+            "action": 0,
+            "selection": 0.03,
+            "navigation": 0.97
+          }
+        },
+        "accepts_typed_text": {
+          "type": "noul",
+          "noul": 0.02
+        },
+        "has_binary_on_off_state": {
+          "type": "noul",
+          "noul": 0.03
+        },
+        "contains_other_components": {
+          "type": "noul",
+          "noul": 0.71
+        },
+        "is_overlaid_above_content": {
+          "type": "noul",
+          "noul": 0.09
+        },
+        "is_dismissible": {
+          "type": "noul",
+          "noul": 0.02
         }
       }
     },
@@ -253,33 +381,34 @@
         "component": {
           "type": "choice",
           "choice": "Toggle",
-          "confidence": 0.94,
+          "confidence": 0.95,
           "probabilities": {
+            "Text Input": 0,
             "Link": 0,
+            "Tabs": 0,
             "Badge": 0,
             "Modal Dialog": 0,
+            "Toggle": 0.97,
+            "Other": 0,
             "Card": 0,
-            "Chip": 0,
+            "Search Field": 0,
+            "Select": 0,
             "Radio Button": 0.02,
             "Button": 0.01,
-            "Text Input": 0,
-            "Checkbox": 0.01,
-            "Toggle": 0.96,
-            "Other": 0,
-            "Search Field": 0,
-            "Select": 0
+            "Checkbox": 0,
+            "Chip": 0
           }
         },
         "family": {
           "type": "choice",
           "choice": "selection",
-          "confidence": 0.82,
+          "confidence": 0.76,
           "probabilities": {
-            "action": 0.06,
-            "indicator": 0.03,
-            "navigation": 0.06,
-            "selection": 0.85,
+            "action": 0.08,
+            "navigation": 0.08,
             "text_entry": 0,
+            "selection": 0.81,
+            "indicator": 0.03,
             "container": 0
           }
         },
@@ -289,15 +418,15 @@
         },
         "has_binary_on_off_state": {
           "type": "noul",
-          "noul": 0.87
+          "noul": 0.85
         },
         "contains_other_components": {
           "type": "noul",
-          "noul": 0.28
+          "noul": 0.26
         },
         "is_overlaid_above_content": {
           "type": "noul",
-          "noul": 0.18
+          "noul": 0.16
         },
         "is_dismissible": {
           "type": "noul",

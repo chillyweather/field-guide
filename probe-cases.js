@@ -32,6 +32,20 @@ module.exports = {
       "so that nothing outside this rectangle is visible.",
     geometry: "480x260 px; aspect ratio 1.85; spans 38% of the screen width; positioned middle centre of the screen",
   },
+  "clear-tabs": {
+    description:
+      "A horizontal row of three short text labels reading 'Overview', 'Activity' and 'Settings', " +
+      "evenly spaced on one baseline with no fills or borders behind them. A two-pixel dark underline " +
+      "sits beneath the first label only, and a thin hairline runs the full width below all three.",
+    geometry: "360x44 px; aspect ratio 8.18; spans 28% of the screen width; positioned top left of the screen",
+  },
+  "tabs-or-chips": {
+    description:
+      "A horizontal row of four rounded pill shapes, each about 90 by 32 pixels, reading 'All', " +
+      "'Unread', 'Flagged' and 'Archived'. The first has a dark fill with light text; the other three " +
+      "have a pale fill with dark text and a thin border. Nothing below the row is visible in the crop.",
+    geometry: "396x32 px; aspect ratio 12.38; spans 31% of the screen width; positioned top left of the screen",
+  },
   "checkbox-or-toggle": {
     description:
       "A small control about 40 by 22 pixels with a fully rounded outline, filled pale grey, with a white " +
