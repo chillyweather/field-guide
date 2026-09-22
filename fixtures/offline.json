@@ -1,0 +1,229 @@
+{
+  "cases": [
+    {
+      "note": "clean identification — acts alone",
+      "description": "A filled rectangle with fully rounded ends and a solid blue background, about three times wider than it is tall. Centred white text reads 'Continue'. No icon, no border, no visible state marker.",
+      "answers": {
+        "component": {
+          "choice": "Button",
+          "probabilities": {
+            "Button": 0.96,
+            "Link": 0.0033,
+            "Chip": 0.0033,
+            "Badge": 0.0033,
+            "Text Input": 0.0033,
+            "Search Field": 0.0033,
+            "Select": 0.0033,
+            "Checkbox": 0.0033,
+            "Radio Button": 0.0033,
+            "Toggle": 0.0033,
+            "Card": 0.0033,
+            "Modal Dialog": 0.0033,
+            "Other": 0.0033
+          },
+          "confidence": 0.9567
+        },
+        "family": {
+          "choice": "action",
+          "probabilities": {},
+          "confidence": 0.9
+        },
+        "accepts_typed_text": {
+          "noul": 0.01
+        },
+        "has_binary_on_off_state": {
+          "noul": 0.02
+        },
+        "contains_other_components": {
+          "noul": 0.03
+        },
+        "is_overlaid_above_content": {
+          "noul": 0.05
+        },
+        "is_dismissible": {
+          "noul": 0.02
+        }
+      }
+    },
+    {
+      "note": "clean identification — acts alone",
+      "description": "A small square outline with a white fill and a thin grey border, roughly 18 by 18 pixels, containing a dark check mark. To its right, dark text reads 'Remember me on this device'.",
+      "answers": {
+        "component": {
+          "choice": "Checkbox",
+          "probabilities": {
+            "Button": 0.0058,
+            "Link": 0.0058,
+            "Chip": 0.0058,
+            "Badge": 0.0058,
+            "Text Input": 0.0058,
+            "Search Field": 0.0058,
+            "Select": 0.0058,
+            "Checkbox": 0.93,
+            "Radio Button": 0.0058,
+            "Toggle": 0.0058,
+            "Card": 0.0058,
+            "Modal Dialog": 0.0058,
+            "Other": 0.0058
+          },
+          "confidence": 0.9242
+        },
+        "family": {
+          "choice": "selection",
+          "probabilities": {},
+          "confidence": 0.9
+        },
+        "accepts_typed_text": {
+          "noul": 0.01
+        },
+        "has_binary_on_off_state": {
+          "noul": 0.97
+        },
+        "contains_other_components": {
+          "noul": 0.02
+        },
+        "is_overlaid_above_content": {
+          "noul": 0.03
+        },
+        "is_dismissible": {
+          "noul": 0.01
+        }
+      }
+    },
+    {
+      "note": "confusion pair — the guide does not separate these",
+      "description": "A small pill-shaped element with a pale green fill and no border, about 60 by 22 pixels. Dark green text inside reads 'Active'. No icon and no visible dismiss affordance.",
+      "answers": {
+        "component": {
+          "choice": "Chip",
+          "probabilities": {
+            "Button": 0.0036,
+            "Link": 0.0036,
+            "Chip": 0.54,
+            "Badge": 0.42,
+            "Text Input": 0.0036,
+            "Search Field": 0.0036,
+            "Select": 0.0036,
+            "Checkbox": 0.0036,
+            "Radio Button": 0.0036,
+            "Toggle": 0.0036,
+            "Card": 0.0036,
+            "Modal Dialog": 0.0036,
+            "Other": 0.0036
+          },
+          "confidence": 0.5017
+        },
+        "family": {
+          "choice": "indicator",
+          "probabilities": {},
+          "confidence": 0.9
+        },
+        "accepts_typed_text": {
+          "noul": 0.01
+        },
+        "has_binary_on_off_state": {
+          "noul": 0.08
+        },
+        "contains_other_components": {
+          "noul": 0.02
+        },
+        "is_overlaid_above_content": {
+          "noul": 0.04
+        },
+        "is_dismissible": {
+          "noul": 0.11
+        }
+      }
+    },
+    {
+      "note": "genuinely uncertain — left for the human",
+      "description": "A large white rectangle with rounded corners and a soft drop shadow, occupying much of the frame. It contains a heading, two lines of body text and two smaller rectangles side by side at the bottom right. The surrounding area of the context image appears darkened.",
+      "answers": {
+        "component": {
+          "choice": "Card",
+          "probabilities": {
+            "Button": 0.0336,
+            "Link": 0.0336,
+            "Chip": 0.0336,
+            "Badge": 0.0336,
+            "Text Input": 0.0336,
+            "Search Field": 0.0336,
+            "Select": 0.0336,
+            "Checkbox": 0.0336,
+            "Radio Button": 0.0336,
+            "Toggle": 0.0336,
+            "Card": 0.34,
+            "Modal Dialog": 0.29,
+            "Other": 0.0336
+          },
+          "confidence": 0.285
+        },
+        "family": {
+          "choice": "container",
+          "probabilities": {},
+          "confidence": 0.9
+        },
+        "accepts_typed_text": {
+          "noul": 0.04
+        },
+        "has_binary_on_off_state": {
+          "noul": 0.02
+        },
+        "contains_other_components": {
+          "noul": 0.96
+        },
+        "is_overlaid_above_content": {
+          "noul": 0.58
+        },
+        "is_dismissible": {
+          "noul": 0.41
+        }
+      }
+    },
+    {
+      "note": "high probability, but the behaviour answer contradicts it — downgraded",
+      "description": "A rectangular field with a thin grey border and a white fill, spanning about a third of the screen width. Grey text on the left reads 'Choose a country' and a small downward chevron sits at the right edge.",
+      "answers": {
+        "component": {
+          "choice": "Select",
+          "probabilities": {
+            "Button": 0.0067,
+            "Link": 0.0067,
+            "Chip": 0.0067,
+            "Badge": 0.0067,
+            "Text Input": 0.0067,
+            "Search Field": 0.0067,
+            "Select": 0.92,
+            "Checkbox": 0.0067,
+            "Radio Button": 0.0067,
+            "Toggle": 0.0067,
+            "Card": 0.0067,
+            "Modal Dialog": 0.0067,
+            "Other": 0.0067
+          },
+          "confidence": 0.9133
+        },
+        "family": {
+          "choice": "text_entry",
+          "probabilities": {},
+          "confidence": 0.9
+        },
+        "accepts_typed_text": {
+          "noul": 0.44
+        },
+        "has_binary_on_off_state": {
+          "noul": 0.02
+        },
+        "contains_other_components": {
+          "noul": 0.03
+        },
+        "is_overlaid_above_content": {
+          "noul": 0.04
+        },
+        "is_dismissible": {
+          "noul": 0.02
+        }
+      }
+    }
+  ]
+}
