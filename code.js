@@ -256,6 +256,9 @@ function focusNode(id) {
  * ------------------------------------------------------------------------ */
 
 const SHEET_KEY = "field-guide-sheet";
+const CARD_PADDING = 48;
+const SHEET_PADDING = 80;
+const SHEET_GAP = 160;
 
 const PAPER = { r: 0.957, g: 0.945, b: 0.925 };
 const CARD = { r: 1, g: 1, b: 1 };
@@ -307,9 +310,16 @@ async function specimenCard(node, width, family, caption, note) {
   const bytes = await node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } });
   const image = figma.createImage(bytes);
 
+  // Scaled down to fit inside the card, never merely placed in it. A region
+  // wider than the card used to hang out of both sides of it — auto-layout
+  // does not shrink a fixed-size child, it lets it overflow.
+  const inner = Math.max(1, width - CARD_PADDING * 2);
+  const natural = { w: Math.max(1, Math.round(node.width)), h: Math.max(1, Math.round(node.height)) };
+  const scale = natural.w > inner ? inner / natural.w : 1;
+
   const picture = figma.createFrame();
   picture.name = node.name;
-  picture.resize(Math.max(1, Math.round(node.width)), Math.max(1, Math.round(node.height)));
+  picture.resize(Math.max(1, Math.round(natural.w * scale)), Math.max(1, Math.round(natural.h * scale)));
   picture.fills = [{ type: "IMAGE", scaleMode: "FIT", imageHash: image.hash }];
 
   const card = figma.createFrame();
@@ -317,8 +327,8 @@ async function specimenCard(node, width, family, caption, note) {
   card.layoutMode = "HORIZONTAL";
   card.primaryAxisAlignItems = "CENTER";
   card.counterAxisAlignItems = "CENTER";
-  card.paddingTop = card.paddingBottom = 48;
-  card.paddingLeft = card.paddingRight = 48;
+  card.paddingTop = card.paddingBottom = CARD_PADDING;
+  card.paddingLeft = card.paddingRight = CARD_PADDING;
   card.counterAxisSizingMode = "AUTO";
   card.primaryAxisSizingMode = "FIXED";
   card.fills = [{ type: "SOLID", color: CARD }];
@@ -360,7 +370,7 @@ async function buildSheet(items) {
   }
   const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 
-  const sheet = column("Field Guide — sheet", 80, 80);
+  const sheet = column("Field Guide — sheet", 80, SHEET_PADDING);
   sheet.fills = [{ type: "SOLID", color: PAPER }];
   sheet.setPluginData(SHEET_KEY, "1");
 
@@ -386,7 +396,7 @@ async function buildSheet(items) {
   }
 
   figma.currentPage.appendChild(sheet);
-  placeLeftOf(sheet, resolved.map((r) => r.node));
+  placeLeftOf(sheet, resolved.map((r) => r.node), cardWidth);
   figma.currentPage.selection = [sheet];
   figma.viewport.scrollAndZoomIntoView([sheet]);
 
@@ -400,10 +410,21 @@ async function buildSheet(items) {
  * because the context may be absent — and the regions are what the sheet is
  * about in either case.
  */
-function placeLeftOf(sheet, nodes) {
+function placeLeftOf(sheet, nodes, cardWidth) {
   const union = unionBox(nodes);
   if (!union) return;
-  const gap = 160;
-  sheet.x = Math.round(union.x - sheet.width - gap);
+
+  // Not `sheet.width` alone. Auto-layout width is not reliably settled in the
+  // same tick the children were appended, and reading it early returns",
+  // something near zero — which put the sheet 160px left of the regions,
+  // directly on top of the screenshot it was supposed to sit beside.
+  //
+  // The intended width is known without asking: one card plus the sheet's own
+  // padding. Take whichever is larger, so a settled layout still wins if a
+  // heading turns out wider than the cards.
+  const intended = cardWidth + SHEET_PADDING * 2;
+  const width = Math.max(sheet.width || 0, intended);
+
+  sheet.x = Math.round(union.x - width - SHEET_GAP);
   sheet.y = Math.round(union.y);
 }
