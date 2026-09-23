@@ -254,7 +254,13 @@ onmessage = async (event) => {
       ? `Sheet built — ${msg.count} region${msg.count === 1 ? "" : "s"} in ${msg.groups} group${msg.groups === 1 ? "" : "s"}, to the left of the screenshot.`
       : "Nothing to lay out.", !msg.count);
   }
-  if (msg.type === "failed") { el("run").disabled = false; say(msg.message, true); }
+  if (msg.type === "failed") {
+    // Every button that could have started this has to come back, or a failure
+    // reads as the plugin having done nothing at all.
+    el("run").disabled = false;
+    el("buildSheet").disabled = false;
+    say(msg.message, true);
+  }
 };
 
 function say(text, isError) {

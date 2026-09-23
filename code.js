@@ -259,6 +259,9 @@ const SHEET_KEY = "field-guide-sheet";
 const CARD_PADDING = 48;
 const SHEET_PADDING = 80;
 const SHEET_GAP = 160;
+// figma.createImage refuses anything longer than this on either side, with
+// "Image is too large". Exporting a full-width region at 2x clears it easily.
+const MAX_IMAGE_PX = 4096;
 
 const PAPER = { r: 0.957, g: 0.945, b: 0.925 };
 const CARD = { r: 1, g: 1, b: 1 };
@@ -305,17 +308,38 @@ function label(text, size, weight, colour, family) {
   return node;
 }
 
+/**
+ * Enough pixels for a crisp picture at the size it is displayed, and never more
+ * than createImage will accept.
+ */
+function exportScaleFor(natural, displayScale) {
+  const wanted = displayScale * 2;
+  const longest = Math.max(natural.w, natural.h);
+  const ceiling = MAX_IMAGE_PX / Math.max(1, longest);
+  // Figma accepts a scale constraint between 0.01 and 4.
+  return Math.max(0.01, Math.min(4, wanted, ceiling));
+}
+
 /** One region, as a white card with the exported picture centred on it. */
 async function specimenCard(node, width, family, caption, note) {
-  const bytes = await node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } });
-  const image = figma.createImage(bytes);
-
   // Scaled down to fit inside the card, never merely placed in it. A region
   // wider than the card used to hang out of both sides of it — auto-layout
   // does not shrink a fixed-size child, it lets it overflow.
   const inner = Math.max(1, width - CARD_PADDING * 2);
   const natural = { w: Math.max(1, Math.round(node.width)), h: Math.max(1, Math.round(node.height)) };
   const scale = natural.w > inner ? inner / natural.w : 1;
+
+  // Export for the size it will be shown at, not for the size it is.
+  //
+  // A flat 2x was both wasteful and fatal: a region already being scaled down
+  // to a third of its width was exported at six times the pixels it would
+  // display, and on a full-page screenshot that cleared createImage's limit and
+  // threw "Image is too large" — which aborted the whole sheet, not one card.
+  const bytes = await node.exportAsync({
+    format: "PNG",
+    constraint: { type: "SCALE", value: exportScaleFor(natural, scale) },
+  });
+  const image = figma.createImage(bytes);
 
   const picture = figma.createFrame();
   picture.name = node.name;
@@ -345,6 +369,22 @@ async function specimenCard(node, width, family, caption, note) {
 }
 
 async function buildSheet(items) {
+  // Everything created during a build, so a failure part way through can be
+  // swept up. figma.createFrame and createText attach to the current page the
+  // moment they are called, so an abort would otherwise strew loose frames
+  // across the designer's document.
+  const created = [];
+  try {
+    return await assembleSheet(items, created);
+  } catch (error) {
+    for (const node of created) {
+      if (node && !node.removed && node.parent && node.parent.type === "PAGE") node.remove();
+    }
+    throw error;
+  }
+}
+
+async function assembleSheet(items, created) {
   if (!items.length) return { type: "sheet-built", count: 0, groups: 0, reason: "nothing-identified" };
 
   const family = await loadSheetFonts();
@@ -371,17 +411,20 @@ async function buildSheet(items) {
   const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 
   const sheet = column("Field Guide — sheet", 80, SHEET_PADDING);
+  created.push(sheet);
   sheet.fills = [{ type: "SOLID", color: PAPER }];
   sheet.setPluginData(SHEET_KEY, "1");
 
   for (const [component, entries] of ordered) {
     const group = column(component, 12);
+    created.push(group);
     const heading = label(component, 48, "Bold", INK, family);
     group.appendChild(heading);
     const count = label(entries.length === 1 ? "1 region" : entries.length + " regions", 14, "Regular", MUTED, family);
     group.appendChild(count);
 
     const stack = column("regions", 24);
+    created.push(stack);
     for (const { item, node } of entries) {
       // The held-back ones say so. A sheet that shows only the answer and not
       // its standing would misrepresent a run where a third were guesses.
@@ -389,7 +432,9 @@ async function buildSheet(items) {
         ? null
         : "confidence " + Number(item.confidence).toFixed(2) + " · " +
           (item.verdict === "unsure" ? "not identified" : "awaiting review");
-      stack.appendChild(await specimenCard(node, cardWidth, family, node.name, note));
+      const card = await specimenCard(node, cardWidth, family, node.name, note);
+      created.push(card);
+      stack.appendChild(card);
     }
     group.appendChild(stack);
     sheet.appendChild(group);
