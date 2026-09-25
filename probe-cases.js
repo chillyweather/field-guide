@@ -2,7 +2,7 @@
 // them: probe.js, which sends them, and fixtures/make-fixtures.js, which pairs
 // each one with the response it actually produced.
 //
-// A control, then four written to sit on the fence — worded so the deciding
+// Controls, then regions written to sit on the fence — worded so the deciding
 // evidence is genuinely absent rather than merely unmentioned.
 
 module.exports = {
@@ -18,6 +18,20 @@ module.exports = {
       "Dark text inside reads 'Marketing' and a small x glyph sits at its right edge. " +
       "Nothing indicates whether the x responds to a click.",
     geometry: "84x24 px; aspect ratio 3.50; spans 6% of the screen width; positioned middle left of the screen",
+  },
+  "clear-icon-button": {
+    description:
+      "A square about 36 by 36 pixels with 8-pixel rounded corners, a white fill and a thin grey border. " +
+      "It holds a single dark outline glyph of a rubbish bin, centred, and no text. It sits at the right " +
+      "end of a row in a list of records, beside a similar square holding a pencil glyph.",
+    geometry: "36x36 px; aspect ratio 1.00; spans 3% of the screen width; positioned middle right of the screen",
+  },
+  "icon-button-or-toggle": {
+    description:
+      "A small outline glyph of a heart, about 24 by 24 pixels, drawn in grey with no fill, no border and " +
+      "no surface behind it. No text accompanies it. It sits in the lower right corner of a product " +
+      "photograph. Nothing indicates whether it responds to a click.",
+    geometry: "24x24 px; aspect ratio 1.00; spans 2% of the screen width; positioned middle centre of the screen",
   },
   "button-or-link": {
     description:

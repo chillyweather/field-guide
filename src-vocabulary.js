@@ -26,7 +26,7 @@
 // find: the noun was masked, the participle was not, and the description carried
 // the answer through anyway.
 const BANNED = [
-  "button", "link", "chip", "badge", "input", "search field", "select", "dropdown",
+  "icon button", "button", "link", "chip", "badge", "input", "search field", "select", "dropdown",
   "checkbox", "radio button", "radio", "toggle", "toggled", "toggling",
   "switch", "switching", "card", "modal", "dialog",
   "popover", "tooltip", "slider", "tab", "tabs", "avatar", "accordion", "breadcrumb",

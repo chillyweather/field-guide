@@ -58,12 +58,46 @@ if (missing.length) { failed++; console.log("FAIL  probes absent from fixtures: 
 else console.log("ok    all " + Object.keys(taxonomy.probes).length + " probes carried through");
 
 
+// A component's required probes. Synthetic: the shape of the corner panel that
+// came back Modal Dialog at 0.92 on an undimmed page, then the same answer with
+// the overlay probe passing. Only the probe differs between the two.
+const modal = (overlay) => ({
+  component: { type: 'choice', choice: 'Modal Dialog', confidence: 0.92,
+    probabilities: { 'Modal Dialog': 0.93, Other: 0.04, Card: 0.03 } },
+  family: { type: 'choice', choice: 'container', confidence: 0.9, probabilities: {} },
+  is_overlaid_above_content: { type: 'noul', noul: overlay },
+});
+const required = [
+  { overlay: 0.12, verdict: 'check', unmet: 'is_overlaid_above_content' },
+  { overlay: 0.81, verdict: 'confident', unmet: '' },
+];
+for (const r of required) {
+  const got = weigh(modal(r.overlay), taxonomy);
+  if (got.verdict !== r.verdict || got.unmet.join() !== r.unmet) {
+    failed++;
+    console.log('FAIL  requires, overlay ' + r.overlay + ': got ' + got.verdict + ' [' + got.unmet.join() + ']');
+  } else {
+    console.log('ok    requires overlay ' + String(r.overlay).padEnd(22) + got.verdict);
+  }
+}
+// And an absent probe holds nothing back — an older response, or a guide whose
+// probe list changed, must not quietly demote every modal.
+{
+  const answers = modal(0);
+  delete answers.is_overlaid_above_content;
+  const got = weigh(answers, taxonomy);
+  if (got.verdict !== 'confident') { failed++; console.log('FAIL  requires: missing probe held the answer back'); }
+  else console.log('ok    requires, probe absent          confident');
+}
+
 // The masking rule, which production applies to every description before the
 // guide sees it. gpt-4o-mini leaked on 1 of 3 identical calls, so this is not
 // belt and braces.
 const masking = [
   { in: 'a small circular area that appears to be in a toggle position', leaked: ['toggle'] },
   { in: 'A radio button sits beside the label', leaked: ['radio button'], notIn: 'button' },
+  // Masked whole. "an icon [element]" still says most of it.
+  { in: 'a small icon button with a gear glyph', leaked: ['icon button'], notIn: 'icon' },
   { in: 'An oval shape with a light gray fill and a darker border', leaked: [] },
   { in: 'a search field beside a select dropdown', leaked: ['search field', 'dropdown', 'select'] },
   { in: 'Cards are stacked above the modal', leaked: ['card', 'modal'] },

@@ -34,13 +34,18 @@ The gates follow TypeSafe's published bands: act alone above `0.9`, ask a human 
 
 - If the behaviour answer disagrees with the family recorded for the chosen component,
   the answer is not trusted however high its probability.
+- If a guide entry lists `requires` probes and Jev scores one below `0.5`, the answer is
+  held for you. `Modal Dialog` requires `is_overlaid_above_content`: a panel with a title,
+  an action and a close × fits the entry from the crop alone, and only the dimmed page
+  around it makes it a modal.
 - **If the top two options sit within `0.15` of each other, that is not a weak answer.
   It is a taxonomy that does not separate them.** The plugin reports it as a confusion
   pair and names both.
 
 That last case is the reason the guide contains `Chip` and `Badge`, `Button` and `Link`,
-`Checkbox` and `Toggle`, `Card` and `Modal Dialog`, `Tabs` and `Chip`. Design systems argue
-about these, and the probability distribution measures the argument.
+`Checkbox` and `Toggle`, `Icon Button` and `Toggle`, `Card` and `Modal Dialog`, `Tabs`
+and `Chip`. Design systems argue about these, and the probability distribution measures
+the argument.
 
 Jev is also not deterministic. The same `chip-or-badge` description answered `action` on
 one capture and agreed with the guide on the next, from an identical input — so a fixture
@@ -48,7 +53,7 @@ records one run, never a guarantee.
 
 ## The guide
 
-`taxonomy/components.json` — fifteen entries drawn from Material 3, IBM Carbon,
+`taxonomy/components.json` — sixteen entries drawn from Material 3, IBM Carbon,
 Shopify Polaris and shadcn/ui, so that any reader can check them. Where those systems
 genuinely disagree, the entry records the disagreement in `contested` rather than
 resolving it.

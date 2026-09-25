@@ -173,7 +173,7 @@ const DEFAULT_VISION_BASE = "https://api.openai.com/v1";
 const el = (id) => document.getElementById(id);
 const useMock = () => el("mockMode").checked;
 const post = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
-let keys = {}, specimens = [], pending = null, lastContext = null;
+let keys = {}, specimens = [], pending = null, lastContext = null, lastRun = null;
 
 post({ type: "load-keys" });
 
@@ -204,8 +204,11 @@ el("run").onclick = () => {
 // read as a cleaner result than the run actually was.
 el("buildSheet").onclick = () => {
   const items = specimens
-    .filter((s) => !s.error && s.answer)
-    .map((s) => ({ id: s.id, name: s.name, answer: s.answer, confidence: s.confidence, verdict: s.verdict }));
+    .filter((s) => s.override || (!s.error && s.answer))
+    .map((s) => ({
+      id: s.id, name: s.name, answer: named(s), guess: s.error ? null : s.answer,
+      confidence: s.confidence, verdict: s.override ? "yours" : s.verdict,
+    }));
   if (!items.length) return say("Nothing identified to lay out.", true);
   el("buildSheet").disabled = true;
   say("Building the sheet…");
@@ -230,8 +233,27 @@ el("copyRecord").onclick = async () => {
   setTimeout(() => { el("copyHint").textContent = ""; }, 4000);
 };
 
+/**
+ * What a region is called now: your word if you gave one, else the guide's.
+ *
+ * Below the ask-a-human line the guide has not named it, so it is Other — not
+ * its top pick. The sheet used to file a 0.48 guess under a "Tabs" heading
+ * while the panel said "Could not identify", which is the sheet claiming an
+ * answer the run did not reach.
+ */
+function named(s) {
+  if (s.override) return s.override;
+  if (s.verdict === "unsure") return "Other";
+  return s.answer;
+}
+
+/** Everything that has a name to apply — the confident answers and your overrides. */
+function applicable() {
+  return specimens.filter((s) => s.override || (!s.error && s.verdict === "confident"));
+}
+
 el("applyAll").onclick = () => {
-  const names = specimens.filter((s) => s.verdict === "confident").map((s) => ({ id: s.id, name: s.answer }));
+  const names = applicable().map((s) => ({ id: s.id, name: named(s) }));
   post({ type: "apply", names });
 };
 
@@ -362,10 +384,11 @@ async function survey({ specimens: collected, context, contextName, reason }) {
 
   show();
   el("run").disabled = false;
-  el("applyAll").hidden = !specimens.some((s) => s.verdict === "confident");
+  el("applyAll").hidden = !applicable().length;
   el("buildSheet").hidden = !specimens.some((s) => !s.error && s.answer);
   say(useMock() ? "Survey complete — offline, from fixtures." : "Survey complete.");
   const elapsedMs = Date.now() - startedAt;
+  lastRun = { spend, elapsedMs };
   tally(spend, elapsedMs);
   publishRecord(spend, elapsedMs);
 }
@@ -388,7 +411,13 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
     "Describe this region of a user interface in 2-3 sentences, factually.\n" +
     "Cover: shape and corner treatment, fill and border, any text and its wording, any icons, " +
     "and any visible state such as a check mark, a sliding thumb, a chevron, or a dismiss affordance. " +
-    "If the context image shows it overlaying other content or sitting on a dimmed backdrop, say so.\n" +
+    // Asked for both ways. Told only to mention an overlay when there was one,
+    // the model mentioned nothing when there was not, and a panel sitting in the
+    // corner of an undimmed page read to the guide as a modal: the crop had a
+    // title, an action and a close ×, and nothing said it was not floating.
+    "Then, in one more sentence, state whether it overlays other content and whether the area " +
+    "around it is dimmed, blurred or darkened. Answer both explicitly, including when the answer is no" +
+    (contextB64 ? "." : "; there is no context image here, so say that you cannot tell.") + "\n" +
     "Geometry from the design file: " + geometry + "\n\n" +
     "Do NOT name the component type and do NOT use design-system vocabulary " +
     "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." });
@@ -450,6 +479,35 @@ function render() {
   for (const s of specimens) el("results").appendChild(card(s));
 }
 
+/**
+ * Every region can be renamed, including the ones named automatically. A
+ * confident answer is still only the guide's reading of a crop — it cannot see
+ * that a "Modal Dialog" sits in the corner with nothing dimmed behind it.
+ */
+function picker(s, node) {
+  const pick = document.createElement("select");
+  pick.style.marginTop = "6px";
+  // A held-back answer starts on the placeholder, so choosing the guide's own
+  // suggestion counts as a choice. A confident one starts on the name already
+  // applied, and changing it is the override.
+  const current = s.override || (!s.error && s.verdict === "confident" ? s.answer : "");
+  pick.innerHTML = '<option value="">' + (current ? "— rename —" : "— name it yourself —") + "</option>" +
+    Object.keys(TAXONOMY.components).map((n) =>
+      "<option" + (n === current ? " selected" : "") + ">" + esc(n) + "</option>").join("");
+  pick.onchange = () => {
+    if (!pick.value) return;
+    s.override = pick.value === s.answer && s.verdict === "confident" ? null : pick.value;
+    post({ type: "apply", names: [{ id: s.id, name: pick.value }] });
+    node.replaceWith(card(s));
+    el("applyAll").hidden = !applicable().length;
+    if (lastRun) {
+      tally(lastRun.spend, lastRun.elapsedMs);
+      publishRecord(lastRun.spend, lastRun.elapsedMs);
+    }
+  };
+  return pick;
+}
+
 function card(s) {
   const node = document.createElement("div");
   node.className = "specimen";
@@ -469,14 +527,19 @@ function card(s) {
     body.innerHTML = '<div class="verdict unsure">Not identified</div><div class="err">' + esc(s.error) + "</div>";
   } else {
     const label = document.createElement("div");
-    label.className = "verdict" + (s.verdict === "unsure" ? " unsure" : "");
-    label.textContent = s.verdict === "unsure" ? "Could not identify" : s.answer;
+    label.className = "verdict" + (s.verdict === "unsure" && !s.override ? " unsure" : "");
+    label.textContent = s.override || (s.verdict === "unsure" ? "Could not identify" : s.answer);
 
+    // Once overridden, the guide's answer stays on the card. The point of the
+    // record is where the guide and the designer parted, not just the outcome.
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = "confidence " + s.confidence.toFixed(2) +
-      (s.verdict === "confident" ? " · named automatically" : " · awaiting your call") +
-      (s.familyAgrees ? "" : " · disagrees with " + s.family);
+    meta.textContent = s.override
+      ? "named by you · guide said " + s.answer + " " + s.confidence.toFixed(2)
+      : "confidence " + s.confidence.toFixed(2) +
+        (s.verdict === "confident" ? " · named automatically" : " · awaiting your call") +
+        (s.familyAgrees ? "" : " · disagrees with " + s.family) +
+        (s.unmet && s.unmet.length ? " · probe says not: " + s.unmet.join(", ").replace(/_/g, " ") : "");
 
     const bar = document.createElement("div");
     bar.className = "bar " + s.verdict;
@@ -531,18 +594,9 @@ function card(s) {
       saw.appendChild(raw);
     }
     body.appendChild(saw);
-
-    if (s.verdict !== "confident") {
-      const pick = document.createElement("select");
-      pick.style.marginTop = "6px";
-      pick.innerHTML = '<option value="">— name it yourself —</option>' +
-        Object.keys(TAXONOMY.components).map((n) =>
-          '<option' + (n === s.answer ? " selected" : "") + '>' + n + "</option>").join("");
-      pick.onchange = () => { if (pick.value) post({ type: "apply", names: [{ id: s.id, name: pick.value }] }); };
-      body.appendChild(pick);
-    }
   }
 
+  body.appendChild(picker(s, node));
   node.append(num, plate, body);
   return node;
 }
@@ -563,6 +617,7 @@ function heldBy(s) {
   if (s.verdict === "confident") return "-";
   if (s.confidence < NEEDS_HUMAN) return "low-confidence";
   if (!s.familyAgrees) return "family";
+  if (s.unmet && s.unmet.length) return "probe";
   if (s.contested) return "contested";
   return "below-threshold";
 }
@@ -582,7 +637,7 @@ function publishRecord(spend, elapsedMs) {
   const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
 
   const head = [
-    "#", "region", "answer", "confidence", "verdict", "held_by", "family", "contested", "masked",
+    "#", "region", "answer", "confidence", "verdict", "held_by", "yours", "family", "contested", "masked",
     "vision_ms", "jev_ms", "vision_in", "vision_out", "jev_in",
   ].join("\t");
 
@@ -596,6 +651,7 @@ function publishRecord(spend, elapsedMs) {
     // mystery, and four such rows in an eighteen-region run could not be
     // explained from the record at all.
     s.error ? "" : heldBy(s),
+    s.override || "-",
     s.error ? "" : (s.family || ""),
     s.contested ? "yes" : "no",
     s.masked ? s.leaked.join("|") : "no",
@@ -612,8 +668,10 @@ function publishRecord(spend, elapsedMs) {
       " · check " + specimens.filter((s) => s.verdict === "check").length +
       " · unsure " + specimens.filter((s) => s.verdict === "unsure").length +
       " · masked " + specimens.filter((s) => s.masked).length +
-      " · failed " + specimens.filter((s) => s.error).length,
+      " · failed " + specimens.filter((s) => s.error).length +
+      " · overridden " + specimens.filter((s) => s.override).length,
     "held by  family " + live.filter((s) => heldBy(s) === "family").length +
+      " · probe " + live.filter((s) => heldBy(s) === "probe").length +
       " · contested " + live.filter((s) => heldBy(s) === "contested").length +
       " · low-confidence " + live.filter((s) => heldBy(s) === "low-confidence").length +
       " · below-threshold " + live.filter((s) => heldBy(s) === "below-threshold").length,
@@ -650,6 +708,8 @@ function tally(spend, elapsedMs) {
       (failed ? " · <b>" + failed + "</b> failed" : ""),
     "<b>" + contested + "</b> contested by the guide itself",
   ];
+  const overridden = specimens.filter((s) => s.override).length;
+  if (overridden) lines.push("<b>" + overridden + "</b> renamed by you");
   if (masked) lines.push("<b>" + masked + "</b> had the vision model's vocabulary masked");
 
   // Reported from the usage the two APIs returned, not from an estimate — the

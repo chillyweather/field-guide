@@ -19,7 +19,7 @@
   "components": {
     "Button": {
       "what": "An interactive control carrying a short verb label that performs an action when activated. Usually a filled, outlined or tinted rectangle with a corner radius; may carry a leading or trailing icon.",
-      "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select).",
+      "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select). A control showing only an icon, with no text (Icon Button).",
       "examples": [
         "Save",
         "Cancel",
@@ -29,9 +29,29 @@
       "family": "action",
       "confused_with": [
         "Link",
-        "Chip"
+        "Chip",
+        "Icon Button"
       ],
       "source": "m3, carbon, shadcn"
+    },
+    "Icon Button": {
+      "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a × to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+      "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear × sitting inside a text field, which belongs to the field (Search Field).",
+      "examples": [
+        "a × in the top corner of a panel",
+        "a bin at the end of a table row",
+        "three vertical dots that open more actions",
+        "a bell in a top bar",
+        "a heart outline that fills when favourited"
+      ],
+      "family": "action",
+      "confused_with": [
+        "Button",
+        "Toggle",
+        "Other"
+      ],
+      "contested": "Material 3 makes it a component of its own, as do GitHub Primer and Atlassian. Carbon, Polaris and shadcn/ui treat it as a Button with the label left out; shadcn's is Button with size=\"icon\". All of them require the missing text to come back as an accessible label or tooltip, which a picture cannot show. A bare glyph with no surface is also hard to tell from a decorative icon without seeing its hover state, and Material's toggling icon buttons behave as selection rather than action.",
+      "source": "m3, carbon, polaris, shadcn"
     },
     "Link": {
       "what": "Text that navigates to another page, view or anchor. Typically inline in a sentence or standing alone, distinguished by colour and often an underline, with no filled surface behind it.",
@@ -148,7 +168,7 @@
     },
     "Toggle": {
       "what": "A switch with a track and a sliding thumb that turns a setting on or off, applying the change immediately rather than on submit.",
-      "not_for": "A square control whose value is submitted with a form (Checkbox).",
+      "not_for": "A square control whose value is submitted with a form (Checkbox). A single icon that switches between filled and outlined, with no track or thumb (Icon Button).",
       "examples": [
         "Dark mode",
         "Enable notifications"
@@ -186,6 +206,7 @@
         "Sidebar"
       ],
       "contested": "Judging overlay from a cropped image is often impossible. The surrounding context, not the crop, is what distinguishes these two.",
+      "requires": ["is_overlaid_above_content"],
       "source": "m3, carbon, shadcn"
     },
     "Tabs": {

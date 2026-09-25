@@ -320,8 +320,16 @@ function exportScaleFor(natural, displayScale) {
   return Math.max(0.01, Math.min(4, wanted, ceiling));
 }
 
-/** One region, as a white card with the exported picture centred on it. */
-async function specimenCard(node, width, family, caption, note) {
+/**
+ * One region's picture, exported for the size it will be shown at.
+ *
+ * Kept apart from building the card, and run for every region before any
+ * sheet node exists. A slice exports whatever is on the canvas inside its
+ * bounds, and createFrame attaches to the page the moment it is called — so a
+ * sheet built between exports was photographed by the slices that came after
+ * it, half-finished captions and all.
+ */
+async function specimenPicture(node, width) {
   // Scaled down to fit inside the card, never merely placed in it. A region
   // wider than the card used to hang out of both sides of it — auto-layout
   // does not shrink a fixed-size child, it lets it overflow.
@@ -339,11 +347,20 @@ async function specimenCard(node, width, family, caption, note) {
     format: "PNG",
     constraint: { type: "SCALE", value: exportScaleFor(natural, scale) },
   });
-  const image = figma.createImage(bytes);
+  return {
+    bytes,
+    w: Math.max(1, Math.round(natural.w * scale)),
+    h: Math.max(1, Math.round(natural.h * scale)),
+  };
+}
+
+/** One region, as a white card with its picture centred on it. */
+function specimenCard(node, shot, width, family, caption, note) {
+  const image = figma.createImage(shot.bytes);
 
   const picture = figma.createFrame();
   picture.name = node.name;
-  picture.resize(Math.max(1, Math.round(natural.w * scale)), Math.max(1, Math.round(natural.h * scale)));
+  picture.resize(shot.w, shot.h);
   picture.fills = [{ type: "IMAGE", scaleMode: "FIT", imageHash: image.hash }];
 
   const card = figma.createFrame();
@@ -410,6 +427,10 @@ async function assembleSheet(items, created) {
   }
   const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 
+  // Every picture before any node — see specimenPicture.
+  const shots = new Map();
+  for (const { node } of resolved) shots.set(node.id, await specimenPicture(node, cardWidth));
+
   const sheet = column("Field Guide — sheet", 80, SHEET_PADDING);
   created.push(sheet);
   sheet.fills = [{ type: "SOLID", color: PAPER }];
@@ -430,9 +451,12 @@ async function assembleSheet(items, created) {
       // its standing would misrepresent a run where a third were guesses.
       const note = item.verdict === "confident"
         ? null
-        : "confidence " + Number(item.confidence).toFixed(2) + " · " +
-          (item.verdict === "unsure" ? "not identified" : "awaiting review");
-      const card = await specimenCard(node, cardWidth, family, node.name, note);
+        : item.verdict === "yours"
+          ? "named by you" + (item.guess ? " · guide said " + item.guess + " " + Number(item.confidence).toFixed(2) : "")
+          : item.verdict === "unsure"
+            ? "not identified · guide leaned " + item.guess + " " + Number(item.confidence).toFixed(2)
+            : "confidence " + Number(item.confidence).toFixed(2) + " · awaiting review";
+      const card = specimenCard(node, shots.get(node.id), cardWidth, family, node.name, note);
       created.push(card);
       stack.appendChild(card);
     }
