@@ -148,11 +148,26 @@ const CONCURRENCY = 4;
 // Per million tokens. Edit if the tariff moves; the panel reports whatever is
 // set here against the usage the two APIs actually returned, so the figure in
 // the tally is measured rather than assumed.
+//
+// Vision prices are per model. With one gpt-4o rate for everything, a run of any
+// other model reported the right tokens at the wrong price. A model without an
+// entry reports its tokens and says its price is not set, rather than borrowing one.
+const VISION_PRICES = {
+  "gpt-4o":      { in: 2.5, out: 10.0 },
+  // OpenAI's models page, 3 October 2026.
+  "gpt-6-astra": { in: 10.0, out: 50.0 },
+  "gpt-6.1-sol": { in: 2.0, out: 10.0 },
+  "gpt-6-luna":  { in: 0.1, out: 0.5 },
+};
 const PRICES = {
-  visionIn: 2.5,   // gpt-4o
-  visionOut: 10.0,
   jevIn: 0.042,    // jev-latest; output is not metered
 };
+
+/** The vision cost of a spend at this model's price, or null when it is not set. */
+function visionCost(spend) {
+  const p = VISION_PRICES[keys.visionModel];
+  return p ? (spend.visionIn * p.in + spend.visionOut * p.out) / 1e6 : null;
+}
 // Any OpenAI-compatible host, so swapping vision provider is a field in the
 // panel rather than a code change.
 //
@@ -164,11 +179,16 @@ const PRICES = {
 // the header would make the request look compliant without making it so.
 const DEFAULT_VISION_BASE = "https://api.openai.com/v1";
 
+// The request shape each model accepted, learned during a run. See src-vision.js.
+const visionShapes = {};
+
 /* __WEIGH__ */
 
 /* __VOCABULARY__ */
 
 /* __QUESTIONS__ */
+
+/* __VISION__ */
 
 const el = (id) => document.getElementById(id);
 const useMock = () => el("mockMode").checked;
@@ -351,6 +371,8 @@ async function survey({ specimens: collected, context, contextName, reason }) {
       slots[item.index - 1] = Object.assign({}, item, weigh(judged.answers, TAXONOMY), {
         description: described.text,
         rawDescription: seen.text,
+        effort: seen.effort,
+        reasoningOut: reasoningTokens(seen.usage),
         masked: described.masked,
         leaked: described.leaked,
         plate: cropB64,
@@ -362,10 +384,20 @@ async function survey({ specimens: collected, context, contextName, reason }) {
         jevIn: (judged.usage && judged.usage.input_tokens) || 0,
       });
     } catch (error) {
-      // One region failing must not lose the other thirty-nine.
+      // One region failing must not lose the other thirty-nine. A vision call
+      // that thought and then said nothing was still billed, so its tokens stay
+      // in the spend rather than vanishing with the answer.
+      const usage = error && error.usage;
+      if (usage) {
+        spend.visionIn += usage.prompt_tokens || 0;
+        spend.visionOut += usage.completion_tokens || 0;
+      }
       slots[item.index - 1] = Object.assign({}, item, {
         error: String((error && error.message) || error),
         plate: cropB64,
+        visionIn: (usage && usage.prompt_tokens) || 0,
+        visionOut: (usage && usage.completion_tokens) || 0,
+        reasoningOut: reasoningTokens(usage),
       });
     }
     done++;
@@ -423,21 +455,41 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
     "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." });
 
   const base = (keys.visionBase || DEFAULT_VISION_BASE).replace(/\/+$/, "");
-  const res = await fetch(base + "/chat/completions", {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: "Bearer " + keys.vision },
-    body: JSON.stringify({
-      model: keys.visionModel,
-      max_tokens: 300,
-      messages: [{ role: "user", content }],
-    }),
-  });
-  if (!res.ok) throw new Error("Vision " + res.status + ": " + (await res.text()).slice(0, 160));
+  const model = keys.visionModel;
+  // Remembered per host and model, so only the first regions of a run pay for
+  // finding the shape. A refusal is a 400 and is not billed.
+  const known = base + " " + model;
+  let shape = visionShapes[known] || firstShape();
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    res = await fetch(base + "/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + keys.vision },
+      body: JSON.stringify(Object.assign({ model, messages: [{ role: "user", content }] }, shapeFields(shape))),
+    });
+    if (res.ok) break;
+    const refusal = await res.text();
+    const next = res.status === 400 && attempt < 4 ? nextShape(shape, refusal) : null;
+    if (!next) throw new Error("Vision " + res.status + ": " + refusal.slice(0, 160));
+    shape = next;
+  }
+  visionShapes[known] = shape;
 
   const data = await res.json();
-  const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (!text) throw new Error("Vision returned no text: " + JSON.stringify(data).slice(0, 160));
-  return { text: String(text).trim(), usage: data.usage || null };
+  const choice = data.choices && data.choices[0];
+  const text = choice && choice.message && choice.message.content;
+  if (!text) {
+    // Say why. No text after two thousand reasoning tokens is a different finding
+    // from a refusal, and the record has to tell them apart.
+    const thought = reasoningTokens(data.usage);
+    const empty = new Error("Vision returned no text" +
+      (choice && choice.finish_reason
+        ? " (finish: " + choice.finish_reason + (thought ? ", " + thought + " reasoning tokens" : "") + ")"
+        : "") + ": " + JSON.stringify(data).slice(0, 120));
+    empty.usage = data.usage || null;
+    throw empty;
+  }
+  return { text: String(text).trim(), usage: data.usage || null, effort: shape.effort };
 }
 
 /**
@@ -632,13 +684,19 @@ function publishRecord(spend, elapsedMs) {
   };
   const visionMs = live.map((s) => s.visionMs || 0);
   const jevMs = live.map((s) => s.jevMs || 0);
-  const vision = (spend.visionIn * PRICES.visionIn + spend.visionOut * PRICES.visionOut) / 1e6;
+  const vision = visionCost(spend);
   const jev = (spend.jevIn * PRICES.jevIn) / 1e6;
   const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
+  const thought = specimens.reduce((sum, s) => sum + (s.reasoningOut || 0), 0);
+  const efforts = Array.from(new Set(live.filter((s) => s.effort !== undefined).map((s) => s.effort || "n/a")));
 
+  // The last five columns are appended, so earlier records keep their positions.
+  // node_id is the key that survives a re-run; the selection order, and so the #,
+  // does not.
   const head = [
     "#", "region", "answer", "confidence", "verdict", "held_by", "yours", "family", "contested", "masked",
     "vision_ms", "jev_ms", "vision_in", "vision_out", "jev_in",
+    "node_id", "model", "reasoning", "reasoning_out", "description",
   ].join("\t");
 
   const rows = specimens.map((s) => [
@@ -657,6 +715,12 @@ function publishRecord(spend, elapsedMs) {
     s.masked ? s.leaked.join("|") : "no",
     s.visionMs || "", s.jevMs || "",
     s.visionIn || "", s.visionOut || "", s.jevIn || "",
+    s.id || "",
+    useMock() ? "offline" : (keys.visionModel || ""),
+    s.effort === undefined ? "" : (s.effort || "n/a"),
+    s.reasoningOut || "",
+    // What the vision model said before masking, on one line.
+    (s.rawDescription || "").replace(/\s+/g, " "),
   ].join("\t"));
 
   const summary = [
@@ -664,6 +728,8 @@ function publishRecord(spend, elapsedMs) {
     specimens.length + " regions · " + (elapsedMs / 1000).toFixed(1) + "s wall · " +
       CONCURRENCY + " at a time" + (useMock() ? " · OFFLINE, no calls made" : ""),
     "context " + (lastContext ? lastContext : "NONE — crops only"),
+    "model   " + (useMock() ? "offline" : keys.visionModel) + " · reasoning " + (efforts.join(", ") || "-") +
+      " · cap " + VISION_CAP,
     "named " + specimens.filter((s) => s.verdict === "confident").length +
       " · check " + specimens.filter((s) => s.verdict === "check").length +
       " · unsure " + specimens.filter((s) => s.verdict === "unsure").length +
@@ -676,11 +742,14 @@ function publishRecord(spend, elapsedMs) {
       " · low-confidence " + live.filter((s) => heldBy(s) === "low-confidence").length +
       " · below-threshold " + live.filter((s) => heldBy(s) === "below-threshold").length,
     "vision  median " + median(visionMs) + "ms  max " + Math.max(0, ...visionMs) + "ms  " +
-      spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out  " + money(vision),
+      spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out" +
+      (thought ? " (" + thought.toLocaleString() + " reasoning)" : "") + "  " +
+      (vision === null ? "price not set for " + keys.visionModel : money(vision)),
     "jev     median " + median(jevMs) + "ms  max " + Math.max(0, ...jevMs) + "ms  " +
       spend.jevIn.toLocaleString() + " in  " + money(jev),
-    "total   " + money(vision + jev) +
-      (vision > 0 && jev > 0 ? "  (vision is " + Math.round(vision / jev) + "x jev)" : ""),
+    "total   " + (vision === null
+      ? money(jev) + " + vision at a price not set"
+      : money(vision + jev) + (vision > 0 && jev > 0 ? "  (vision is " + Math.round(vision / jev) + "x jev)" : "")),
     "",
   ].join("\n");
 
@@ -717,11 +786,12 @@ function tally(spend, elapsedMs) {
   // identification does, which is the opposite of what the pricing pages
   // suggest when read separately.
   if (spend && (spend.visionIn || spend.jevIn)) {
-    const vision = (spend.visionIn * PRICES.visionIn + spend.visionOut * PRICES.visionOut) / 1e6;
+    const vision = visionCost(spend);
     const jev = (spend.jevIn * PRICES.jevIn) / 1e6;
     const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
     lines.push(
-      "<span class='spend'>" + money(vision + jev) + " — vision " + money(vision) +
+      "<span class='spend'>" +
+      (vision === null ? "vision price not set for " + keys.visionModel : money(vision + jev) + " — vision " + money(vision)) +
       " (" + spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out)" +
       ", jev " + money(jev) + " (" + spend.jevIn.toLocaleString() + " in)</span>",
     );

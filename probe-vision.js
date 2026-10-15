@@ -3,6 +3,10 @@
 //   node probe-vision.js                  list the models the host exposes
 //   node probe-vision.js <model>          describe a generated test image
 //
+// The second form uses the plugin's own request shapes (src-vision.js) and
+// prints the reasoning level the model settled on, so it doubles as the check
+// that a model will run in the plugin at all.
+//
 // Keys and base URL come from .env.local:
 //   VISION_API_KEY=sk-...
 //   VISION_BASE_URL=https://api.openai.com/v1
@@ -105,7 +109,9 @@ async function listModels() {
   catch { console.error("Not JSON:\n" + text.slice(0, 500)); process.exit(1); }
 
   console.log(BASE + " exposes " + ids.length + " models\n");
-  const vision = ids.filter((id) => /vl|vision|omni|4o|gpt-5|gemini|qwen3|glm|internvl|pixtral|llava/i.test(id));
+  // A name pattern, so it goes stale with every new family: gpt-6 and gpt-4.1
+  // sat unnoticed under "the rest" until the list was read in full.
+  const vision = ids.filter((id) => /vl|vision|omni|4o|gpt-4\.1|gpt-5|gpt-6|^o\d|gemini|qwen3|glm|internvl|pixtral|llava/i.test(id));
   if (vision.length) {
     console.log("likely vision-capable:");
     for (const id of vision.sort()) console.log("  " + id);
@@ -115,17 +121,14 @@ async function listModels() {
   console.log("\nDescribe the test image with one:  node probe-vision.js <model>");
 }
 
-async function describeWith(model, png, geometry, capParam) {
-  // Newer models reject max_tokens and want max_completion_tokens. Rather than
-  // keep a list of which is which, send one and switch on the error that says so.
-  const cap = capParam || "max_tokens";
-  const res = await fetch(BASE + "/chat/completions", {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: "Bearer " + KEY },
-    body: JSON.stringify({
-      model,
-      [cap]: 300,
-      messages: [{ role: "user", content: [
+const { firstShape, shapeFields, nextShape, reasoningTokens } = require("./src-vision");
+
+async function describeWith(model, png, geometry) {
+  // The same shapes the plugin negotiates, so a model that answers here runs in
+  // the plugin at the same reasoning level. A list of which model takes what
+  // would be stale by the next release; the refusal says what to change.
+  let shape = firstShape();
+  const messages = [{ role: "user", content: [
         { type: "text", text: "Next image: the region to describe." },
         { type: "image_url", image_url: { url: "data:image/png;base64," + png.toString("base64") } },
         { type: "text", text:
@@ -135,18 +138,32 @@ async function describeWith(model, png, geometry, capParam) {
           "Geometry from the design file: " + geometry + "\n\n" +
           "Do NOT name the component type and do NOT use design-system vocabulary " +
           "(no 'button', 'chip', 'badge', 'input', 'card', 'modal', and so on). Describe only what is visible." },
-      ] }],
-    }),
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    if (!capParam && /max_completion_tokens/.test(text)) return describeWith(model, png, geometry, "max_completion_tokens");
-    throw new Error("HTTP " + res.status + " — " + text.slice(0, 400));
+      ] }];
+
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(BASE + "/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + KEY },
+      body: JSON.stringify(Object.assign({ model, messages }, shapeFields(shape))),
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      const next = res.status === 400 && attempt < 4 ? nextShape(shape, text) : null;
+      if (!next) throw new Error("HTTP " + res.status + " — " + text.slice(0, 400));
+      shape = next;
+      continue;
+    }
+    const body = JSON.parse(text);
+    const choice = body.choices && body.choices[0];
+    const out = choice && choice.message && choice.message.content;
+    if (!out) {
+      const thought = reasoningTokens(body.usage);
+      throw new Error("No text in response" +
+        (choice && choice.finish_reason ? " (finish: " + choice.finish_reason + (thought ? ", " + thought + " reasoning tokens" : "") + ")" : "") +
+        ": " + JSON.stringify(body).slice(0, 300));
+    }
+    return { text: String(out).trim(), usage: body.usage, effort: shape.effort, cap: shape.cap };
   }
-  const body = JSON.parse(text);
-  const out = body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content;
-  if (!out) throw new Error("No text in response: " + JSON.stringify(body).slice(0, 300));
-  return { text: String(out).trim(), usage: body.usage };
 }
 
 // One word list, shared with the plugin. A probe measuring a different rule from
@@ -163,7 +180,9 @@ async function describe(model) {
   let out;
   try { out = await describeWith(model, png, "100x44 px; aspect ratio 2.27; spans 8% of the screen width"); }
   catch (e) { console.error("FAILED  " + e.message); process.exit(1); }
-  console.log("HTTP 200  " + (Date.now() - started) + "ms  model=" + model);
+  console.log("HTTP 200  " + (Date.now() - started) + "ms  model=" + model +
+    "  reasoning=" + (out.effort === null ? "n/a" : out.effort) + " (" + reasoningTokens(out.usage) + " tokens)" +
+    "  cap=" + out.cap);
   console.log("\n--- description ---\n" + out.text);
 
   const leaked = leakedWords(out.text);

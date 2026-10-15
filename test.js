@@ -123,5 +123,53 @@ for (const m of masking) {
   }
 }
 
+// The request shapes, which decide whether a model in the comparison is run
+// fairly or written off as broken. The refusals are shaped like OpenAI's 400s;
+// the last two are the forms a less tidy host sends.
+const { firstShape, shapeFields, nextShape } = require('./src-vision');
+const refuse = (param, code, message) => JSON.stringify({ error: { param, code, message, type: 'invalid_request_error' } });
+const shapes = [
+  { why: 'a newer model has no "none" level', from: { cap: 'max_completion_tokens', effort: 'none' },
+    error: refuse('reasoning_effort', 'unsupported_value', "Unsupported value: 'reasoning_effort' does not support 'none' with this model. Supported values are: 'minimal', 'low', 'medium', and 'high'."),
+    want: { cap: 'max_completion_tokens', effort: 'minimal' } },
+  { why: 'a flagship that starts at "low"', from: { cap: 'max_completion_tokens', effort: 'minimal' },
+    error: refuse('reasoning_effort', 'unsupported_value', "Unsupported value: 'reasoning_effort' does not support 'minimal' with this model."),
+    want: { cap: 'max_completion_tokens', effort: 'low' } },
+  { why: 'no level left to try', from: { cap: 'max_completion_tokens', effort: 'low' },
+    error: refuse('reasoning_effort', 'unsupported_value', "Unsupported value: 'reasoning_effort' does not support 'low' with this model."),
+    want: null },
+  { why: 'gpt-4o does not reason at all', from: { cap: 'max_completion_tokens', effort: 'none' },
+    error: refuse('reasoning_effort', 'unsupported_parameter', "Unsupported parameter: 'reasoning_effort' is not supported with this model."),
+    want: { cap: 'max_completion_tokens', effort: null } },
+  { why: 'a reasoning model refuses max_tokens', from: { cap: 'max_tokens', effort: 'low' },
+    error: refuse('max_tokens', 'unsupported_parameter', "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."),
+    want: { cap: 'max_completion_tokens', effort: 'low' } },
+  { why: 'the same message, but max_completion_tokens was sent', from: { cap: 'max_completion_tokens', effort: null },
+    error: refuse('max_tokens', 'unsupported_parameter', "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."),
+    want: null },
+  { why: 'a host without JSON errors', from: { cap: 'max_completion_tokens', effort: 'none' },
+    error: 'Unrecognized request argument supplied: reasoning_effort',
+    want: { cap: 'max_completion_tokens', effort: null } },
+  { why: 'a refusal about the image, not the shape', from: { cap: 'max_completion_tokens', effort: 'none' },
+    error: refuse('messages', 'invalid_image_format', 'You uploaded an unsupported image.'),
+    want: null },
+];
+for (const c of shapes) {
+  const got = nextShape(c.from, c.error);
+  if (JSON.stringify(got) !== JSON.stringify(c.want)) {
+    failed++;
+    console.log('FAIL  shape: ' + c.why + '\n        expected ' + JSON.stringify(c.want) + ', got ' + JSON.stringify(got));
+  } else {
+    console.log('ok    shape ' + (got ? (got.effort || 'no reasoning') + ' / ' + got.cap : 'give up').padEnd(40) + c.why);
+  }
+}
+{
+  const fields = shapeFields({ cap: 'max_tokens', effort: null });
+  const first = shapeFields(firstShape());
+  if ('reasoning_effort' in fields || first.reasoning_effort !== 'none' || !first.max_completion_tokens) {
+    failed++; console.log('FAIL  shape fields: ' + JSON.stringify(fields) + ' / ' + JSON.stringify(first));
+  } else console.log('ok    shape fields omit reasoning_effort when a model has none');
+}
+
 console.log(failed ? '\n' + failed + ' failing' : '\nall passing');
 process.exit(failed ? 1 : 0);
