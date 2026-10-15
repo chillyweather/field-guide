@@ -36,7 +36,7 @@ loadEnvFile();
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "POST, OPTIONS",
-  "access-control-allow-headers": "authorization, content-type",
+  "access-control-allow-headers": "authorization, content-type, typesafe-danger-zone-images",
   "access-control-max-age": "600",
 };
 
@@ -65,7 +65,13 @@ const server = http.createServer(async (req, res) => {
   try {
     const upstream = await fetch(UPSTREAM + req.url, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: auth },
+      headers: Object.assign(
+        { "content-type": "application/json", authorization: auth },
+        // Jev's image input is opt-in per request. Without this passed on, every
+        // Jev-only call arrives upstream as a plain request and is refused.
+        req.headers["typesafe-danger-zone-images"]
+          ? { "TypeSafe-Danger-Zone-Images": req.headers["typesafe-danger-zone-images"] }
+          : {}),
       body,
     });
     const text = await upstream.text();

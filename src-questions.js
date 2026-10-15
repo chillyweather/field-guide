@@ -9,7 +9,10 @@
 // evaluated in parallel against the same state with no penalty for asking more,
 // and the behaviour answer is only useful as an independent read.
 
-function buildQuestions(taxonomy) {
+// `subject` is how the questions point at the region: "described" when Jev is
+// reading the vision model's prose, "pictured" when it is looking at the crop.
+function buildQuestions(taxonomy, subject) {
+  const region = "the " + (subject || "described") + " region";
   const criteria = {};
   for (const [name, entry] of Object.entries(taxonomy.components)) {
     criteria[name] = { what: entry.what, not_for: entry.not_for, examples: entry.examples };
@@ -18,12 +21,12 @@ function buildQuestions(taxonomy) {
   const questions = {
     component: {
       type: "choice",
-      instructions: "Which component from this design-system field guide does the described region show?",
+      instructions: "Which component from this design-system field guide does " + region + " show?",
       criteria,
     },
     family: {
       type: "choice",
-      instructions: "What kind of component is the described region, by behaviour?",
+      instructions: "What kind of component is " + region + ", by behaviour?",
       criteria: taxonomy.families,
     },
   };

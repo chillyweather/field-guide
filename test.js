@@ -171,5 +171,31 @@ for (const c of shapes) {
   } else console.log('ok    shape fields omit reasoning_effort when a model has none');
 }
 
+// Jev refuses an image outside its limits and fails the whole request, so
+// every size a Figma export can come out at has to land inside them.
+const { fitForJev, jevAccepts, buildImageState } = require('./src-images');
+const sizes = [
+  { why: '2x icon button, padded not enlarged', w: 48, h: 48, padded: true, scale: 1 },
+  { why: 'wide thin divider', w: 1200, h: 4, padded: true, scale: 1 },
+  { why: 'documented minimum, refused in practice', w: 256, h: 256, padded: true, scale: 1 },
+  { why: 'measured minimum', w: 280, h: 280, padded: false, scale: 1 },
+  { why: 'card that already fits', w: 640, h: 480, padded: false, scale: 1 },
+  { why: 'long scrolling screen, shrunk to 26%', w: 1440, h: 6000, padded: false },
+  { why: 'desktop screen over the side cap', w: 1920, h: 1080, padded: false },
+];
+for (const c of sizes) {
+  const f = fitForJev(c.w, c.h);
+  const wrong = !jevAccepts(f.canvasW, f.canvasH) || f.drawW > f.canvasW || f.drawH > f.canvasH ||
+    f.scale > 1 || f.padded !== c.padded || (c.scale !== undefined && f.scale !== c.scale);
+  if (wrong) { failed++; console.log('FAIL  fit ' + c.why + ': ' + JSON.stringify(f)); }
+  else console.log('ok    fit ' + (c.w + 'x' + c.h + ' -> ' + f.canvasW + 'x' + f.canvasH).padEnd(38) + c.why);
+}
+{
+  const st = buildImageState({ crop: 'fg-region-x', context: null }, '48x48 px', { cropPadded: true, contextScale: 1 });
+  if (st.region !== 'fg-region-x' || st.screen || !st.region_note || !/alone/.test(st.screen_note)) {
+    failed++; console.log('FAIL  image state: ' + JSON.stringify(st));
+  } else console.log('ok    image state references the crop, notes the margin and the missing screen');
+}
+
 console.log(failed ? '\n' + failed + ' failing' : '\nall passing');
 process.exit(failed ? 1 : 0);

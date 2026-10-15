@@ -90,6 +90,10 @@
   <details id="setup">
     <summary>Keys &amp; endpoints</summary>
     <div style="margin-top:10px">
+      <div class="field"><label>Pipeline</label><select id="pipeline">
+        <option value="vision+jev">Vision + Jev — a vision model describes, Jev judges the words</option>
+        <option value="jev">Jev only — Jev judges the pictures (Dreamer-ready)</option>
+      </select></div>
       <div class="field"><label>TypeSafe (Jev) API key</label><input id="jevKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Vision API key</label><input id="visionKey" type="password" placeholder="sk-..."></div>
       <div class="field"><label>Jev base URL — needs the local shim running</label><input id="jevBase" placeholder="http://localhost:8787"></div>
@@ -190,10 +194,17 @@ const visionShapes = {};
 
 /* __VISION__ */
 
+/* __IMAGES__ */
+
+// Which pipeline a run uses. A setting rather than a fork of the code, so the
+// two are compared on the same selection, exports, questions and weighing —
+// the only thing that differs is what Jev is shown.
+const jevOnly = () => keys.pipeline === "jev";
+
 const el = (id) => document.getElementById(id);
 const useMock = () => el("mockMode").checked;
 const post = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
-let keys = {}, specimens = [], pending = null, lastContext = null, lastRun = null;
+let keys = {}, specimens = [], pending = null, lastContext = null, lastRun = null, lastPipeline = null;
 
 post({ type: "load-keys" });
 
@@ -204,14 +215,26 @@ el("saveKeys").onclick = () => {
     vision: el("visionKey").value.trim(),
     visionBase: el("visionBase").value.trim() || DEFAULT_VISION_BASE,
     visionModel: el("visionModel").value.trim(),
+    pipeline: el("pipeline").value,
   };
   post({ type: "save-keys", keys });
   el("setup").open = false;
 };
+// Applied and saved on change. Read only on "Save keys", a switched pipeline
+// looked chosen and was not: three "Jev only" runs went out as Vision + Jev.
+el("pipeline").onchange = () => {
+  keys = Object.assign({}, keys, { pipeline: el("pipeline").value });
+  post({ type: "save-keys", keys });
+  say("Pipeline: " + (jevOnly() ? "Jev only (images)." : "Vision + Jev."));
+};
 el("run").onclick = () => {
-  if (!useMock() && (!keys.jev || !keys.vision || !keys.visionModel)) {
+  if (!useMock() && !keys.jev) {
     el("setup").open = true;
-    return say("Two keys and a vision model name are needed before a live survey.", true);
+    return say("A Jev key is needed before a live survey.", true);
+  }
+  if (!useMock() && !jevOnly() && (!keys.vision || !keys.visionModel)) {
+    el("setup").open = true;
+    return say("Vision + Jev needs a vision key and model name — or switch the pipeline to Jev only.", true);
   }
   el("run").disabled = true; el("applyAll").hidden = true;
   el("buildSheet").hidden = true; el("record").hidden = true;
@@ -286,7 +309,8 @@ onmessage = async (event) => {
     el("jevBase").value = keys.jevBase || DEFAULT_JEV_BASE;
     el("visionBase").value = keys.visionBase || DEFAULT_VISION_BASE;
     el("visionModel").value = keys.visionModel || "";
-    if (!keys.jev || !keys.vision || !keys.visionModel) el("setup").open = true;
+    el("pipeline").value = keys.pipeline || "vision+jev";
+    if (!keys.jev || (!jevOnly() && (!keys.vision || !keys.visionModel))) el("setup").open = true;
   }
   if (msg.type === "collected") await survey(msg);
   if (msg.type === "applied") say(`Applied ${msg.applied} name${msg.applied === 1 ? "" : "s"}.`);
@@ -323,6 +347,10 @@ async function survey({ specimens: collected, context, contextName, reason }) {
       : "No surrounding context found — identifying " + collected.length + " regions from crops alone.");
   }
   lastContext = contextB64 ? contextName : null;
+  lastPipeline = useMock() ? "offline" : (keys.pipeline || "vision+jev");
+
+  // Fitted once: the screen is the same for every region in the run.
+  const contextFit = !useMock() && jevOnly() && context ? await fitImage(context) : null;
 
   // Results are placed by index, never appended. Under concurrency the order of
   // completion is not the order of the selection, and a list that reshuffles as
@@ -345,6 +373,27 @@ async function survey({ specimens: collected, context, contextName, reason }) {
       // the same code either way, which is the only reason the offline run is
       // worth looking at.
       const fixture = useMock() ? FIXTURES.cases[(item.index - 1) % FIXTURES.cases.length] : null;
+
+      // Jev only: no description, no masking — there are no words for a vision
+      // model to give the answer away in. The crop and the screen go to Jev as
+      // pictures, and everything after is the same code as the other pipeline.
+      if (!fixture && jevOnly()) {
+        const cropFit = await fitImage(item.bytes);
+        const tJev = Date.now();
+        const judged = await askJevWithImages(cropFit, contextFit, item.geometry);
+        const jevMs = Date.now() - tJev;
+        if (judged.usage) spend.jevIn += judged.usage.input_tokens || 0;
+        slots[item.index - 1] = Object.assign({}, item, weigh(judged.answers, TAXONOMY), {
+          description: "", rawDescription: "", masked: false, leaked: [],
+          plate: cropB64, offline: false, visionMs: 0, jevMs, visionIn: 0, visionOut: 0,
+          jevIn: (judged.usage && judged.usage.input_tokens) || 0,
+          cropScale: cropFit.scale, cropPadded: cropFit.padded,
+        });
+        done++;
+        say(`Identified ${done} of ${collected.length}…`);
+        show();
+        return;
+      }
 
       // The vision model describes and does not decide. Keeping the naming out
       // of this step is what leaves the identification to Jev and the guide,
@@ -500,18 +549,44 @@ async function describeRegion({ cropB64, contextB64, geometry }) {
  * the component answer as a reason to distrust a high probability.
  */
 async function askJev(description, geometry) {
+  return postJev({
+    model: JEV_MODEL,
+    state: buildState(description, geometry),
+    questions: buildQuestions(TAXONOMY, "described"),
+  }, false);
+}
+
+/**
+ * The same questions, asked of the pictures. Base64 in JSON rather than
+ * multipart: a third larger, but it goes through the shim untouched, and two
+ * images a call are far inside the 32 MiB limit.
+ */
+async function askJevWithImages(cropFit, contextFit, geometry) {
+  // Unique per call and unlike any word, since Jev swaps a reference for its
+  // image wherever the string appears.
+  const tag = Math.random().toString(36).slice(2, 10);
+  const refs = { crop: "fg-region-" + tag, context: contextFit ? "fg-screen-" + tag : null };
+  const assets = {};
+  assets[refs.crop] = { type: "image", format: "png", data_base64: cropFit.b64 };
+  if (contextFit) assets[refs.context] = { type: "image", format: "png", data_base64: contextFit.b64 };
+  return postJev({
+    model: JEV_MODEL,
+    state: buildImageState(refs, geometry, {
+      cropPadded: cropFit.padded,
+      contextScale: contextFit ? contextFit.scale : 1,
+    }),
+    assets,
+    questions: buildQuestions(TAXONOMY, "pictured"),
+  }, true);
+}
+
+async function postJev(payload, withImages) {
   const base = (keys.jevBase || DEFAULT_JEV_BASE).replace(/\/+$/, "");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + keys.jev };
+  if (withImages) headers["TypeSafe-Danger-Zone-Images"] = "true";
   let res;
   try {
-    res = await fetch(base + "/v1/systemone", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: "Bearer " + keys.jev },
-      body: JSON.stringify({
-        model: JEV_MODEL,
-        state: buildState(description, geometry),
-        questions: buildQuestions(TAXONOMY),
-      }),
-    });
+    res = await fetch(base + "/v1/systemone", { method: "POST", headers, body: JSON.stringify(payload) });
   } catch (networkError) {
     // A refused connection here is nearly always the shim not running, and the
     // browser's own message for that says nothing useful.
@@ -696,7 +771,7 @@ function publishRecord(spend, elapsedMs) {
   const head = [
     "#", "region", "answer", "confidence", "verdict", "held_by", "yours", "family", "contested", "masked",
     "vision_ms", "jev_ms", "vision_in", "vision_out", "jev_in",
-    "node_id", "model", "reasoning", "reasoning_out", "description",
+    "node_id", "model", "reasoning", "reasoning_out", "description", "pipeline",
   ].join("\t");
 
   const rows = specimens.map((s) => [
@@ -704,7 +779,9 @@ function publishRecord(spend, elapsedMs) {
     s.name || "",
     s.error ? "FAILED" : s.answer,
     s.error ? "" : Number(s.confidence).toFixed(2),
-    s.error ? s.error.slice(0, 60) : s.verdict,
+    // Long enough to reach the API's message: at 60 characters a Jev 400 stopped
+    // at "message" and the reason was cut off.
+    s.error ? s.error.slice(0, 200) : s.verdict,
     // Why it was not named. Without this a row reading "1.00 / check" is a
     // mystery, and four such rows in an eighteen-region run could not be
     // explained from the record at all.
@@ -716,19 +793,21 @@ function publishRecord(spend, elapsedMs) {
     s.visionMs || "", s.jevMs || "",
     s.visionIn || "", s.visionOut || "", s.jevIn || "",
     s.id || "",
-    useMock() ? "offline" : (keys.visionModel || ""),
+    useMock() ? "offline" : lastPipeline === "jev" ? JEV_MODEL : (keys.visionModel || ""),
     s.effort === undefined ? "" : (s.effort || "n/a"),
     s.reasoningOut || "",
     // What the vision model said before masking, on one line.
     (s.rawDescription || "").replace(/\s+/g, " "),
+    lastPipeline || "",
   ].join("\t"));
 
   const summary = [
     "# Field Guide run — " + new Date().toISOString().slice(0, 16).replace("T", " "),
     specimens.length + " regions · " + (elapsedMs / 1000).toFixed(1) + "s wall · " +
       CONCURRENCY + " at a time" + (useMock() ? " · OFFLINE, no calls made" : ""),
+    "pipeline " + (lastPipeline === "jev" ? "Jev only (images)" : lastPipeline === "offline" ? "offline" : "Vision + Jev"),
     "context " + (lastContext ? lastContext : "NONE — crops only"),
-    "model   " + (useMock() ? "offline" : keys.visionModel) + " · reasoning " + (efforts.join(", ") || "-") +
+    "model   " + (useMock() ? "offline" : lastPipeline === "jev" ? JEV_MODEL : keys.visionModel) + " · reasoning " + (efforts.join(", ") || "-") +
       " · cap " + VISION_CAP,
     "named " + specimens.filter((s) => s.verdict === "confident").length +
       " · check " + specimens.filter((s) => s.verdict === "check").length +
@@ -741,13 +820,13 @@ function publishRecord(spend, elapsedMs) {
       " · contested " + live.filter((s) => heldBy(s) === "contested").length +
       " · low-confidence " + live.filter((s) => heldBy(s) === "low-confidence").length +
       " · below-threshold " + live.filter((s) => heldBy(s) === "below-threshold").length,
-    "vision  median " + median(visionMs) + "ms  max " + Math.max(0, ...visionMs) + "ms  " +
+    lastPipeline === "jev" ? "vision  none — Jev saw the images" : ("vision  median " + median(visionMs) + "ms  max " + Math.max(0, ...visionMs) + "ms  " +
       spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out" +
       (thought ? " (" + thought.toLocaleString() + " reasoning)" : "") + "  " +
-      (vision === null ? "price not set for " + keys.visionModel : money(vision)),
+      (vision === null ? "price not set for " + keys.visionModel : money(vision))),
     "jev     median " + median(jevMs) + "ms  max " + Math.max(0, ...jevMs) + "ms  " +
       spend.jevIn.toLocaleString() + " in  " + money(jev),
-    "total   " + (vision === null
+    "total   " + (lastPipeline === "jev" ? money(jev) : vision === null
       ? money(jev) + " + vision at a price not set"
       : money(vision + jev) + (vision > 0 && jev > 0 ? "  (vision is " + Math.round(vision / jev) + "x jev)" : "")),
     "",
@@ -791,8 +870,9 @@ function tally(spend, elapsedMs) {
     const money = (v) => "$" + (v < 0.01 ? v.toFixed(5) : v.toFixed(4));
     lines.push(
       "<span class='spend'>" +
-      (vision === null ? "vision price not set for " + keys.visionModel : money(vision + jev) + " — vision " + money(vision)) +
-      " (" + spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out)" +
+      (lastPipeline === "jev" ? money(jev) + " — Jev only, images included" :
+        (vision === null ? "vision price not set for " + keys.visionModel : money(vision + jev) + " — vision " + money(vision)) +
+        " (" + spend.visionIn.toLocaleString() + " in / " + spend.visionOut.toLocaleString() + " out)") +
       ", jev " + money(jev) + " (" + spend.jevIn.toLocaleString() + " in)</span>",
     );
   }
@@ -836,6 +916,26 @@ function tally(spend, elapsedMs) {
   grip.addEventListener("pointerup", stop);
   grip.addEventListener("pointercancel", stop);
 })();
+
+/**
+ * A PNG export made to fit Jev's size limits (see src-images.js): shrunk when
+ * too large, centred on a white margin when too small, never enlarged. White
+ * also replaces transparency, which the docs say nothing about.
+ */
+async function fitImage(bytes) {
+  const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+  const fit = fitForJev(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = fit.canvasW; canvas.height = fit.canvasH;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, fit.canvasW, fit.canvasH);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, Math.floor((fit.canvasW - fit.drawW) / 2), Math.floor((fit.canvasH - fit.drawH) / 2), fit.drawW, fit.drawH);
+  bitmap.close && bitmap.close();
+  const b64 = canvas.toDataURL("image/png").slice("data:image/png;base64,".length);
+  return Object.assign({ b64, width: bitmap.width, height: bitmap.height }, fit);
+}
 
 function toB64(bytes) {
   let s = "";
