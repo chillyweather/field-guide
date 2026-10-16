@@ -30,7 +30,8 @@ const VERDICTS = ["confident", "check", "unsure"];
 const ROLE_NAMES_ENTRY = ["checkbox", "switch", "tab", "dialog", "link", "button"];
 
 // What a tag or role says an element does, for the semantic-mismatch group.
-// Role first, since a role overrides what the tag would mean.
+// Role first, since a role overrides what the tag would mean. The tag table is
+// the one #2 fixes; the button and link roles are its role-level equivalents.
 const BUTTON_INPUTS = ["button", "submit", "reset", "image"];
 function impliedFamily(facts) {
   if (!facts) return null;
@@ -38,6 +39,10 @@ function impliedFamily(facts) {
   const tag = facts.tag || "";
   if (["checkbox", "switch", "radio"].includes(role)) return { family: "selection", why: "role " + role };
   if (role === "dialog" || tag === "dialog") return { family: "container", why: role === "dialog" ? "role dialog" : "<dialog>" };
+  // An explicit button or link role says what activating it does, whatever
+  // the tag: <a href role="button"> is an action, <button role="link"> navigates.
+  if (role === "button") return { family: "action", why: "role button" };
+  if (role === "link") return { family: "navigation", why: "role link" };
   if (tag === "a" && typeof facts.href === "string") return { family: "navigation", why: "<a href>" };
   if (tag === "button") return { family: "action", why: "<button>" };
   if (tag === "input" && BUTTON_INPUTS.includes(String(facts.type || "").toLowerCase())) {
@@ -72,6 +77,9 @@ function buildReport(candidates, entries, { taxonomy = guide, price = JEV_PRICE_
   const right = (c, a) => a.answer === c.label;
   const labelled = candidates.filter(isLabelled);
   const roleNames = (c) => Boolean(c.facts && ROLE_NAMES_ENTRY.includes(c.facts.role));
+  // Without element facts from the capture its answers came from, a candidate's
+  // role and tag are unknown: it sits out the role split and the tag table.
+  const known = (c) => Boolean(c.facts);
 
   // 6. Semantic mismatches, first, since accuracy is also given without them.
   const mismatches = [];
@@ -122,8 +130,8 @@ function buildReport(candidates, entries, { taxonomy = guide, price = JEV_PRICE_
   const groups = {
     all: labelled,
     withoutMismatches: labelled.filter((c) => !mismatched.has(candidateKey(c))),
-    roleNamesEntry: labelled.filter(roleNames),
-    roleDoesNot: labelled.filter((c) => !roleNames(c)),
+    roleNamesEntry: labelled.filter((c) => known(c) && roleNames(c)),
+    roleDoesNot: labelled.filter((c) => known(c) && !roleNames(c)),
   };
   const accuracy = {}, precision = {};
   for (const setup of SETUPS) {
@@ -239,7 +247,7 @@ function buildReport(candidates, entries, { taxonomy = guide, price = JEV_PRICE_
   return {
     counts: {
       candidates: candidates.length, labelled: labelled.length, mismatches: mismatches.length,
-      roleNamesEntry: groups.roleNamesEntry.length,
+      roleNamesEntry: groups.roleNamesEntry.length, factsUnknown: candidates.filter((c) => !known(c)).length,
     },
     captures,
     accuracy, precision, movement, changed, stability, mismatches, buttonLink, cost, rules,
@@ -282,11 +290,13 @@ function decide({ candidates, labelled, got, right, accuracy, precision, stabili
   const accB = accuracy.dom.all.pooled, accC = accuracy["image+dom"].all.pooled;
   const preB = precision.dom.all, preC = precision["image+dom"].all;
   const accGap = accB.share !== null && accC.share !== null ? Math.abs(accB.share - accC.share) : null;
-  const preGap = preB.none && preC.none ? 0 : preB.none || preC.none ? null : Math.abs(preB.share - preC.share);
+  // No confident answer on one side or both leaves precision unmeasured, and
+  // an unmeasured comparison cannot hold.
+  const preGap = preB.none || preC.none ? null : Math.abs(preB.share - preC.share);
   const rethinkRule = {
     holds: cNoise.share !== null && accGap !== null && preGap !== null && accGap <= cNoise.share && preGap <= cNoise.share,
     accuracyGap: accGap, precisionGap: preGap, cNoise,
-    precisionNote: preB.none && preC.none ? "neither B nor C was ever confident"
+    precisionNote: preB.none && preC.none ? "neither B nor C was ever confident, so precision cannot be compared"
       : preB.none || preC.none ? (preB.none ? "B" : "C") + " was never confident, so precision cannot be compared" : null,
   };
 
@@ -359,6 +369,12 @@ function renderMarkdown(r) {
   }
   out.push(table(["Setup", "Run 1", "Run 2", "Pooled", "Without mismatches", "Role names an entry", "Role does not"], accRows));
   out.push("");
+  if (r.counts.factsUnknown) {
+    out.push("_" + count(r.counts.factsUnknown, "candidate") + " had no element facts from the capture " +
+      "its answers came from, so " + (r.counts.factsUnknown === 1 ? "it is" : "they are") +
+      " left out of the role split and of the tag check for semantic mismatches._");
+    out.push("");
+  }
 
   out.push("## 2. Confident precision");
   out.push("");
@@ -452,18 +468,32 @@ function renderMarkdown(r) {
   return out.join("\n");
 }
 
+/**
+ * Each candidate with the tag, role, type and href of the element its answers
+ * were about. Read from the answers themselves when they carry it; otherwise
+ * from a capture, but only the capture the answers came from, since a
+ * recapture numbers its elements afresh and e12 may be something else.
+ */
+function enrich(candidates, entries, captures) {
+  return candidates.map((c) => {
+    const mine = Object.entries(entries).filter(([key]) => key.startsWith(candidateKey(c) + "|")).map(([, e]) => e);
+    const told = mine.find((e) => e.element && e.element.tag);
+    if (told) return Object.assign({}, c, { facts: told.element });
+    const found = captures.get(c.page);
+    const from = new Set(mine.map((e) => e.capturedAt).filter(Boolean));
+    if (!found || (from.size && !from.has(found.record.capturedAt))) return c;
+    const e = found.record.elements.find((x) => x.id === c.element);
+    return e ? Object.assign({}, c, { facts: { tag: e.tag, role: e.role, type: e.type, href: e.href } }) : c;
+  });
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const { candidates } = loadCandidates(path.resolve(SPIKE, args.candidates || "fixtures/candidates.json"));
   const { entries } = readJson(path.resolve(SPIKE, args.responses || "fixtures/responses.json"), { entries: {} });
   const captures = loadCaptures(path.resolve(SPIKE, args.captures || "captures"));
 
-  // The tag, role, type and href each candidate had, from its capture.
-  const enriched = candidates.map((c) => {
-    const found = captures.get(c.page);
-    const e = found && found.record.elements.find((x) => x.id === c.element);
-    return e ? Object.assign({}, c, { facts: { tag: e.tag, role: e.role, type: e.type, href: e.href } }) : c;
-  });
+  const enriched = enrich(candidates, entries, captures);
   // The capture each page's answers were made from, as the entries record it;
   // the capture on disk only when no entry says.
   const pages = [...new Set(candidates.map((c) => c.page))];
@@ -484,6 +514,6 @@ function main() {
   }
 }
 
-module.exports = { buildReport, renderMarkdown, impliedFamily, ROLE_NAMES_ENTRY };
+module.exports = { buildReport, renderMarkdown, enrich, impliedFamily, ROLE_NAMES_ENTRY };
 
 if (require.main === module) main();

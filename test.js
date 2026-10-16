@@ -480,6 +480,36 @@ const { describeGeometry } = require('./src-geometry');
       JSON.stringify(withMismatch));
   }
 
+  // An explicit button or link role overrides the tag.
+  {
+    const cands = [
+      candidate('r1', { label: 'Button', facts: { tag: 'a', href: '/x', role: 'button' } }),
+      candidate('r2', { label: 'Link', facts: { tag: 'button', role: 'link' } }),
+      candidate('r3', { label: 'Link', facts: { tag: 'fancy-action', role: 'button' } }),
+    ];
+    const keys = buildReport(cands, {}).mismatches.map((m) => m.key.split('/').pop()).join();
+    check('button and link roles come before the tag', keys !== 'r3' && keys);
+  }
+
+  // Element facts come from the answers, or from the capture they were made from, never another.
+  {
+    const { enrich } = require('./spike/report');
+    const c1 = candidate('e1', { label: 'Link' }), c2 = candidate('e2', { label: 'Link' }), c3 = candidate('e3', { label: 'Link' });
+    const entries = {
+      [responseKey(c1, 'dom', 1)]: { status: 'ok', capturedAt: 'old', element: { tag: 'a', role: 'link', type: null, href: '/a' } },
+      [responseKey(c2, 'dom', 1)]: { status: 'ok', capturedAt: 'old' },
+      [responseKey(c3, 'dom', 1)]: { status: 'ok', capturedAt: 'new' },
+    };
+    const record = { capturedAt: 'new', elements: ['e1', 'e2', 'e3'].map((id) => ({ id, tag: 'div', role: 'generic', type: null, href: null })) };
+    const captures = new Map([['https://example.com/p', { record }]]);
+    const [f1, f2, f3] = enrich([c1, c2, c3], entries, captures).map((c) => c.facts);
+    check('element facts come from the answers, or only from the capture they were made from',
+      (!f1 || f1.tag !== 'a' || f2 || !f3 || f3.tag !== 'div') && JSON.stringify([f1, f2, f3]));
+    const md = renderMarkdown(buildReport([c2], {}));
+    check('a candidate without facts sits out the role split, and the report says so',
+      !/1 candidate had no element facts/.test(md) && md.split('\n').filter((l) => /facts/.test(l)).join(' / '));
+  }
+
   // Split by whether the role names a guide entry outright.
   {
     const a = candidate('e1', { label: 'Toggle', facts: { tag: 'div', role: 'switch' } });
@@ -511,6 +541,10 @@ const { describeGeometry } = require('./src-geometry');
     const rethinkAgainst = buildReport(bl, build(bl.map((c) => [c, { dom: [wrong(c), wrong(c)], 'image+dom': [right(c), right(c)] }])));
     check('rethink holds when B is within C\'s noise of C', !rethinkFor.rules.rethink.holds && JSON.stringify(rethinkFor.rules.rethink));
     check('rethink stays quiet when B falls short of C', rethinkAgainst.rules.rethink.holds && JSON.stringify(rethinkAgainst.rules.rethink));
+    const unsure = (c) => [c.label, 'K'];
+    const noneConfident = buildReport(bl, build(bl.map((c, i) => [c, { dom: [unsure(c), i === 3 ? [wrong(c)[0], 'K'] : unsure(c)], 'image+dom': [unsure(c), i === 3 ? [wrong(c)[0], 'K'] : unsure(c)] }])));
+    check('rethink stays quiet when neither B nor C was ever confident',
+      (noneConfident.rules.rethink.holds || noneConfident.rules.rethink.precisionGap !== null) && JSON.stringify(noneConfident.rules.rethink));
 
     // Guide: the DOM changes nothing; against: it changes every answer while A is stable.
     const guideFor = buildReport(bl, build(bl.map((c) => [c, { image: [wrong(c), wrong(c)], 'image+dom': [wrong(c), wrong(c)] }])));
