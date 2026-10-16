@@ -1,0 +1,319 @@
+{
+  "url": "test/page.html",
+  "capturedAt": "2026-10-16T11:54:21.518Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "page": {
+    "width": 1440,
+    "height": 1792
+  },
+  "screenshot": "test-page-html-6f1c47eb.png",
+  "elements": [
+    {
+      "id": "e1",
+      "parent": null,
+      "tag": "html",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "Get started Save Read the documentation first.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1792
+      },
+      "style": {
+        "width": "1440px",
+        "height": "1792px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(0, 0, 0)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e2",
+      "parent": "e1",
+      "tag": "body",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "Get started Save Read the documentation first.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1792
+      },
+      "style": {
+        "width": "1440px",
+        "height": "1792px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e3",
+      "parent": "e2",
+      "tag": "main",
+      "type": null,
+      "role": "main",
+      "name": null,
+      "text": "Get started Save Read the documentation first.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 1792
+      },
+      "style": {
+        "width": "1440px",
+        "height": "1792px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e4",
+      "parent": "e3",
+      "tag": "a",
+      "type": null,
+      "role": "link",
+      "name": "Get started",
+      "text": "Get started",
+      "href": "/start",
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 0,
+        "width": 160,
+        "height": 48
+      },
+      "style": {
+        "width": "160px",
+        "height": "48px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(15, 98, 254)",
+        "border": "0px none rgb(255, 255, 255)",
+        "position": "absolute",
+        "zIndex": "auto",
+        "cursor": "pointer"
+      }
+    },
+    {
+      "id": "e5",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "Save Read the documentation first.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 0,
+        "width": 1360,
+        "height": 176
+      },
+      "style": {
+        "width": "1360px",
+        "height": "176px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e6",
+      "parent": "e5",
+      "tag": "button",
+      "type": "button",
+      "role": "button",
+      "name": "Save",
+      "text": "Save",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 96,
+        "width": 120,
+        "height": 40
+      },
+      "style": {
+        "width": "120px",
+        "height": "40px",
+        "borderRadius": "4px",
+        "backgroundColor": "rgb(244, 244, 244)",
+        "border": "1px solid rgb(141, 141, 141)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "default"
+      }
+    },
+    {
+      "id": "e7",
+      "parent": "e5",
+      "tag": "p",
+      "type": null,
+      "role": "paragraph",
+      "name": null,
+      "text": "Read the documentation first.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 152,
+        "width": 1360,
+        "height": 24
+      },
+      "style": {
+        "width": "1360px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e8",
+      "parent": "e7",
+      "tag": "a",
+      "type": null,
+      "role": "link",
+      "name": "documentation",
+      "text": "documentation",
+      "href": "/docs",
+      "aria": {},
+      "box": {
+        "x": 109.06,
+        "y": 155,
+        "width": 107.61,
+        "height": 18
+      },
+      "style": {
+        "width": "auto",
+        "height": "auto",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(0, 0, 238)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "pointer"
+      }
+    },
+    {
+      "id": "e9",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 192,
+        "width": 1360,
+        "height": 1600
+      },
+      "style": {
+        "width": "1360px",
+        "height": "1600px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e10",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "generic",
+      "name": null,
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 600,
+        "y": 300,
+        "width": 80,
+        "height": 40
+      },
+      "style": {
+        "width": "80px",
+        "height": "40px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(218, 30, 40)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "absolute",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    }
+  ],
+  "labelling": {
+    "e4": {
+      "classes": [
+        "hero-signup-link",
+        "cds--btn",
+        "cds--btn--primary"
+      ],
+      "id": "hero-signup",
+      "data": {
+        "data-track": "signup-hero"
+      }
+    },
+    "e5": {
+      "classes": [
+        "action-row"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e9": {
+      "classes": [
+        "page-filler"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e10": {
+      "classes": [
+        "sliding-block"
+      ],
+      "id": null,
+      "data": {}
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "note": "The test page, end to end: one candidate through all three setups. The real candidate list lives in fixtures/candidates.json.",
+  "candidates": [
+    {
+      "page": "test/page.html",
+      "element": "e4",
+      "pair": "Button / Link",
+      "hint": "hero-signup-link cds--btn cds--btn--primary",
+      "label": "Link",
+      "looks_like": "Button",
+      "note": "An <a href> styled as a filled primary button: the case the spike exists for."
+    }
+  ]
+}

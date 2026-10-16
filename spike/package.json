@@ -1,0 +1,18 @@
+{
+  "name": "field-guide-dom-spike",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Does the DOM help Jev identify what the picture can't? Captures pages, builds evidence, asks Jev three ways, reports.",
+  "scripts": {
+    "test": "node test.js",
+    "capture": "node capture.js",
+    "run": "node run.js",
+    "report": "node report.js",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "1.64.1",
+    "sharp": "0.35.5"
+  }
+}

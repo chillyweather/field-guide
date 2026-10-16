@@ -1,0 +1,925 @@
+{
+  "entries": {
+    "test-page-html-6f1c47eb/e4|image|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
+      "setup": "image",
+      "run": 1,
+      "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
+      "at": "2026-10-16T11:22:25.214Z",
+      "ms": 526,
+      "inputTokens": 6356,
+      "model": "jev-1.13.0",
+      "requestedModel": "jev-latest",
+      "guideVersion": "0.1.0",
+      "weighed": {
+        "answer": "Button",
+        "confidence": 1,
+        "verdict": "confident",
+        "contested": false,
+        "familyAgrees": true,
+        "unmet": [],
+        "family": "action",
+        "runners": [
+          [
+            "Button",
+            1
+          ],
+          [
+            "Icon Button",
+            0
+          ],
+          [
+            "Link",
+            0
+          ]
+        ],
+        "probes": {
+          "accepts_typed_text": 0.02,
+          "has_binary_on_off_state": 0.01,
+          "contains_other_components": 0.07,
+          "is_overlaid_above_content": 0.04,
+          "is_dismissible": 0.01
+        }
+      },
+      "body": {
+        "model": "jev-1.13.0",
+        "answers": {
+          "component": {
+            "type": "choice",
+            "choice": "Button",
+            "confidence": 1,
+            "probabilities": {
+              "Button": 1,
+              "Icon Button": 0,
+              "Link": 0,
+              "Chip": 0,
+              "Badge": 0,
+              "Text Input": 0,
+              "Search Field": 0,
+              "Select": 0,
+              "Checkbox": 0,
+              "Radio Button": 0,
+              "Toggle": 0,
+              "Card": 0,
+              "Modal Dialog": 0,
+              "Tabs": 0,
+              "Sidebar": 0,
+              "Other": 0
+            }
+          },
+          "family": {
+            "type": "choice",
+            "choice": "action",
+            "confidence": 0.88,
+            "probabilities": {
+              "action": 0.9,
+              "navigation": 0.1,
+              "text_entry": 0,
+              "selection": 0,
+              "container": 0,
+              "indicator": 0
+            }
+          },
+          "accepts_typed_text": {
+            "type": "noul",
+            "noul": 0.02
+          },
+          "has_binary_on_off_state": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "contains_other_components": {
+            "type": "noul",
+            "noul": 0.07
+          },
+          "is_overlaid_above_content": {
+            "type": "noul",
+            "noul": 0.04
+          },
+          "is_dismissible": {
+            "type": "noul",
+            "noul": 0.01
+          }
+        },
+        "usage": {
+          "input_tokens": 6356,
+          "output_tokens": 292
+        }
+      },
+      "request": {
+        "imageHeader": true,
+        "body": {
+          "model": "jev-latest",
+          "state": {
+            "task": "A region of a web page, picked out by a tool, to be identified.",
+            "region": "fg-region-vfjqnuhr",
+            "geometry": "From the page layout, measured against the browser viewport: 160x48 px; aspect ratio 3.33; spans 11% of the screen width; positioned top left of the screen",
+            "region_note": "The region is drawn at its true size on a flat white margin; the margin is not part of it.",
+            "screen": "fg-screen-vfjqnuhr",
+            "screen_note": "A viewport-sized window of the page around the region, for context only. The tool outlined the region in it with a 3 px magenta line drawn just outside its edges; the outline is not part of the page."
+          },
+          "assets": {
+            "fg-region-vfjqnuhr": {
+              "type": "image",
+              "format": "png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-crop.png",
+              "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
+            },
+            "fg-screen-vfjqnuhr": {
+              "type": "image",
+              "format": "png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-window.png",
+              "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
+            }
+          },
+          "questions": {
+            "component": {
+              "type": "choice",
+              "instructions": "Which component from this design-system field guide does the given region show?",
+              "criteria": {
+                "Button": {
+                  "what": "An interactive control carrying a short verb label that performs an action when activated. Usually a filled, outlined or tinted rectangle with a corner radius; may carry a leading or trailing icon.",
+                  "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select). A control showing only an icon, with no text (Icon Button).",
+                  "examples": [
+                    "Save",
+                    "Cancel",
+                    "Add to cart",
+                    "Continue"
+                  ]
+                },
+                "Icon Button": {
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
+                  "examples": [
+                    "a \u00d7 in the top corner of a panel",
+                    "a bin at the end of a table row",
+                    "three vertical dots that open more actions",
+                    "a bell in a top bar",
+                    "a heart outline that fills when favourited"
+                  ]
+                },
+                "Link": {
+                  "what": "Text that navigates to another page, view or anchor. Typically inline in a sentence or standing alone, distinguished by colour and often an underline, with no filled surface behind it.",
+                  "not_for": "Anything that changes data or submits rather than navigates, even if it is styled as plain text (Button).",
+                  "examples": [
+                    "Learn more",
+                    "Terms of service",
+                    "Back to results"
+                  ]
+                },
+                "Chip": {
+                  "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
+                  "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
+                  "examples": [
+                    "a removable filter token reading 'Under $50 \u00d7'",
+                    "a selectable 'Vegetarian' tag in a filter row"
+                  ]
+                },
+                "Badge": {
+                  "what": "A small non-interactive indicator showing a count, status or short label, frequently attached to the corner of another element such as an icon or avatar.",
+                  "not_for": "A token the user can select or remove (Chip). Anything clickable.",
+                  "examples": [
+                    "a red dot with '3' on a bell icon",
+                    "a green 'Active' status pill in a table row"
+                  ]
+                },
+                "Text Input": {
+                  "what": "A single-line field that accepts free text typed by the user. A bordered or underlined box, usually with a label above or inside it and often placeholder text.",
+                  "not_for": "A field whose purpose is querying, marked by a magnifier icon or 'Search' placeholder (Search Field). A field that opens a list of predefined options instead of accepting typing (Select).",
+                  "examples": [
+                    "Email address",
+                    "Full name",
+                    "Street address"
+                  ]
+                },
+                "Search Field": {
+                  "what": "A text entry control specialised for querying a data set. Recognisable by a magnifier icon, a placeholder naming search, and often a clear affordance or rounded full-width treatment.",
+                  "not_for": "Generic free-text entry for a form value (Text Input).",
+                  "examples": [
+                    "a rounded field with a magnifier and 'Search products'"
+                  ]
+                },
+                "Select": {
+                  "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
+                  "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
+                  "examples": [
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
+                  ]
+                },
+                "Checkbox": {
+                  "what": "A small square control for an independent binary choice, usually with a label beside it. Several may be checked at once within a group. May show a check mark or an indeterminate dash.",
+                  "not_for": "A circular control where exactly one option in the group may be chosen (Radio Button). A sliding track control that applies immediately (Toggle).",
+                  "examples": [
+                    "Remember me",
+                    "I agree to the terms",
+                    "a multi-select filter list"
+                  ]
+                },
+                "Radio Button": {
+                  "what": "A small circular control for choosing exactly one option from a mutually exclusive group. Selected state is shown as a filled inner dot.",
+                  "not_for": "Independent choices where more than one may be selected (Checkbox).",
+                  "examples": [
+                    "Delivery method: Standard / Express",
+                    "Payment: Card / PayPal"
+                  ]
+                },
+                "Toggle": {
+                  "what": "A switch with a track and a sliding thumb that turns a setting on or off, applying the change immediately rather than on submit.",
+                  "not_for": "A square control whose value is submitted with a form (Checkbox). A single icon that switches between filled and outlined, with no track or thumb (Icon Button).",
+                  "examples": [
+                    "Dark mode",
+                    "Enable notifications"
+                  ]
+                },
+                "Card": {
+                  "what": "A bounded surface that groups related content and actions about a single subject, sitting in the normal flow of the page. Usually has a border, elevation or tinted background.",
+                  "not_for": "A surface that floats above the page content and blocks interaction with it (Modal Dialog).",
+                  "examples": [
+                    "a product tile with image, title, price and an action",
+                    "a dashboard statistic panel"
+                  ]
+                },
+                "Modal Dialog": {
+                  "what": "A surface overlaid above the page that requires attention or a decision before the user continues. Usually centred, above a dimmed scrim, with a title, body and one or more actions, and often a close control.",
+                  "not_for": "An in-flow grouping surface that does not overlay anything (Card). A small transient label appearing on hover (Tooltip).",
+                  "examples": [
+                    "a 'Delete this file?' confirmation with Cancel and Delete"
+                  ]
+                },
+                "Tabs": {
+                  "what": "A row of two or more labels, one of them marked as current by an underline, a filled pill or a heavier weight, which switches the content shown below it. Also called a tab bar. The labels sit on one shared baseline and are usually evenly weighted.",
+                  "not_for": "A row of tokens that filter or select without switching a view (Chip). A single isolated label. A row whose items each navigate to a different page rather than swapping content in place.",
+                  "examples": [
+                    "Overview | Activity | Settings, with Overview underlined",
+                    "a segmented row of view switchers above a table"
+                  ]
+                },
+                "Sidebar": {
+                  "what": "A tall panel anchored to the left or right edge of the screen, running most or all of its height, holding a vertical list of destinations or supplementary controls. Usually narrow relative to the screen, often on a tinted or bordered surface, with the current destination marked. Also called a side nav, navigation rail or navigation drawer.",
+                  "not_for": "A bounded surface about one subject that sits in the page flow (Card). A panel overlaid above the content with a scrim, demanding a decision (Modal Dialog). A horizontal row of destinations (Tabs).",
+                  "examples": [
+                    "a settings menu listing General, Members, Billing and Security down the left edge",
+                    "a documentation index pinned to the side of the page"
+                  ]
+                },
+                "Other": {
+                  "what": "None of the above, or the region does not contain a single identifiable component. Choose this rather than forcing a poor fit.",
+                  "not_for": "A component that does match one of the entries above, even partially.",
+                  "examples": [
+                    "a photograph",
+                    "a block of body text",
+                    "several components at once",
+                    "an unrecognisable fragment"
+                  ]
+                }
+              }
+            },
+            "family": {
+              "type": "choice",
+              "instructions": "What kind of component is the given region, by behaviour?",
+              "criteria": {
+                "action": "Performs an operation when activated.",
+                "navigation": "Moves the user to another location or view.",
+                "text_entry": "Accepts free text typed by the user.",
+                "selection": "Sets a value by choosing among predefined options or states.",
+                "container": "A surface that groups and holds other components.",
+                "indicator": "Displays status or information and is not interactive."
+              }
+            },
+            "accepts_typed_text": {
+              "type": "noul",
+              "instructions": "The region shows a control that the user can type free text into."
+            },
+            "has_binary_on_off_state": {
+              "type": "noul",
+              "instructions": "The region shows a control representing an on/off or checked/unchecked state."
+            },
+            "contains_other_components": {
+              "type": "noul",
+              "instructions": "The region is a surface that holds several smaller components inside it."
+            },
+            "is_overlaid_above_content": {
+              "type": "noul",
+              "instructions": "The region appears to float above other page content, for example over a dimmed backdrop."
+            },
+            "is_dismissible": {
+              "type": "noul",
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
+            }
+          }
+        }
+      }
+    },
+    "test-page-html-6f1c47eb/e4|dom|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
+      "setup": "dom",
+      "run": 1,
+      "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
+      "at": "2026-10-16T11:22:25.533Z",
+      "ms": 315,
+      "inputTokens": 2798,
+      "model": "jev-1.13.0",
+      "requestedModel": "jev-latest",
+      "guideVersion": "0.1.0",
+      "weighed": {
+        "answer": "Link",
+        "confidence": 0.58,
+        "verdict": "check",
+        "contested": true,
+        "familyAgrees": true,
+        "unmet": [],
+        "family": "navigation",
+        "runners": [
+          [
+            "Link",
+            0.61
+          ],
+          [
+            "Button",
+            0.39
+          ],
+          [
+            "Icon Button",
+            0
+          ]
+        ],
+        "probes": {
+          "accepts_typed_text": 0.02,
+          "has_binary_on_off_state": 0.02,
+          "contains_other_components": 0.04,
+          "is_overlaid_above_content": 0.12,
+          "is_dismissible": 0.02
+        }
+      },
+      "body": {
+        "model": "jev-1.13.0",
+        "answers": {
+          "component": {
+            "type": "choice",
+            "choice": "Link",
+            "confidence": 0.58,
+            "probabilities": {
+              "Button": 0.39,
+              "Icon Button": 0,
+              "Link": 0.61,
+              "Chip": 0,
+              "Badge": 0,
+              "Text Input": 0,
+              "Search Field": 0,
+              "Select": 0,
+              "Checkbox": 0,
+              "Radio Button": 0,
+              "Toggle": 0,
+              "Card": 0,
+              "Modal Dialog": 0,
+              "Tabs": 0,
+              "Sidebar": 0,
+              "Other": 0
+            }
+          },
+          "family": {
+            "type": "choice",
+            "choice": "navigation",
+            "confidence": 0.77,
+            "probabilities": {
+              "action": 0.19,
+              "navigation": 0.81,
+              "text_entry": 0,
+              "selection": 0,
+              "container": 0,
+              "indicator": 0
+            }
+          },
+          "accepts_typed_text": {
+            "type": "noul",
+            "noul": 0.02
+          },
+          "has_binary_on_off_state": {
+            "type": "noul",
+            "noul": 0.02
+          },
+          "contains_other_components": {
+            "type": "noul",
+            "noul": 0.04
+          },
+          "is_overlaid_above_content": {
+            "type": "noul",
+            "noul": 0.12
+          },
+          "is_dismissible": {
+            "type": "noul",
+            "noul": 0.02
+          }
+        },
+        "usage": {
+          "input_tokens": 2798,
+          "output_tokens": 292
+        }
+      },
+      "request": {
+        "imageHeader": false,
+        "body": {
+          "model": "jev-latest",
+          "state": {
+            "task": "A region of a web page, picked out by a tool, to be identified.",
+            "geometry": "From the page layout, measured against the browser viewport: 160x48 px; aspect ratio 3.33; spans 11% of the screen width; positioned top left of the screen",
+            "picture_note": "No picture of the region is given; judge from its facts and geometry alone.",
+            "dom": "Read from the page's DOM and computed style:\n- element: <a>\n- role: link\n- accessible name: \"Get started\"\n- visible text: \"Get started\"\n- href: present, \"/start\"\n- width (computed): 160px\n- height (computed): 48px\n- corner radius (computed): 0px\n- background colour (computed): rgb(15, 98, 254)\n- border (computed): 0px none rgb(255, 255, 255)\n- position (computed): absolute\n- z-index (computed): auto\n- cursor (computed): pointer\n- parent: <main>, role main\n- children by role: none"
+          },
+          "questions": {
+            "component": {
+              "type": "choice",
+              "instructions": "Which component from this design-system field guide does the given region show?",
+              "criteria": {
+                "Button": {
+                  "what": "An interactive control carrying a short verb label that performs an action when activated. Usually a filled, outlined or tinted rectangle with a corner radius; may carry a leading or trailing icon.",
+                  "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select). A control showing only an icon, with no text (Icon Button).",
+                  "examples": [
+                    "Save",
+                    "Cancel",
+                    "Add to cart",
+                    "Continue"
+                  ]
+                },
+                "Icon Button": {
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
+                  "examples": [
+                    "a \u00d7 in the top corner of a panel",
+                    "a bin at the end of a table row",
+                    "three vertical dots that open more actions",
+                    "a bell in a top bar",
+                    "a heart outline that fills when favourited"
+                  ]
+                },
+                "Link": {
+                  "what": "Text that navigates to another page, view or anchor. Typically inline in a sentence or standing alone, distinguished by colour and often an underline, with no filled surface behind it.",
+                  "not_for": "Anything that changes data or submits rather than navigates, even if it is styled as plain text (Button).",
+                  "examples": [
+                    "Learn more",
+                    "Terms of service",
+                    "Back to results"
+                  ]
+                },
+                "Chip": {
+                  "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
+                  "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
+                  "examples": [
+                    "a removable filter token reading 'Under $50 \u00d7'",
+                    "a selectable 'Vegetarian' tag in a filter row"
+                  ]
+                },
+                "Badge": {
+                  "what": "A small non-interactive indicator showing a count, status or short label, frequently attached to the corner of another element such as an icon or avatar.",
+                  "not_for": "A token the user can select or remove (Chip). Anything clickable.",
+                  "examples": [
+                    "a red dot with '3' on a bell icon",
+                    "a green 'Active' status pill in a table row"
+                  ]
+                },
+                "Text Input": {
+                  "what": "A single-line field that accepts free text typed by the user. A bordered or underlined box, usually with a label above or inside it and often placeholder text.",
+                  "not_for": "A field whose purpose is querying, marked by a magnifier icon or 'Search' placeholder (Search Field). A field that opens a list of predefined options instead of accepting typing (Select).",
+                  "examples": [
+                    "Email address",
+                    "Full name",
+                    "Street address"
+                  ]
+                },
+                "Search Field": {
+                  "what": "A text entry control specialised for querying a data set. Recognisable by a magnifier icon, a placeholder naming search, and often a clear affordance or rounded full-width treatment.",
+                  "not_for": "Generic free-text entry for a form value (Text Input).",
+                  "examples": [
+                    "a rounded field with a magnifier and 'Search products'"
+                  ]
+                },
+                "Select": {
+                  "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
+                  "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
+                  "examples": [
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
+                  ]
+                },
+                "Checkbox": {
+                  "what": "A small square control for an independent binary choice, usually with a label beside it. Several may be checked at once within a group. May show a check mark or an indeterminate dash.",
+                  "not_for": "A circular control where exactly one option in the group may be chosen (Radio Button). A sliding track control that applies immediately (Toggle).",
+                  "examples": [
+                    "Remember me",
+                    "I agree to the terms",
+                    "a multi-select filter list"
+                  ]
+                },
+                "Radio Button": {
+                  "what": "A small circular control for choosing exactly one option from a mutually exclusive group. Selected state is shown as a filled inner dot.",
+                  "not_for": "Independent choices where more than one may be selected (Checkbox).",
+                  "examples": [
+                    "Delivery method: Standard / Express",
+                    "Payment: Card / PayPal"
+                  ]
+                },
+                "Toggle": {
+                  "what": "A switch with a track and a sliding thumb that turns a setting on or off, applying the change immediately rather than on submit.",
+                  "not_for": "A square control whose value is submitted with a form (Checkbox). A single icon that switches between filled and outlined, with no track or thumb (Icon Button).",
+                  "examples": [
+                    "Dark mode",
+                    "Enable notifications"
+                  ]
+                },
+                "Card": {
+                  "what": "A bounded surface that groups related content and actions about a single subject, sitting in the normal flow of the page. Usually has a border, elevation or tinted background.",
+                  "not_for": "A surface that floats above the page content and blocks interaction with it (Modal Dialog).",
+                  "examples": [
+                    "a product tile with image, title, price and an action",
+                    "a dashboard statistic panel"
+                  ]
+                },
+                "Modal Dialog": {
+                  "what": "A surface overlaid above the page that requires attention or a decision before the user continues. Usually centred, above a dimmed scrim, with a title, body and one or more actions, and often a close control.",
+                  "not_for": "An in-flow grouping surface that does not overlay anything (Card). A small transient label appearing on hover (Tooltip).",
+                  "examples": [
+                    "a 'Delete this file?' confirmation with Cancel and Delete"
+                  ]
+                },
+                "Tabs": {
+                  "what": "A row of two or more labels, one of them marked as current by an underline, a filled pill or a heavier weight, which switches the content shown below it. Also called a tab bar. The labels sit on one shared baseline and are usually evenly weighted.",
+                  "not_for": "A row of tokens that filter or select without switching a view (Chip). A single isolated label. A row whose items each navigate to a different page rather than swapping content in place.",
+                  "examples": [
+                    "Overview | Activity | Settings, with Overview underlined",
+                    "a segmented row of view switchers above a table"
+                  ]
+                },
+                "Sidebar": {
+                  "what": "A tall panel anchored to the left or right edge of the screen, running most or all of its height, holding a vertical list of destinations or supplementary controls. Usually narrow relative to the screen, often on a tinted or bordered surface, with the current destination marked. Also called a side nav, navigation rail or navigation drawer.",
+                  "not_for": "A bounded surface about one subject that sits in the page flow (Card). A panel overlaid above the content with a scrim, demanding a decision (Modal Dialog). A horizontal row of destinations (Tabs).",
+                  "examples": [
+                    "a settings menu listing General, Members, Billing and Security down the left edge",
+                    "a documentation index pinned to the side of the page"
+                  ]
+                },
+                "Other": {
+                  "what": "None of the above, or the region does not contain a single identifiable component. Choose this rather than forcing a poor fit.",
+                  "not_for": "A component that does match one of the entries above, even partially.",
+                  "examples": [
+                    "a photograph",
+                    "a block of body text",
+                    "several components at once",
+                    "an unrecognisable fragment"
+                  ]
+                }
+              }
+            },
+            "family": {
+              "type": "choice",
+              "instructions": "What kind of component is the given region, by behaviour?",
+              "criteria": {
+                "action": "Performs an operation when activated.",
+                "navigation": "Moves the user to another location or view.",
+                "text_entry": "Accepts free text typed by the user.",
+                "selection": "Sets a value by choosing among predefined options or states.",
+                "container": "A surface that groups and holds other components.",
+                "indicator": "Displays status or information and is not interactive."
+              }
+            },
+            "accepts_typed_text": {
+              "type": "noul",
+              "instructions": "The region shows a control that the user can type free text into."
+            },
+            "has_binary_on_off_state": {
+              "type": "noul",
+              "instructions": "The region shows a control representing an on/off or checked/unchecked state."
+            },
+            "contains_other_components": {
+              "type": "noul",
+              "instructions": "The region is a surface that holds several smaller components inside it."
+            },
+            "is_overlaid_above_content": {
+              "type": "noul",
+              "instructions": "The region appears to float above other page content, for example over a dimmed backdrop."
+            },
+            "is_dismissible": {
+              "type": "noul",
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
+            }
+          }
+        }
+      }
+    },
+    "test-page-html-6f1c47eb/e4|image+dom|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
+      "setup": "image+dom",
+      "run": 1,
+      "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
+      "at": "2026-10-16T11:22:26.102Z",
+      "ms": 567,
+      "inputTokens": 6521,
+      "model": "jev-1.13.0",
+      "requestedModel": "jev-latest",
+      "guideVersion": "0.1.0",
+      "weighed": {
+        "answer": "Link",
+        "confidence": 0.64,
+        "verdict": "check",
+        "contested": true,
+        "familyAgrees": true,
+        "unmet": [],
+        "family": "navigation",
+        "runners": [
+          [
+            "Link",
+            0.66
+          ],
+          [
+            "Button",
+            0.33
+          ],
+          [
+            "Other",
+            0.01
+          ]
+        ],
+        "probes": {
+          "accepts_typed_text": 0.01,
+          "has_binary_on_off_state": 0.01,
+          "contains_other_components": 0.03,
+          "is_overlaid_above_content": 0.04,
+          "is_dismissible": 0.01
+        }
+      },
+      "body": {
+        "model": "jev-1.13.0",
+        "answers": {
+          "component": {
+            "type": "choice",
+            "choice": "Link",
+            "confidence": 0.64,
+            "probabilities": {
+              "Button": 0.33,
+              "Icon Button": 0,
+              "Link": 0.66,
+              "Chip": 0,
+              "Badge": 0,
+              "Text Input": 0,
+              "Search Field": 0,
+              "Select": 0,
+              "Checkbox": 0,
+              "Radio Button": 0,
+              "Toggle": 0,
+              "Card": 0,
+              "Modal Dialog": 0,
+              "Tabs": 0,
+              "Sidebar": 0,
+              "Other": 0.01
+            }
+          },
+          "family": {
+            "type": "choice",
+            "choice": "navigation",
+            "confidence": 0.89,
+            "probabilities": {
+              "action": 0.09,
+              "navigation": 0.91,
+              "text_entry": 0,
+              "selection": 0,
+              "container": 0,
+              "indicator": 0
+            }
+          },
+          "accepts_typed_text": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "has_binary_on_off_state": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "contains_other_components": {
+            "type": "noul",
+            "noul": 0.03
+          },
+          "is_overlaid_above_content": {
+            "type": "noul",
+            "noul": 0.04
+          },
+          "is_dismissible": {
+            "type": "noul",
+            "noul": 0.01
+          }
+        },
+        "usage": {
+          "input_tokens": 6521,
+          "output_tokens": 292
+        }
+      },
+      "request": {
+        "imageHeader": true,
+        "body": {
+          "model": "jev-latest",
+          "state": {
+            "task": "A region of a web page, picked out by a tool, to be identified.",
+            "region": "fg-region-eblxi8qu",
+            "geometry": "From the page layout, measured against the browser viewport: 160x48 px; aspect ratio 3.33; spans 11% of the screen width; positioned top left of the screen",
+            "region_note": "The region is drawn at its true size on a flat white margin; the margin is not part of it.",
+            "screen": "fg-screen-eblxi8qu",
+            "screen_note": "A viewport-sized window of the page around the region, for context only. The tool outlined the region in it with a 3 px magenta line drawn just outside its edges; the outline is not part of the page.",
+            "dom": "Read from the page's DOM and computed style:\n- element: <a>\n- role: link\n- accessible name: \"Get started\"\n- visible text: \"Get started\"\n- href: present, \"/start\"\n- width (computed): 160px\n- height (computed): 48px\n- corner radius (computed): 0px\n- background colour (computed): rgb(15, 98, 254)\n- border (computed): 0px none rgb(255, 255, 255)\n- position (computed): absolute\n- z-index (computed): auto\n- cursor (computed): pointer\n- parent: <main>, role main\n- children by role: none"
+          },
+          "assets": {
+            "fg-region-eblxi8qu": {
+              "type": "image",
+              "format": "png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-crop.png",
+              "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
+            },
+            "fg-screen-eblxi8qu": {
+              "type": "image",
+              "format": "png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-window.png",
+              "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
+            }
+          },
+          "questions": {
+            "component": {
+              "type": "choice",
+              "instructions": "Which component from this design-system field guide does the given region show?",
+              "criteria": {
+                "Button": {
+                  "what": "An interactive control carrying a short verb label that performs an action when activated. Usually a filled, outlined or tinted rectangle with a corner radius; may carry a leading or trailing icon.",
+                  "not_for": "Text that navigates somewhere else instead of acting (Link). A compact removable token (Chip). A control whose whole purpose is showing a value and opening a list (Select). A control showing only an icon, with no text (Icon Button).",
+                  "examples": [
+                    "Save",
+                    "Cancel",
+                    "Add to cart",
+                    "Continue"
+                  ]
+                },
+                "Icon Button": {
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
+                  "examples": [
+                    "a \u00d7 in the top corner of a panel",
+                    "a bin at the end of a table row",
+                    "three vertical dots that open more actions",
+                    "a bell in a top bar",
+                    "a heart outline that fills when favourited"
+                  ]
+                },
+                "Link": {
+                  "what": "Text that navigates to another page, view or anchor. Typically inline in a sentence or standing alone, distinguished by colour and often an underline, with no filled surface behind it.",
+                  "not_for": "Anything that changes data or submits rather than navigates, even if it is styled as plain text (Button).",
+                  "examples": [
+                    "Learn more",
+                    "Terms of service",
+                    "Back to results"
+                  ]
+                },
+                "Chip": {
+                  "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
+                  "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
+                  "examples": [
+                    "a removable filter token reading 'Under $50 \u00d7'",
+                    "a selectable 'Vegetarian' tag in a filter row"
+                  ]
+                },
+                "Badge": {
+                  "what": "A small non-interactive indicator showing a count, status or short label, frequently attached to the corner of another element such as an icon or avatar.",
+                  "not_for": "A token the user can select or remove (Chip). Anything clickable.",
+                  "examples": [
+                    "a red dot with '3' on a bell icon",
+                    "a green 'Active' status pill in a table row"
+                  ]
+                },
+                "Text Input": {
+                  "what": "A single-line field that accepts free text typed by the user. A bordered or underlined box, usually with a label above or inside it and often placeholder text.",
+                  "not_for": "A field whose purpose is querying, marked by a magnifier icon or 'Search' placeholder (Search Field). A field that opens a list of predefined options instead of accepting typing (Select).",
+                  "examples": [
+                    "Email address",
+                    "Full name",
+                    "Street address"
+                  ]
+                },
+                "Search Field": {
+                  "what": "A text entry control specialised for querying a data set. Recognisable by a magnifier icon, a placeholder naming search, and often a clear affordance or rounded full-width treatment.",
+                  "not_for": "Generic free-text entry for a form value (Text Input).",
+                  "examples": [
+                    "a rounded field with a magnifier and 'Search products'"
+                  ]
+                },
+                "Select": {
+                  "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
+                  "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
+                  "examples": [
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
+                  ]
+                },
+                "Checkbox": {
+                  "what": "A small square control for an independent binary choice, usually with a label beside it. Several may be checked at once within a group. May show a check mark or an indeterminate dash.",
+                  "not_for": "A circular control where exactly one option in the group may be chosen (Radio Button). A sliding track control that applies immediately (Toggle).",
+                  "examples": [
+                    "Remember me",
+                    "I agree to the terms",
+                    "a multi-select filter list"
+                  ]
+                },
+                "Radio Button": {
+                  "what": "A small circular control for choosing exactly one option from a mutually exclusive group. Selected state is shown as a filled inner dot.",
+                  "not_for": "Independent choices where more than one may be selected (Checkbox).",
+                  "examples": [
+                    "Delivery method: Standard / Express",
+                    "Payment: Card / PayPal"
+                  ]
+                },
+                "Toggle": {
+                  "what": "A switch with a track and a sliding thumb that turns a setting on or off, applying the change immediately rather than on submit.",
+                  "not_for": "A square control whose value is submitted with a form (Checkbox). A single icon that switches between filled and outlined, with no track or thumb (Icon Button).",
+                  "examples": [
+                    "Dark mode",
+                    "Enable notifications"
+                  ]
+                },
+                "Card": {
+                  "what": "A bounded surface that groups related content and actions about a single subject, sitting in the normal flow of the page. Usually has a border, elevation or tinted background.",
+                  "not_for": "A surface that floats above the page content and blocks interaction with it (Modal Dialog).",
+                  "examples": [
+                    "a product tile with image, title, price and an action",
+                    "a dashboard statistic panel"
+                  ]
+                },
+                "Modal Dialog": {
+                  "what": "A surface overlaid above the page that requires attention or a decision before the user continues. Usually centred, above a dimmed scrim, with a title, body and one or more actions, and often a close control.",
+                  "not_for": "An in-flow grouping surface that does not overlay anything (Card). A small transient label appearing on hover (Tooltip).",
+                  "examples": [
+                    "a 'Delete this file?' confirmation with Cancel and Delete"
+                  ]
+                },
+                "Tabs": {
+                  "what": "A row of two or more labels, one of them marked as current by an underline, a filled pill or a heavier weight, which switches the content shown below it. Also called a tab bar. The labels sit on one shared baseline and are usually evenly weighted.",
+                  "not_for": "A row of tokens that filter or select without switching a view (Chip). A single isolated label. A row whose items each navigate to a different page rather than swapping content in place.",
+                  "examples": [
+                    "Overview | Activity | Settings, with Overview underlined",
+                    "a segmented row of view switchers above a table"
+                  ]
+                },
+                "Sidebar": {
+                  "what": "A tall panel anchored to the left or right edge of the screen, running most or all of its height, holding a vertical list of destinations or supplementary controls. Usually narrow relative to the screen, often on a tinted or bordered surface, with the current destination marked. Also called a side nav, navigation rail or navigation drawer.",
+                  "not_for": "A bounded surface about one subject that sits in the page flow (Card). A panel overlaid above the content with a scrim, demanding a decision (Modal Dialog). A horizontal row of destinations (Tabs).",
+                  "examples": [
+                    "a settings menu listing General, Members, Billing and Security down the left edge",
+                    "a documentation index pinned to the side of the page"
+                  ]
+                },
+                "Other": {
+                  "what": "None of the above, or the region does not contain a single identifiable component. Choose this rather than forcing a poor fit.",
+                  "not_for": "A component that does match one of the entries above, even partially.",
+                  "examples": [
+                    "a photograph",
+                    "a block of body text",
+                    "several components at once",
+                    "an unrecognisable fragment"
+                  ]
+                }
+              }
+            },
+            "family": {
+              "type": "choice",
+              "instructions": "What kind of component is the given region, by behaviour?",
+              "criteria": {
+                "action": "Performs an operation when activated.",
+                "navigation": "Moves the user to another location or view.",
+                "text_entry": "Accepts free text typed by the user.",
+                "selection": "Sets a value by choosing among predefined options or states.",
+                "container": "A surface that groups and holds other components.",
+                "indicator": "Displays status or information and is not interactive."
+              }
+            },
+            "accepts_typed_text": {
+              "type": "noul",
+              "instructions": "The region shows a control that the user can type free text into."
+            },
+            "has_binary_on_off_state": {
+              "type": "noul",
+              "instructions": "The region shows a control representing an on/off or checked/unchecked state."
+            },
+            "contains_other_components": {
+              "type": "noul",
+              "instructions": "The region is a surface that holds several smaller components inside it."
+            },
+            "is_overlaid_above_content": {
+              "type": "noul",
+              "instructions": "The region appears to float above other page content, for example over a dimmed backdrop."
+            },
+            "is_dismissible": {
+              "type": "noul",
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
+            }
+          }
+        }
+      }
+    }
+  }
+}
