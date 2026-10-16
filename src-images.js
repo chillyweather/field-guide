@@ -51,33 +51,6 @@ function jevAccepts(width, height) {
     px >= L.minPixels && px <= L.maxPixels;
 }
 
-/**
- * The state for a Jev-only call: the pictures in place of a description.
- *
- * References are bare strings that Jev swaps for the images wherever they
- * appear, so they are made unlikely to occur in ordinary text. Both images go in
- * the state rather than in a question's instructions, so the dozen questions in
- * the call share one copy instead of each carrying its own.
- */
-function buildImageState(refs, geometry, notes) {
-  const state = {
-    task: "A region of a user interface, marked by a designer, to be identified.",
-    region: refs.crop,
-    geometry: "From the design file: " + geometry,
-  };
-  if (notes.cropPadded) {
-    state.region_note = "The region is drawn at its true size on a flat white margin; the margin is not part of it.";
-  }
-  if (refs.context) {
-    state.screen = refs.context;
-    state.screen_note = "The whole screen the region sits on, for context only." +
-      (notes.contextScale < 1 ? " Shown at " + Math.round(notes.contextScale * 100) + "% of its size." : "");
-  } else {
-    state.screen_note = "No surrounding screen was found; judge from the region alone.";
-  }
-  return state;
-}
-
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { JEV_IMAGE, fitForJev, jevAccepts, buildImageState };
+  module.exports = { JEV_IMAGE, fitForJev, jevAccepts };
 }
