@@ -96,7 +96,10 @@ async function collect() {
       index: i + 1,
       name: node.name,
       bytes,
-      geometry: describeGeometry(node, context && context.box),
+      // The UI words the geometry (src-geometry.js), so the sentence is shared
+      // with anything else that measures a box against its surroundings.
+      box: plainBox(node.absoluteBoundingBox),
+      size: { width: node.width, height: node.height },
     });
   }
 
@@ -104,6 +107,7 @@ async function collect() {
     type: "collected",
     specimens,
     context: context && context.image,
+    contextBox: context ? plainBox(context.box) : null,
     contextName: context ? context.name : null,
     contextFramed: context ? context.framed : false,
     total: specimens.length,
@@ -192,33 +196,9 @@ function largestContaining(union) {
   }
   return best;
 }
-/**
- * What the pixels do not say.
- *
- * Size, proportion and position are free here and genuinely discriminating: a
- * full-width 64px band at the top of the frame is a Header and not a Card, and
- * no crop of it says so.
- */
-function describeGeometry(node, contextBox) {
-  const box = node.absoluteBoundingBox;
-  const w = Math.round(node.width);
-  const h = Math.round(node.height);
-  const parts = [`${w}x${h} px`, `aspect ratio ${(w / Math.max(h, 1)).toFixed(2)}`];
-
-  if (contextBox && box) {
-    const widthShare = box.width / contextBox.width;
-    const relX = (box.x - contextBox.x) / contextBox.width;
-    const relY = (box.y - contextBox.y) / contextBox.height;
-    parts.push(`spans ${Math.round(widthShare * 100)}% of the screen width`);
-    parts.push(`positioned ${band(relY, "top", "middle", "bottom")} ${band(relX, "left", "centre", "right")} of the screen`);
-  }
-  return parts.join("; ");
-}
-
-function band(ratio, low, mid, high) {
-  if (ratio < 0.33) return low;
-  if (ratio < 0.66) return mid;
-  return high;
+/** A Figma rect as a plain object, so it crosses postMessage as data. */
+function plainBox(b) {
+  return b ? { x: b.x, y: b.y, width: b.width, height: b.height } : null;
 }
 
 /** Renames only what the UI decided to apply. Missing nodes are skipped, not fatal. */
