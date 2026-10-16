@@ -66,6 +66,17 @@ async function main() {
       return !entry || entry.status !== "ok";
     });
     if (!pending.length) continue;
+    // Every setup of a candidate must see the same capture. A page recaptured
+    // between a saved answer and the rest would compare setups on different
+    // pages, and rebuilding would overwrite the pictures the saved answers name.
+    const found = captures.get(candidate.page);
+    const earlier = SETUPS.map((setup) => fixture.entries[responseKey(candidate, setup, run)])
+      .find((entry) => entry && entry.status === "ok");
+    if (found && earlier && earlier.capturedAt !== found.record.capturedAt) {
+      throw new Error(candidateKey(candidate) + " has answers from the capture of " + earlier.capturedAt +
+        ", but the capture on disk is from " + found.record.capturedAt + ". Restore that capture, or delete the " +
+        "candidate's saved answers to start it again.");
+    }
     const evidence = await evidenceFor(candidate, captures);
     for (const setup of pending) {
       const k = responseKey(candidate, setup, run);
@@ -77,7 +88,7 @@ async function main() {
       tokens += inputTokens;
       const weighed = weigh(out.body.answers, taxonomy);
       fixture.entries[k] = {
-        candidate: candidateKey(candidate), setup, run, status: "ok",
+        candidate: candidateKey(candidate), setup, run, status: "ok", capturedAt: found.record.capturedAt,
         at: new Date().toISOString(), ms: out.ms, inputTokens,
         model: out.body.model || null, requestedModel: MODEL, guideVersion: taxonomy.version,
         weighed, body: out.body, request: savedRequest(request, evidence),

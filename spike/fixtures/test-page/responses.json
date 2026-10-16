@@ -1,10 +1,11 @@
 {
   "entries": {
-    "test-page-html/e4|image|1": {
-      "candidate": "test-page-html/e4",
+    "test-page-html-6f1c47eb/e4|image|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
       "setup": "image",
       "run": 1,
       "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
       "at": "2026-10-16T11:22:25.214Z",
       "ms": 526,
       "inputTokens": 6356,
@@ -122,13 +123,13 @@
             "fg-region-vfjqnuhr": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-e4-crop.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-crop.png",
               "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
             },
             "fg-screen-vfjqnuhr": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-e4-window.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-window.png",
               "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
             }
           },
@@ -148,10 +149,10 @@
                   ]
                 },
                 "Icon Button": {
-                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a × to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
-                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear × sitting inside a text field, which belongs to the field (Search Field).",
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
                   "examples": [
-                    "a × in the top corner of a panel",
+                    "a \u00d7 in the top corner of a panel",
                     "a bin at the end of a table row",
                     "three vertical dots that open more actions",
                     "a bell in a top bar",
@@ -171,7 +172,7 @@
                   "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
                   "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
                   "examples": [
-                    "a removable filter token reading 'Under $50 ×'",
+                    "a removable filter token reading 'Under $50 \u00d7'",
                     "a selectable 'Vegetarian' tag in a filter row"
                   ]
                 },
@@ -203,8 +204,8 @@
                   "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
                   "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
                   "examples": [
-                    "Country ▾",
-                    "Sort by: Newest ▾"
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
                   ]
                 },
                 "Checkbox": {
@@ -305,17 +306,18 @@
             },
             "is_dismissible": {
               "type": "noul",
-              "instructions": "The region shows a control for removing or closing it, such as an × affordance."
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
             }
           }
         }
       }
     },
-    "test-page-html/e4|dom|1": {
-      "candidate": "test-page-html/e4",
+    "test-page-html-6f1c47eb/e4|dom|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
       "setup": "dom",
       "run": 1,
       "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
       "at": "2026-10-16T11:22:25.533Z",
       "ms": 315,
       "inputTokens": 2798,
@@ -443,10 +445,10 @@
                   ]
                 },
                 "Icon Button": {
-                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a × to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
-                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear × sitting inside a text field, which belongs to the field (Search Field).",
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
                   "examples": [
-                    "a × in the top corner of a panel",
+                    "a \u00d7 in the top corner of a panel",
                     "a bin at the end of a table row",
                     "three vertical dots that open more actions",
                     "a bell in a top bar",
@@ -466,7 +468,7 @@
                   "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
                   "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
                   "examples": [
-                    "a removable filter token reading 'Under $50 ×'",
+                    "a removable filter token reading 'Under $50 \u00d7'",
                     "a selectable 'Vegetarian' tag in a filter row"
                   ]
                 },
@@ -498,8 +500,8 @@
                   "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
                   "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
                   "examples": [
-                    "Country ▾",
-                    "Sort by: Newest ▾"
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
                   ]
                 },
                 "Checkbox": {
@@ -600,17 +602,18 @@
             },
             "is_dismissible": {
               "type": "noul",
-              "instructions": "The region shows a control for removing or closing it, such as an × affordance."
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
             }
           }
         }
       }
     },
-    "test-page-html/e4|image+dom|1": {
-      "candidate": "test-page-html/e4",
+    "test-page-html-6f1c47eb/e4|image+dom|1": {
+      "candidate": "test-page-html-6f1c47eb/e4",
       "setup": "image+dom",
       "run": 1,
       "status": "ok",
+      "capturedAt": "2026-10-16T11:22:18.255Z",
       "at": "2026-10-16T11:22:26.102Z",
       "ms": 567,
       "inputTokens": 6521,
@@ -729,13 +732,13 @@
             "fg-region-eblxi8qu": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-e4-crop.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-crop.png",
               "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
             },
             "fg-screen-eblxi8qu": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-e4-window.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-window.png",
               "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
             }
           },
@@ -755,10 +758,10 @@
                   ]
                 },
                 "Icon Button": {
-                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a × to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
-                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear × sitting inside a text field, which belongs to the field (Search Field).",
+                  "what": "A compact control showing a single icon and no visible text, which performs an action when activated: a pencil to edit, a bin to delete, a gear for settings, a \u00d7 to close, three dots for more actions. Usually square or circular and roughly 24 to 48 pixels across. It may be a bare glyph with no surface, or sit on a filled, tinted or outlined shape. Some toggle, shown by a filled against an outlined version of the same icon.",
+                  "not_for": "A control with a text label, with or without an icon beside it (Button). A switch with a track and a sliding thumb (Toggle). An icon that cannot be clicked, used as decoration or to mark status (Other). A magnifier or clear \u00d7 sitting inside a text field, which belongs to the field (Search Field).",
                   "examples": [
-                    "a × in the top corner of a panel",
+                    "a \u00d7 in the top corner of a panel",
                     "a bin at the end of a table row",
                     "three vertical dots that open more actions",
                     "a bell in a top bar",
@@ -778,7 +781,7 @@
                   "what": "A compact interactive token in a pill or rounded rectangle representing an input, filter, selection or attribute. Often carries a dismiss affordance, a leading avatar or icon, or a selected state.",
                   "not_for": "A small static count or status marker that cannot be clicked or removed (Badge).",
                   "examples": [
-                    "a removable filter token reading 'Under $50 ×'",
+                    "a removable filter token reading 'Under $50 \u00d7'",
                     "a selectable 'Vegetarian' tag in a filter row"
                   ]
                 },
@@ -810,8 +813,8 @@
                   "what": "A control that sets a value by opening a list of predefined options. In its collapsed state it shows the current value and a chevron or caret.",
                   "not_for": "A field the user types into freely (Text Input). A menu opened from a button that performs actions rather than setting a value.",
                   "examples": [
-                    "Country ▾",
-                    "Sort by: Newest ▾"
+                    "Country \u25be",
+                    "Sort by: Newest \u25be"
                   ]
                 },
                 "Checkbox": {
@@ -912,7 +915,7 @@
             },
             "is_dismissible": {
               "type": "noul",
-              "instructions": "The region shows a control for removing or closing it, such as an × affordance."
+              "instructions": "The region shows a control for removing or closing it, such as an \u00d7 affordance."
             }
           }
         }

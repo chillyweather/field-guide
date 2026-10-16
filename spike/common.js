@@ -7,6 +7,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const SPIKE = __dirname;
 const ROOT = path.join(SPIKE, "..");
@@ -21,10 +22,15 @@ const LETTER = { image: "A", dom: "B", "image+dom": "C" };
 // "pictured" would be false for the DOM-only setup, and "described" for all.
 const SUBJECT = "given";
 
-/** A file-system-safe name for a page URL or a local path. */
+/**
+ * A file-system-safe name for a page URL or a local path: readable, plus a
+ * short hash of the whole URL, since "components/button" and
+ * "components-button" read the same once the punctuation is gone.
+ */
 function slug(url) {
-  return String(url).replace(/^[a-z]+:\/\//i, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "")
-    .toLowerCase().slice(0, 80) || "page";
+  const readable = String(url).replace(/^[a-z]+:\/\//i, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "")
+    .toLowerCase().slice(0, 60) || "page";
+  return readable + "-" + crypto.createHash("sha256").update(String(url)).digest("hex").slice(0, 8);
 }
 
 /** Candidates are named by page and element, since element ids are only unique within a page. */

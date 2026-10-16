@@ -1,6 +1,6 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T11:25:58.634Z",
+  "capturedAt": "2026-10-16T11:28:27.072Z",
   "viewport": {
     "width": 1440,
     "height": 900
@@ -9,7 +9,7 @@
     "width": 1440,
     "height": 1792
   },
-  "screenshot": "test-page-html.png",
+  "screenshot": "test-page-html-6f1c47eb.png",
   "elements": [
     {
       "id": "e1",

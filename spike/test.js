@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const sharp = require("sharp");
-const { SPIKE, ROOT, SETUPS } = require("./common");
+const { SPIKE, ROOT, SETUPS, slug } = require("./common");
 const { capture } = require("./capture");
 const { buildEvidence, contextWindow } = require("./evidence");
 const { requestFor, savedRequest } = require("./jev");
@@ -30,12 +30,15 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     check("the plugin build carries nothing of the spike", /playwright|require\("sharp"\)/.test(ui) && "found in dist/ui.html");
   }
 
+  check("pages whose names read the same keep apart",
+    slug("https://example.com/components/button") === slug("https://example.com/components-button") && "same slug");
+
   fs.rmSync(OUT, { recursive: true, force: true });
   const [record] = await capture(["test/page.html"], OUT);
   const screenshot = path.join(OUT, record.screenshot);
 
   check("capture writes a screenshot and an element record",
-    (!fs.existsSync(screenshot) || !fs.existsSync(path.join(OUT, "test-page-html.json")) || !record.elements.length) &&
+    (!fs.existsSync(screenshot) || !fs.existsSync(path.join(OUT, slug("test/page.html") + ".json")) || !record.elements.length) &&
     "missing output");
   {
     const meta = await sharp(screenshot).metadata();
