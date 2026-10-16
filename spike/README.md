@@ -37,7 +37,7 @@ The key is read from the repository's `.env.local` (`TYPESAFE_API_KEY=`), as
 node capture.js <url-or-path>...       # captures/<slug>.json + .png, several pages per run
 node run.js --dry-run                  # what is missing, and what it should cost
 node run.js                            # fixtures/candidates.json → fixtures/responses.json
-node report.js                         # accuracy per setup
+node report.js --out report.md         # the full report, as Markdown
 ```
 
 The runner sends every candidate through each setup twice, four calls at a
@@ -119,6 +119,48 @@ scroll position 0 and records every visible element.
 - **Shadow DOM**: open roots are walked and their elements marked
   `shadow: true`. A closed root can't be walked. Its host is marked
   `closedShadowRoot: true` and the page counts them.
+
+## The report
+
+`report.js` re-weighs every saved body with the plugin's own `weigh()` and
+answers the six questions from #1. A failed call is missing, never wrong.
+Accuracy and confident precision count labelled candidates only. The other
+answers count every candidate.
+
+1. **Accuracy** per setup, per run and pooled. It's also given without the
+   semantic-mismatch group, and split by whether the ARIA role names a guide
+   entry outright (`checkbox`, `switch`, `tab`, `dialog`, `link`, `button`).
+2. **Confident precision** per setup, with its count. When nothing was
+   `confident` the report says "none confident", never 0 %.
+3. **Movement**: a 3 × 3 table of verdicts from A to C, one per run.
+4. **Changed answers**: every candidate whose A and C answers differ in
+   either run, with both verdicts, the top three probabilities and the DOM
+   facts sent.
+5. **Stability**: per setup, the share of candidates with the same answer in
+   both runs, and the share with the same verdict.
+6. **Semantic mismatches**: candidates with a `looks_like`, plus any whose tag
+   or role implies a different family from the label's. `a[href]` implies
+   navigation, `button` and button-type inputs imply action, the
+   `checkbox`/`switch`/`radio` roles imply selection, and `dialog` implies
+   container. `Other` is exempt.
+
+It also covers the Button / Link breakout, cost and wall-clock time, and the
+capture each page's answers came from. The three decision rules are measured
+against Jev's own run-to-run noise from answer 5:
+
+- **Continue** holds when C is right in both runs on more than half the
+  labelled Button / Link candidates, *and* the share of clear cases that C
+  makes worse is no more than A's run-to-run disagreement. A clear case is one
+  A got right and `confident` in both runs. Worse means a wrong answer or a
+  verdict below `confident` in either run of C. A's disagreement is the share
+  of candidates whose two A runs differ in answer or verdict.
+- **Rethink the inputs** holds when B's pooled accuracy and confident
+  precision are each within C's run-to-run answer disagreement of C's.
+- **Look at the guide** holds when A and C differ on no more candidates than
+  A differs from itself, both counted over candidates with all four calls.
+
+The report names the rule that holds, or says that none or several do. It
+ends with a conclusion to be written by hand.
 
 ## What is committed
 

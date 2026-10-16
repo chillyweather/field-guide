@@ -14,7 +14,11 @@ const { domFacts } = require("../src-request");
 const crypto = require("crypto");
 const { groupElements } = require("./select");
 const { addCandidate, loadCandidates, LABELLING_RULE } = require("./candidates");
-const { accuracy } = require("./report");
+const { buildReport } = require("./report");
+// Pooled accuracy per setup, as the report computes it, with its per-run counts.
+const accuracy = (candidates, entries) => Object.fromEntries(Object.entries(buildReport(candidates, entries).accuracy)
+  .map(([setup, a]) => [setup, { right: a.all.pooled.n, counted: a.all.pooled.d,
+    runs: { 1: { right: a.all.runs[1].n, counted: a.all.runs[1].d }, 2: { right: a.all.runs[2].n, counted: a.all.runs[2].d } } }]));
 
 let failed = 0;
 function check(name, problem) {
@@ -244,7 +248,8 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
 
     // Runner and report take the format, unlabelled candidates included.
     const fixture = loadCandidates(file);
-    const entry = (answer) => ({ status: "ok", weighed: { answer } });
+    const entry = (answer) => ({ status: "ok", body: { answers: {
+      component: { type: "choice", choice: answer, confidence: 0.97, probabilities: { [answer]: 0.97, Other: 0.03 } } } } });
     const keyOf = (c, setup) => require("./common").responseKey(c, setup, 1);
     const entries = {
       [keyOf(fixture.candidates[0], "image")]: entry("Link"),

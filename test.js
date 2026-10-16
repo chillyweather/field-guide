@@ -348,5 +348,199 @@ const { describeGeometry } = require('./src-geometry');
   }
 }
 
+// The DOM spike's report: candidates and raw responses in, the six answers and
+// the decision out. Responses are synthesised the way fixtures/make-fixtures.js
+// shapes them (probabilities summing to 1, the confidence carried with the top
+// option, as in the live captures where one option holds the mass) and are
+// weighed by the real weigh() inside the report.
+{
+  const { buildReport, renderMarkdown } = require('./spike/report');
+  const check = (why, wrong) => {
+    if (wrong) { failed++; console.log('FAIL  report ' + why + (wrong === true ? '' : '\n        ' + wrong)); }
+    else console.log('ok    report ' + why);
+  };
+  const synth = (choice, p) => {
+    const probabilities = Object.fromEntries(Object.keys(taxonomy.components).map((k) => [k, 0]));
+    const runnerUp = choice === 'Other' ? 'Card' : 'Other';
+    probabilities[choice] = p;
+    probabilities[runnerUp] = Math.round((1 - p) * 100) / 100;
+    const answers = {
+      component: { type: 'choice', choice, confidence: p, probabilities },
+      family: { type: 'choice', choice: taxonomy.components[choice].family, confidence: p, probabilities: {} },
+    };
+    for (const id of Object.keys(taxonomy.probes)) answers[id] = { type: 'noul', noul: 0.1 };
+    return answers;
+  };
+  {
+    const sums = ['Button', 'Card', 'Other'].map((c) => Object.values(synth(c, 0.83).component.probabilities).reduce((a, b) => a + b, 0));
+    check('synthetic probabilities sum to 1', sums.some((x) => Math.abs(x - 1) > 1e-9) && JSON.stringify(sums));
+  }
+  // C (confident 0.95), K (check 0.7), U (unsure 0.4).
+  const P = { C: 0.95, K: 0.7, U: 0.4 };
+  let clock = Date.parse('2026-10-20T10:00:00Z');
+  const ok = (choice, v, dom) => ({
+    status: 'ok', body: { model: 'jev-1.13.0', answers: synth(choice, P[v]) }, inputTokens: 5000, ms: 400,
+    at: new Date(clock += 1000).toISOString(), model: 'jev-1.13.0', guideVersion: taxonomy.version,
+    request: { body: { state: dom ? { dom } : {} } },
+  });
+  const failedCall = () => ({ status: 'failed', error: 'HTTP 429 — slow down', at: new Date(clock += 1000).toISOString() });
+  const candidate = (element, extra) => Object.assign({ page: 'https://example.com/p', element }, extra);
+  const { responseKey } = require('./spike/common');
+  // rows: [candidate, { image: [run1, run2], dom: [...], 'image+dom': [...] }], each run [choice, verdict] or 'fail'.
+  const build = (rows) => {
+    const entries = {};
+    for (const [c, setups] of rows) {
+      for (const [setup, runs] of Object.entries(setups)) {
+        runs.forEach((r, i) => {
+          if (!r) return;
+          entries[responseKey(c, setup, i + 1)] = r === 'fail' ? failedCall()
+            : ok(r[0], r[1], setup === 'image' ? null : '- element: <' + ((c.facts && c.facts.tag) || 'div') + '>');
+        });
+      }
+    }
+    return entries;
+  };
+  const same = (x) => ({ image: [x, x], dom: [x, x], 'image+dom': [x, x] });
+
+  // 1. Accuracy: per run and pooled; unlabelled never counted, failed calls missing.
+  {
+    const b = candidate('e1', { label: 'Button' }), l = candidate('e2', { label: 'Link' });
+    const u = candidate('e3'), f = candidate('e4', { label: 'Card' });
+    const r = buildReport([b, l, u, f], build([
+      [b, same(['Button', 'C'])],
+      [l, { image: [['Button', 'C'], ['Link', 'C']], dom: [['Link', 'K'], ['Link', 'K']], 'image+dom': [['Link', 'C'], ['Link', 'C']] }],
+      [u, same(['Badge', 'C'])],
+      [f, { image: ['fail', ['Card', 'C']], dom: [['Card', 'C'], ['Card', 'C']], 'image+dom': [['Card', 'C'], ['Card', 'C']] }],
+    ]));
+    const a = r.accuracy.image.all;
+    check('accuracy per run and pooled, unlabelled and failed calls left out',
+      (a.runs[1].n !== 1 || a.runs[1].d !== 2 || a.runs[2].n !== 3 || a.runs[2].d !== 3 || a.pooled.n !== 4 || a.pooled.d !== 5) &&
+      JSON.stringify(a));
+    check('a failed call is missing, not wrong', r.accuracy['image+dom'].all.pooled.share !== 1 && JSON.stringify(r.accuracy['image+dom'].all));
+  }
+
+  // 2. Confident precision, and "none confident" without dividing by zero.
+  {
+    const b = candidate('e1', { label: 'Button' }), l = candidate('e2', { label: 'Link' });
+    const r = buildReport([b, l], build([
+      [b, { image: [['Button', 'K'], ['Button', 'K']], dom: [['Button', 'C'], ['Link', 'C']], 'image+dom': [['Button', 'U'], ['Button', 'K']] }],
+      [l, { image: [['Link', 'K'], ['Button', 'U']], dom: [['Link', 'C'], ['Link', 'C']], 'image+dom': [['Link', 'K'], ['Link', 'K']] }],
+    ]));
+    const md = renderMarkdown(r);
+    check('confident precision with its count', (r.precision.dom.all.n !== 3 || r.precision.dom.all.d !== 4) && JSON.stringify(r.precision.dom.all));
+    check('"none confident" is reported as such, never 0% and never NaN',
+      (!r.precision.image.all.none || r.precision.image.all.share !== null || /NaN|Infinity/.test(JSON.stringify(r) + md) ||
+        !/\| A image \| none confident/.test(md)) && JSON.stringify(r.precision.image.all));
+  }
+
+  // 3. Movement, 4. changed answers, 5. stability.
+  {
+    const x = candidate('e1', { label: 'Button', facts: { tag: 'button' } });
+    const y = candidate('e2', { label: 'Link', facts: { tag: 'a', href: '/y' } });
+    const z = candidate('e3', { facts: { tag: 'div' } });
+    const r = buildReport([x, y, z], build([
+      [x, { image: [['Button', 'C'], ['Button', 'C']], dom: [['Button', 'C'], ['Button', 'C']], 'image+dom': [['Button', 'K'], ['Button', 'C']] }],
+      [y, { image: [['Button', 'C'], ['Link', 'U']], dom: [['Link', 'C'], ['Link', 'C']], 'image+dom': [['Button', 'C'], ['Link', 'C']] }],
+      [z, { image: [['Card', 'K'], ['Card', 'K']], dom: [['Card', 'K'], ['Other', 'U']], 'image+dom': [['Card', 'K'], ['Badge', 'K']] }],
+    ]));
+    const m1 = r.movement[1].matrix, m2 = r.movement[2].matrix;
+    check('movement: a 3 × 3 table from A to C for each run',
+      (r.movement[1].n !== 3 || m1.confident.check !== 1 || m1.confident.confident !== 1 || m1.check.check !== 1 ||
+        m2.confident.confident !== 1 || m2.unsure.confident !== 1 || m2.check.check !== 1) && JSON.stringify(r.movement));
+    const changed = r.changed.map((ch) => ch.key.split('/').pop());
+    const zc = r.changed.find((ch) => ch.key.endsWith('/e3'));
+    check('changed answers: every candidate whose A and C answers differ in either run, with what was sent',
+      (changed.join() !== 'e3' || zc.runs[2].A.answer !== 'Card' || zc.runs[2].C.answer !== 'Badge' || zc.runs[2].C.top.length !== 3 ||
+        zc.runs[2].C.verdict !== 'check' || zc.facts !== '- element: <div>') && JSON.stringify(r.changed));
+    const st = r.stability;
+    check('stability: same answer and same verdict across runs, unlabelled included',
+      (st.image.n !== 3 || st.image.sameAnswer.n !== 2 || st.image.sameVerdict.n !== 2 ||
+        st.dom.sameAnswer.n !== 2 || st['image+dom'].sameAnswer.n !== 1 || st['image+dom'].sameVerdict.n !== 2) && JSON.stringify(st));
+  }
+
+  // 6. Semantic mismatches, from looks_like and from the tag table.
+  {
+    const cands = [
+      candidate('e1', { label: 'Link', looks_like: 'Button', facts: { tag: 'a', href: '/start' } }),
+      candidate('e2', { label: 'Button', facts: { tag: 'a', href: '/go' } }),
+      candidate('e3', { label: 'Button', facts: { tag: 'button' } }),
+      candidate('e4', { label: 'Other', facts: { tag: 'a', href: '/' } }),
+      candidate('e5', { label: 'Toggle', facts: { tag: 'div', role: 'switch' } }),
+      candidate('e6', { label: 'Button', facts: { tag: 'div', role: 'checkbox' } }),
+      candidate('e7', { label: 'Card', facts: { tag: 'input', type: 'submit' } }),
+    ];
+    const r = buildReport(cands, {});
+    const keys = r.mismatches.map((m) => m.key.split('/').pop()).join();
+    check('semantic mismatches from looks_like and from the tag table, Other exempt', keys !== 'e1,e2,e6,e7' && keys);
+    const withMismatch = buildReport(cands.slice(0, 3), build([
+      [cands[0], same(['Button', 'C'])], [cands[1], same(['Link', 'C'])], [cands[2], same(['Button', 'C'])],
+    ])).accuracy.image;
+    check('accuracy is also given without the mismatch group',
+      (withMismatch.all.pooled.share !== 1 / 3 || withMismatch.withoutMismatches.pooled.n !== 2 || withMismatch.withoutMismatches.pooled.d !== 2) &&
+      JSON.stringify(withMismatch));
+  }
+
+  // Split by whether the role names a guide entry outright.
+  {
+    const a = candidate('e1', { label: 'Toggle', facts: { tag: 'div', role: 'switch' } });
+    const b = candidate('e2', { label: 'Card', facts: { tag: 'div', role: 'generic' } });
+    const r = buildReport([a, b], build([[a, same(['Toggle', 'C'])], [b, same(['Badge', 'C'])]]));
+    check('accuracy and precision split by whether the role names a guide entry',
+      (r.accuracy.image.roleNamesEntry.pooled.share !== 1 || r.accuracy.image.roleDoesNot.pooled.share !== 0 ||
+        r.precision.image.roleNamesEntry.share !== 1) && JSON.stringify(r.accuracy.image));
+  }
+
+  // The decision rules, each on data built for it and on data built against it.
+  {
+    const bl = [1, 2, 3, 4].map((i) => candidate('b' + i, { label: i % 2 ? 'Button' : 'Link', pair: 'Button / Link' }));
+    const right = (c) => [c.label, 'C'];
+    const wrong = (c) => [c.label === 'Button' ? 'Link' : 'Button', 'C'];
+    // For: C right and confident on every Button / Link in both runs; A right too.
+    const forContinue = buildReport(bl, build(bl.map((c) => [c, { image: [right(c), right(c)], 'image+dom': [right(c), right(c)] }])));
+    // Against: C wrong on three of four.
+    const againstContinue = buildReport(bl, build(bl.map((c, i) => [c, { image: [right(c), right(c)], 'image+dom': i ? [wrong(c), wrong(c)] : [right(c), right(c)] }])));
+    // Against, the other way: C right on Button / Link, but it knocks the clear cases off confident.
+    const clearHurt = buildReport(bl, build(bl.map((c) => [c, { image: [right(c), right(c)], 'image+dom': [[c.label, 'K'], [c.label, 'K']] }])));
+    check('continue holds on data built for it', !forContinue.rules.continue.holds && JSON.stringify(forContinue.rules.continue));
+    check('continue stays quiet when C gets Button / Link wrong', againstContinue.rules.continue.holds && JSON.stringify(againstContinue.rules.continue));
+    check('continue stays quiet when C makes clear cases worse beyond A\'s noise',
+      (clearHurt.rules.continue.holds || clearHurt.rules.continue.clearCasesMadeWorse.n !== 4) && JSON.stringify(clearHurt.rules.continue));
+
+    // Rethink: B matches C; against: B far below C, with C perfectly stable.
+    const rethinkFor = buildReport(bl, build(bl.map((c, i) => [c, { dom: [right(c), i === 3 ? wrong(c) : right(c)], 'image+dom': [right(c), i === 3 ? wrong(c) : right(c)] }])));
+    const rethinkAgainst = buildReport(bl, build(bl.map((c) => [c, { dom: [wrong(c), wrong(c)], 'image+dom': [right(c), right(c)] }])));
+    check('rethink holds when B is within C\'s noise of C', !rethinkFor.rules.rethink.holds && JSON.stringify(rethinkFor.rules.rethink));
+    check('rethink stays quiet when B falls short of C', rethinkAgainst.rules.rethink.holds && JSON.stringify(rethinkAgainst.rules.rethink));
+
+    // Guide: the DOM changes nothing; against: it changes every answer while A is stable.
+    const guideFor = buildReport(bl, build(bl.map((c) => [c, { image: [wrong(c), wrong(c)], 'image+dom': [wrong(c), wrong(c)] }])));
+    const guideAgainst = buildReport(bl, build(bl.map((c) => [c, { image: [wrong(c), wrong(c)], 'image+dom': [right(c), right(c)] }])));
+    check('look-at-the-guide holds when A and C differ no more than A from itself', !guideFor.rules.guide.holds && JSON.stringify(guideFor.rules.guide));
+    check('look-at-the-guide stays quiet when the DOM changes the answers', guideAgainst.rules.guide.holds && JSON.stringify(guideAgainst.rules.guide));
+
+    check('the report names the one rule that holds, or says none or several',
+      (guideAgainst.decision !== 'continue' || guideFor.decision === 'continue' || buildReport(bl, {}).decision !== 'none' ||
+        forContinue.decision !== 'several') &&
+      [guideAgainst.decision, guideFor.decision, buildReport(bl, {}).decision, forContinue.decision].join(', '));
+
+    // The Markdown: every table well formed, the decision, and the hand-written end.
+    const md = renderMarkdown(Object.assign(forContinue, { captures: [{ url: 'https://example.com/p', capturedAt: '2026-10-20T09:00:00Z' }] }));
+    const lines = md.split('\n');
+    const bad = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].startsWith('|') || (i && lines[i - 1].startsWith('|'))) continue;
+      let j = i;
+      while (j < lines.length && lines[j].startsWith('|')) j++;
+      const block = lines.slice(i, j);
+      const cells = (l) => l.replace(/\\\|/g, '').split('|').length;
+      if (block.length < 2 || !/^\|(---\|)+$/.test(block[1]) || block.some((l) => cells(l) !== cells(block[0]))) bad.push(block[0]);
+    }
+    const tables = lines.filter((l, i) => l.startsWith('|') && !(i && lines[i - 1].startsWith('|'))).length;
+    check('the Markdown renders as tables and lists without hand editing',
+      (bad.length || tables !== 8 || !/## Decision/.test(md) || !/_To be written by hand\._\n$/.test(md) || !/- https:\/\/example.com\/p \(captured/.test(md) ||
+        !/- Cost: \$/.test(md)) && (bad.join('\n') || 'tables ' + tables));
+  }
+}
+
 console.log(failed ? '\n' + failed + ' failing' : '\nall passing');
 process.exit(failed ? 1 : 0);
