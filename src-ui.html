@@ -196,6 +196,8 @@ const visionShapes = {};
 
 /* __IMAGES__ */
 
+/* __GEOMETRY__ */
+
 // Which pipeline a run uses. A setting rather than a fork of the code, so the
 // two are compared on the same selection, exports, questions and weighing —
 // the only thing that differs is what Jev is shown.
@@ -333,11 +335,14 @@ function say(text, isError) {
   const s = el("status"); s.textContent = text; s.className = isError ? "status err" : "status";
 }
 
-async function survey({ specimens: collected, context, contextName, reason }) {
+async function survey({ specimens: collected, context, contextBox, contextName, reason }) {
   if (reason === "nothing-selected" || !collected.length) {
     el("run").disabled = false;
     return say("Nothing selected. Mark some regions first.", true);
   }
+  // The main thread sends boxes; the sentence is worded here, by the same
+  // function the DOM spike uses (src-geometry.js).
+  for (const item of collected) item.geometry = describeGeometry(item.box, contextBox, item.size);
   const contextB64 = context ? toB64(context) : null;
   // Said out loud, because its absence changed every answer on an earlier run
   // without appearing anywhere in the output.

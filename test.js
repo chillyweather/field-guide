@@ -197,5 +197,44 @@ for (const c of sizes) {
   } else console.log('ok    image state references the crop, notes the margin and the missing screen');
 }
 
+// The geometry sentence, pinned to what code.js said before it moved into
+// src-geometry.js. Each expected line was produced by the old describeGeometry
+// on a Figma-shaped node with the same numbers; Jev has read these words on
+// every live run, so a change in wording is a change in the experiment.
+const { describeGeometry } = require('./src-geometry');
+{
+  const screen = { x: 0, y: 0, width: 1440, height: 900 };
+  const square = { x: 0, y: 0, width: 1000, height: 1000 };
+  const geometry = [
+    { why: 'no context box', box: { x: 10, y: 10, width: 48, height: 48 }, context: null,
+      want: '48x48 px; aspect ratio 1.00' },
+    { why: 'full-width header', box: { x: 0, y: 0, width: 1440, height: 64 }, context: screen,
+      want: '1440x64 px; aspect ratio 22.50; spans 100% of the screen width; positioned top left of the screen' },
+    { why: 'screen not at the origin', box: { x: 1660, y: 560, width: 320, height: 180 },
+      context: { x: 1000, y: 200, width: 1440, height: 1024 },
+      want: '320x180 px; aspect ratio 1.78; spans 22% of the screen width; positioned middle centre of the screen' },
+    { why: 'fractional size, rounded', box: { x: 1300, y: 860, width: 36.4, height: 35.6 }, context: screen,
+      want: '36x36 px; aspect ratio 1.00; spans 3% of the screen width; positioned bottom right of the screen' },
+    { why: 'band edge 0.33', box: { x: 330, y: 330, width: 100, height: 40 }, context: square,
+      want: '100x40 px; aspect ratio 2.50; spans 10% of the screen width; positioned middle centre of the screen' },
+    { why: 'just under 0.33', box: { x: 329, y: 329, width: 100, height: 40 }, context: square,
+      want: '100x40 px; aspect ratio 2.50; spans 10% of the screen width; positioned top left of the screen' },
+    { why: 'band edge 0.66', box: { x: 660, y: 660, width: 100, height: 40 }, context: square,
+      want: '100x40 px; aspect ratio 2.50; spans 10% of the screen width; positioned bottom right of the screen' },
+    { why: 'zero height', box: { x: 120, y: 450, width: 1200, height: 0 }, context: screen,
+      want: '1200x0 px; aspect ratio 1200.00; spans 83% of the screen width; positioned middle left of the screen' },
+    { why: 'rotated: size from the node, share from the box', box: { x: 0, y: 0, width: 80, height: 80 },
+      size: { width: 100, height: 20 }, context: { x: 0, y: 0, width: 400, height: 400 },
+      want: '100x20 px; aspect ratio 5.00; spans 20% of the screen width; positioned top left of the screen' },
+    { why: 'no box at all, size only', box: null, size: { width: 48, height: 24 }, context: screen,
+      want: '48x24 px; aspect ratio 2.00' },
+  ];
+  for (const g of geometry) {
+    const got = describeGeometry(g.box, g.context, g.size);
+    if (got !== g.want) { failed++; console.log('FAIL  geometry ' + g.why + '\n        expected ' + g.want + '\n        got      ' + got); }
+    else console.log('ok    geometry ' + g.why);
+  }
+}
+
 console.log(failed ? '\n' + failed + ' failing' : '\nall passing');
 process.exit(failed ? 1 : 0);
