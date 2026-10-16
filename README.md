@@ -247,3 +247,7 @@ would have to cross postMessage again for no gain, and the nodes are right there
   correctly — but not reliably: blank shapes have also come back `Toggle` and `Button` at
   high confidence. Nothing upstream asks whether the region is a component before asking
   which one.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

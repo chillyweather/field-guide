@@ -2,6 +2,7 @@
   "name": "field-guide",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "A Figma plugin that identifies UI components from marked regions, and admits when it cannot.",
   "scripts": {
     "build": "node build.js",
