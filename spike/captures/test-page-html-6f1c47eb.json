@@ -1,15 +1,16 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T11:54:21.518Z",
+  "capturedAt": "2026-10-16T15:58:07.288Z",
   "viewport": {
     "width": 1440,
     "height": 900
   },
   "page": {
     "width": 1440,
-    "height": 1792
+    "height": 2194
   },
   "screenshot": "test-page-html-6f1c47eb.png",
+  "closedShadowRoots": 1,
   "elements": [
     {
       "id": "e1",
@@ -18,18 +19,18 @@
       "type": null,
       "role": "none",
       "name": null,
-      "text": "Get started Save Read the documentation first.",
+      "text": "Get started Save Read the documentation first. Email me updates Dark mode ★ Releases ship on Tuesdays Typography Type scale and tokens. Read the guide See the …",
       "href": null,
       "aria": {},
       "box": {
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 1792
+        "height": 2194
       },
       "style": {
         "width": "1440px",
-        "height": "1792px",
+        "height": "2194px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(0, 0, 0)",
@@ -45,18 +46,18 @@
       "type": null,
       "role": "none",
       "name": null,
-      "text": "Get started Save Read the documentation first.",
+      "text": "Get started Save Read the documentation first. Email me updates Dark mode ★ Releases ship on Tuesdays Typography Type scale and tokens. Read the guide See the …",
       "href": null,
       "aria": {},
       "box": {
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 1792
+        "height": 2194
       },
       "style": {
         "width": "1440px",
-        "height": "1792px",
+        "height": "2194px",
         "borderRadius": "0px",
         "backgroundColor": "rgb(255, 255, 255)",
         "border": "0px none rgb(22, 22, 22)",
@@ -72,18 +73,18 @@
       "type": null,
       "role": "main",
       "name": null,
-      "text": "Get started Save Read the documentation first.",
+      "text": "Get started Save Read the documentation first. Email me updates Dark mode ★ Releases ship on Tuesdays Typography Type scale and tokens. Read the guide See the …",
       "href": null,
       "aria": {},
       "box": {
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 1792
+        "height": 2194
       },
       "style": {
         "width": "1440px",
-        "height": "1792px",
+        "height": "2194px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(22, 22, 22)",
@@ -234,12 +235,451 @@
       "type": null,
       "role": "none",
       "name": null,
+      "text": "Email me updates Dark mode ★",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 200,
+        "width": 1360,
+        "height": 32
+      },
+      "style": {
+        "width": "1360px",
+        "height": "32px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e10",
+      "parent": "e9",
+      "tag": "label",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "Email me updates",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 204,
+        "width": 156.36,
+        "height": 24
+      },
+      "style": {
+        "width": "156.359px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "default"
+      }
+    },
+    {
+      "id": "e11",
+      "parent": "e10",
+      "tag": "input",
+      "type": "checkbox",
+      "role": "checkbox",
+      "name": "Email me updates",
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 44,
+        "y": 209.5,
+        "width": 13,
+        "height": 13
+      },
+      "style": {
+        "width": "13px",
+        "height": "13px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(0, 0, 0)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "default"
+      }
+    },
+    {
+      "id": "e12",
+      "parent": "e9",
+      "tag": "div",
+      "type": null,
+      "role": "switch",
+      "name": "Dark mode",
+      "text": "Dark mode",
+      "href": null,
+      "aria": {
+        "checked": "true"
+      },
+      "box": {
+        "x": 220.36,
+        "y": 200,
+        "width": 120,
+        "height": 32
+      },
+      "style": {
+        "width": "120px",
+        "height": "32px",
+        "borderRadius": "16px",
+        "backgroundColor": "rgb(36, 161, 72)",
+        "border": "0px none rgb(255, 255, 255)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "pointer"
+      }
+    },
+    {
+      "id": "e13",
+      "parent": "e9",
+      "tag": "span",
+      "type": null,
+      "role": null,
+      "name": null,
+      "text": "★",
+      "href": null,
+      "aria": {
+        "hidden": "true"
+      },
+      "box": {
+        "x": 364.36,
+        "y": 204,
+        "width": 16,
+        "height": 24
+      },
+      "style": {
+        "width": "16px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e14",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "generic",
+      "name": null,
+      "text": "Releases ship on Tuesdays",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 1040,
+        "y": 0,
+        "width": 400,
+        "height": 40
+      },
+      "style": {
+        "width": "400px",
+        "height": "40px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(57, 57, 57)",
+        "border": "0px none rgb(255, 255, 255)",
+        "position": "fixed",
+        "zIndex": "10",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e15",
+      "parent": "e3",
+      "tag": "article",
+      "type": null,
+      "role": "article",
+      "name": null,
+      "text": "Typography Type scale and tokens. Read the guide See the tokens",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 256,
+        "width": 320,
+        "height": 162
+      },
+      "style": {
+        "width": "320px",
+        "height": "162px",
+        "borderRadius": "8px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "1px solid rgb(224, 224, 224)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e16",
+      "parent": "e15",
+      "tag": "h3",
+      "type": null,
+      "role": "heading",
+      "name": "Typography",
+      "text": "Typography",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 57,
+        "y": 273,
+        "width": 286,
+        "height": 24
+      },
+      "style": {
+        "width": "286px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e17",
+      "parent": "e15",
+      "tag": "p",
+      "type": null,
+      "role": "paragraph",
+      "name": null,
+      "text": "Type scale and tokens.",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 57,
+        "y": 313,
+        "width": 286,
+        "height": 24
+      },
+      "style": {
+        "width": "286px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e18",
+      "parent": "e15",
+      "tag": "a",
+      "type": null,
+      "role": "link",
+      "name": "Read the guide",
+      "text": "Read the guide",
+      "href": "/type",
+      "aria": {},
+      "box": {
+        "x": 57,
+        "y": 353,
+        "width": 286,
+        "height": 24
+      },
+      "style": {
+        "width": "286px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(0, 0, 238)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "pointer"
+      }
+    },
+    {
+      "id": "e19",
+      "parent": "e15",
+      "tag": "a",
+      "type": null,
+      "role": "link",
+      "name": "See the tokens",
+      "text": "See the tokens",
+      "href": "/type/tokens",
+      "aria": {},
+      "box": {
+        "x": 57,
+        "y": 377,
+        "width": 286,
+        "height": 24
+      },
+      "style": {
+        "width": "286px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(0, 0, 238)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "pointer"
+      }
+    },
+    {
+      "id": "e20",
+      "parent": "e3",
+      "tag": "status-pill",
+      "type": null,
+      "role": null,
+      "name": null,
+      "text": "Slotted note",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 547,
+        "width": 208.19,
+        "height": 18
+      },
+      "style": {
+        "width": "auto",
+        "height": "auto",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e21",
+      "parent": "e20",
+      "tag": "span",
+      "type": null,
+      "role": "status",
+      "name": null,
+      "text": "Beta",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 542,
+        "width": 49.19,
+        "height": 28
+      },
+      "style": {
+        "width": "33.1875px",
+        "height": "24px",
+        "borderRadius": "12px",
+        "backgroundColor": "rgb(208, 226, 255)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      },
+      "shadow": true
+    },
+    {
+      "id": "e22",
+      "parent": "e20",
+      "tag": "button",
+      "type": "button",
+      "role": "button",
+      "name": "Dismiss",
+      "text": "Dismiss",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 93.64,
+        "y": 547,
+        "width": 62.66,
+        "height": 21
+      },
+      "style": {
+        "width": "62.6562px",
+        "height": "21px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(239, 239, 239)",
+        "border": "2px outset rgb(0, 0, 0)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "default"
+      },
+      "shadow": true
+    },
+    {
+      "id": "e23",
+      "parent": "e20",
+      "tag": "span",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "Slotted note",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 160.75,
+        "y": 547,
+        "width": 87.44,
+        "height": 18
+      },
+      "style": {
+        "width": "auto",
+        "height": "auto",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e24",
+      "parent": "e3",
+      "tag": "sealed-widget",
+      "type": null,
+      "role": null,
+      "name": null,
       "text": "",
       "href": null,
       "aria": {},
       "box": {
         "x": 40,
-        "y": 192,
+        "y": 570,
+        "width": 1360,
+        "height": 24
+      },
+      "style": {
+        "width": "auto",
+        "height": "auto",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      },
+      "closedShadowRoot": true
+    },
+    {
+      "id": "e25",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 594,
         "width": 1360,
         "height": 1600
       },
@@ -255,7 +695,7 @@
       }
     },
     {
-      "id": "e10",
+      "id": "e26",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -303,12 +743,54 @@
     },
     "e9": {
       "classes": [
+        "settings"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e12": {
+      "classes": [
+        "theme-switch"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e13": {
+      "classes": [
+        "decoration"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e14": {
+      "classes": [
+        "notice-bar"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e15": {
+      "classes": [
+        "guide-card"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e21": {
+      "classes": [
+        "pill"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e25": {
+      "classes": [
         "page-filler"
       ],
       "id": null,
       "data": {}
     },
-    "e10": {
+    "e26": {
       "classes": [
         "sliding-block"
       ],
