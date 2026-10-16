@@ -160,10 +160,13 @@ async function scrollThrough(page, network) {
   }, height);
   // Capped, so an infinite feed ends; forty viewports is 36,000 px of page.
   for (let i = 0; i < 40; i++) {
-    if (await step(VIEWPORT.height)) { await page.waitForTimeout(100); continue; }
-    await network.idle(500, 5000);
-    await heightSettles(page);
-    if (!(await step(VIEWPORT.height))) break;
+    if (!(await step(VIEWPORT.height))) {
+      await network.idle(500, 5000);
+      await heightSettles(page);
+      if (!(await step(VIEWPORT.height))) break;
+    }
+    // A frame or more at every position, or an observer never sees it.
+    await page.waitForTimeout(100);
   }
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
 }
@@ -217,7 +220,7 @@ function freezeAnimations() {
  * each way; not display: none; not visibility: hidden; opacity above zero once
  * every ancestor's opacity is applied, since opacity is not inherited and a
  * transparent wrapper hides everything in it (one with display: contents has
- * no box, and hides nothing); and some part inside the page.
+ * no box, and hides nothing, and none reaches into the top layer); and some part inside the page.
  * aria-hidden elements are visible, so they are kept, and their aria-hidden is
  * recorded.
  *
@@ -257,7 +260,10 @@ function walk() {
     // its children paint as if it were not there.
     const style = getComputedStyle(el);
     const own = style.display === "contents" ? 1 : Number(style.opacity);
-    const value = own * effectiveOpacity(renderedParent(el));
+    // An open modal dialog or popover paints in the top layer, out of reach of
+    // its ancestors' opacity; only its own applies.
+    const topLayer = el.matches(":modal, :popover-open, :fullscreen");
+    const value = topLayer ? own : own * effectiveOpacity(renderedParent(el));
     opacity.set(el, value);
     return value;
   };

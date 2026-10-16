@@ -62,6 +62,9 @@
   <button style="visibility: hidden">Hidden by visibility</button>
   <div class="see-through"><button>Hidden by opacity</button></div>
   <div class="see-through" style="display: contents"><button>Shown through contents</button></div>
+  <div class="see-through">
+    <div class="floating-note" popover="manual" style="inset: auto; left: 900px; top: 300px; margin: 0">Popover note</div>
+  </div>
   <div class="stray">Off the page</div>
   <status-pill><span>Slotted note</span></status-pill>
   <sealed-widget></sealed-widget>
@@ -86,6 +89,9 @@
       this.attachShadow({ mode: "closed" }).innerHTML = '<p style="margin: 0">Sealed content</p>';
     }
   });
+
+  // Opened into the top layer, where its wrapper's opacity cannot reach it.
+  document.querySelector(".floating-note").showPopover();
 
   // Lazy content, the slow kind: reaching the bottom appends a section after a
   // pause, and that section only finishes loading once it is itself scrolled to.

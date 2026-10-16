@@ -1,13 +1,13 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T16:01:51.980Z",
+  "capturedAt": "2026-10-16T16:04:05.410Z",
   "viewport": {
     "width": 1440,
     "height": 900
   },
   "page": {
     "width": 1440,
-    "height": 3499
+    "height": 3525
   },
   "screenshot": "test-page-html-6f1c47eb.png",
   "closedShadowRoots": 1,
@@ -26,11 +26,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 3499
+        "height": 3525
       },
       "style": {
         "width": "1440px",
-        "height": "3499px",
+        "height": "3525px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(0, 0, 0)",
@@ -53,11 +53,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 3483
+        "height": 3509
       },
       "style": {
         "width": "1440px",
-        "height": "3483px",
+        "height": "3509px",
         "borderRadius": "0px",
         "backgroundColor": "rgb(255, 255, 255)",
         "border": "0px none rgb(22, 22, 22)",
@@ -80,11 +80,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 3483
+        "height": 3509
       },
       "style": {
         "width": "1440px",
-        "height": "3483px",
+        "height": "3509px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(22, 22, 22)",
@@ -559,6 +559,33 @@
     {
       "id": "e21",
       "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "group",
+      "name": null,
+      "text": "Popover note",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 900,
+        "y": 300,
+        "width": 110.31,
+        "height": 38
+      },
+      "style": {
+        "width": "110.312px",
+        "height": "38px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "3px solid rgb(0, 0, 0)",
+        "position": "fixed",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e22",
+      "parent": "e3",
       "tag": "status-pill",
       "type": null,
       "role": null,
@@ -567,8 +594,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 164.45,
-        "y": 595,
+        "x": 40,
+        "y": 621,
         "width": 208.19,
         "height": 18
       },
@@ -584,8 +611,8 @@
       }
     },
     {
-      "id": "e22",
-      "parent": "e21",
+      "id": "e23",
+      "parent": "e22",
       "tag": "span",
       "type": null,
       "role": "status",
@@ -594,8 +621,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 164.45,
-        "y": 590,
+        "x": 40,
+        "y": 616,
         "width": 49.19,
         "height": 28
       },
@@ -612,8 +639,8 @@
       "shadow": true
     },
     {
-      "id": "e23",
-      "parent": "e21",
+      "id": "e24",
+      "parent": "e22",
       "tag": "button",
       "type": "button",
       "role": "button",
@@ -622,8 +649,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 218.09,
-        "y": 595,
+        "x": 93.64,
+        "y": 621,
         "width": 62.66,
         "height": 21
       },
@@ -640,8 +667,8 @@
       "shadow": true
     },
     {
-      "id": "e24",
-      "parent": "e21",
+      "id": "e25",
+      "parent": "e22",
       "tag": "span",
       "type": null,
       "role": "none",
@@ -650,8 +677,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 285.2,
-        "y": 595,
+        "x": 160.75,
+        "y": 621,
         "width": 87.44,
         "height": 18
       },
@@ -667,7 +694,7 @@
       }
     },
     {
-      "id": "e25",
+      "id": "e26",
       "parent": "e3",
       "tag": "sealed-widget",
       "type": null,
@@ -678,7 +705,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 618,
+        "y": 644,
         "width": 1360,
         "height": 24
       },
@@ -695,7 +722,7 @@
       "closedShadowRoot": true
     },
     {
-      "id": "e26",
+      "id": "e27",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -706,7 +733,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 642,
+        "y": 668,
         "width": 1360,
         "height": 1600
       },
@@ -722,7 +749,7 @@
       }
     },
     {
-      "id": "e27",
+      "id": "e28",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -749,7 +776,7 @@
       }
     },
     {
-      "id": "e28",
+      "id": "e29",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -760,7 +787,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 2242,
+        "y": 2268,
         "width": 1360,
         "height": 1
       },
@@ -776,7 +803,7 @@
       }
     },
     {
-      "id": "e29",
+      "id": "e30",
       "parent": "e3",
       "tag": "section",
       "type": null,
@@ -787,7 +814,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 2243,
+        "y": 2269,
         "width": 1360,
         "height": 1240
       },
@@ -803,8 +830,8 @@
       }
     },
     {
-      "id": "e30",
-      "parent": "e29",
+      "id": "e31",
+      "parent": "e30",
       "tag": "div",
       "type": null,
       "role": "generic",
@@ -814,7 +841,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 2243,
+        "y": 2269,
         "width": 1360,
         "height": 1200
       },
@@ -830,8 +857,8 @@
       }
     },
     {
-      "id": "e31",
-      "parent": "e29",
+      "id": "e32",
+      "parent": "e30",
       "tag": "p",
       "type": null,
       "role": "paragraph",
@@ -841,7 +868,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 3459,
+        "y": 3485,
         "width": 1360,
         "height": 24
       },
@@ -911,35 +938,42 @@
       "id": null,
       "data": {}
     },
-    "e22": {
+    "e21": {
+      "classes": [
+        "floating-note"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e23": {
       "classes": [
         "pill"
       ],
       "id": null,
       "data": {}
     },
-    "e26": {
+    "e27": {
       "classes": [
         "page-filler"
       ],
       "id": null,
       "data": {}
     },
-    "e27": {
+    "e28": {
       "classes": [
         "sliding-block"
       ],
       "id": null,
       "data": {}
     },
-    "e28": {
+    "e29": {
       "classes": [
         "bottom-sentinel"
       ],
       "id": null,
       "data": {}
     },
-    "e31": {
+    "e32": {
       "classes": [
         "late-status"
       ],

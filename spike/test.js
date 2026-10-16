@@ -125,6 +125,8 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
 
     check("a display: contents wrapper with opacity 0 hides nothing",
       !find("Shown through contents", "button") && "the button is missing");
+    check("an open popover inside an opacity-0 wrapper is kept",
+      !record.elements.some((e) => e.text === "Popover note") && "the popover is missing");
     check("lazy content appended at the bottom is loaded and swept through",
       !find("Late section seen", "p") && JSON.stringify(record.elements.filter((e) => /^Late|^Waiting/.test(e.text)).map((e) => e.text)));
 
