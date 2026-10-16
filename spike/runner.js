@@ -112,6 +112,9 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
     const base = {
       candidate: candidateKey(job.candidate), setup: job.setup, run: job.run,
       capturedAt: ev.capturedAt || null, requestedModel: MODEL,
+      // What the element was, so the report never has to look it up in a
+      // capture that may since have been replaced.
+      element: ev.dom ? { tag: ev.dom.tag, role: ev.dom.role || null, type: ev.dom.type || null, href: typeof ev.dom.href === "string" ? ev.dom.href : null } : null,
       guideVersion: GUIDE.version, guideSha256: GUIDE.sha256,
     };
     let out;
