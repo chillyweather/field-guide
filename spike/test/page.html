@@ -8,6 +8,8 @@
 <title>Field Guide capture test page</title>
 <style>
   * { box-sizing: border-box; }
+  /* Smooth, so a capture that scrolls without saying "instant" stops after one step. */
+  html { scroll-behavior: smooth; }
   body { margin: 0; font: 16px/24px -apple-system, "Helvetica Neue", Arial, sans-serif; color: #161616; background: #ffffff; }
   main { padding: 0 40px; }
   .hero-signup-link { position: absolute; left: 40px; top: 0; display: block; width: 160px; height: 48px; padding: 12px 16px;
@@ -59,11 +61,13 @@
   <button style="display: none">Hidden by display</button>
   <button style="visibility: hidden">Hidden by visibility</button>
   <div class="see-through"><button>Hidden by opacity</button></div>
+  <div class="see-through" style="display: contents"><button>Shown through contents</button></div>
   <div class="stray">Off the page</div>
   <status-pill><span>Slotted note</span></status-pill>
   <sealed-widget></sealed-widget>
   <div class="page-filler"></div>
   <div class="sliding-block"></div>
+  <div class="bottom-sentinel" style="height: 1px"></div>
 </main>
 <script>
   // An open shadow root, holding its own elements and a slotted one from the
@@ -82,6 +86,23 @@
       this.attachShadow({ mode: "closed" }).innerHTML = '<p style="margin: 0">Sealed content</p>';
     }
   });
+
+  // Lazy content, the slow kind: reaching the bottom appends a section after a
+  // pause, and that section only finishes loading once it is itself scrolled to.
+  new IntersectionObserver((entries, observer) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    observer.disconnect();
+    setTimeout(() => {
+      const late = document.createElement("section");
+      late.innerHTML = '<div style="height: 1200px">Late section loaded</div><p class="late-status">Waiting</p>';
+      document.querySelector("main").appendChild(late);
+      new IntersectionObserver((seen, o) => {
+        if (!seen.some((e) => e.isIntersecting)) return;
+        o.disconnect();
+        late.querySelector(".late-status").textContent = "Late section seen";
+      }).observe(late.querySelector(".late-status"));
+    }, 400);
+  }).observe(document.querySelector(".bottom-sentinel"));
 </script>
 </body>
 </html>

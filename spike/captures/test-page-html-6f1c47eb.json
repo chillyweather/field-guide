@@ -1,13 +1,13 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T15:58:07.288Z",
+  "capturedAt": "2026-10-16T16:01:51.980Z",
   "viewport": {
     "width": 1440,
     "height": 900
   },
   "page": {
     "width": 1440,
-    "height": 2194
+    "height": 3499
   },
   "screenshot": "test-page-html-6f1c47eb.png",
   "closedShadowRoots": 1,
@@ -26,11 +26,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 2194
+        "height": 3499
       },
       "style": {
         "width": "1440px",
-        "height": "2194px",
+        "height": "3499px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(0, 0, 0)",
@@ -53,11 +53,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 2194
+        "height": 3483
       },
       "style": {
         "width": "1440px",
-        "height": "2194px",
+        "height": "3483px",
         "borderRadius": "0px",
         "backgroundColor": "rgb(255, 255, 255)",
         "border": "0px none rgb(22, 22, 22)",
@@ -80,11 +80,11 @@
         "x": 0,
         "y": 0,
         "width": 1440,
-        "height": 2194
+        "height": 3483
       },
       "style": {
         "width": "1440px",
-        "height": "2194px",
+        "height": "3483px",
         "borderRadius": "0px",
         "backgroundColor": "rgba(0, 0, 0, 0)",
         "border": "0px none rgb(22, 22, 22)",
@@ -532,6 +532,33 @@
     {
       "id": "e20",
       "parent": "e3",
+      "tag": "button",
+      "type": null,
+      "role": "button",
+      "name": "Shown through contents",
+      "text": "Shown through contents",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 542,
+        "width": 120,
+        "height": 40
+      },
+      "style": {
+        "width": "120px",
+        "height": "40px",
+        "borderRadius": "4px",
+        "backgroundColor": "rgb(244, 244, 244)",
+        "border": "1px solid rgb(141, 141, 141)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "default"
+      }
+    },
+    {
+      "id": "e21",
+      "parent": "e3",
       "tag": "status-pill",
       "type": null,
       "role": null,
@@ -540,8 +567,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 40,
-        "y": 547,
+        "x": 164.45,
+        "y": 595,
         "width": 208.19,
         "height": 18
       },
@@ -557,8 +584,8 @@
       }
     },
     {
-      "id": "e21",
-      "parent": "e20",
+      "id": "e22",
+      "parent": "e21",
       "tag": "span",
       "type": null,
       "role": "status",
@@ -567,8 +594,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 40,
-        "y": 542,
+        "x": 164.45,
+        "y": 590,
         "width": 49.19,
         "height": 28
       },
@@ -585,8 +612,8 @@
       "shadow": true
     },
     {
-      "id": "e22",
-      "parent": "e20",
+      "id": "e23",
+      "parent": "e21",
       "tag": "button",
       "type": "button",
       "role": "button",
@@ -595,8 +622,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 93.64,
-        "y": 547,
+        "x": 218.09,
+        "y": 595,
         "width": 62.66,
         "height": 21
       },
@@ -613,8 +640,8 @@
       "shadow": true
     },
     {
-      "id": "e23",
-      "parent": "e20",
+      "id": "e24",
+      "parent": "e21",
       "tag": "span",
       "type": null,
       "role": "none",
@@ -623,8 +650,8 @@
       "href": null,
       "aria": {},
       "box": {
-        "x": 160.75,
-        "y": 547,
+        "x": 285.2,
+        "y": 595,
         "width": 87.44,
         "height": 18
       },
@@ -640,7 +667,7 @@
       }
     },
     {
-      "id": "e24",
+      "id": "e25",
       "parent": "e3",
       "tag": "sealed-widget",
       "type": null,
@@ -651,7 +678,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 570,
+        "y": 618,
         "width": 1360,
         "height": 24
       },
@@ -668,7 +695,7 @@
       "closedShadowRoot": true
     },
     {
-      "id": "e25",
+      "id": "e26",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -679,7 +706,7 @@
       "aria": {},
       "box": {
         "x": 40,
-        "y": 594,
+        "y": 642,
         "width": 1360,
         "height": 1600
       },
@@ -695,7 +722,7 @@
       }
     },
     {
-      "id": "e26",
+      "id": "e27",
       "parent": "e3",
       "tag": "div",
       "type": null,
@@ -717,6 +744,114 @@
         "backgroundColor": "rgb(218, 30, 40)",
         "border": "0px none rgb(22, 22, 22)",
         "position": "absolute",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e28",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "none",
+      "name": null,
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 2242,
+        "width": 1360,
+        "height": 1
+      },
+      "style": {
+        "width": "1360px",
+        "height": "1px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e29",
+      "parent": "e3",
+      "tag": "section",
+      "type": null,
+      "role": "generic",
+      "name": null,
+      "text": "Late section loaded Late section seen",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 2243,
+        "width": 1360,
+        "height": 1240
+      },
+      "style": {
+        "width": "1360px",
+        "height": "1240px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e30",
+      "parent": "e29",
+      "tag": "div",
+      "type": null,
+      "role": "generic",
+      "name": null,
+      "text": "Late section loaded",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 2243,
+        "width": 1360,
+        "height": 1200
+      },
+      "style": {
+        "width": "1360px",
+        "height": "1200px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
+    },
+    {
+      "id": "e31",
+      "parent": "e29",
+      "tag": "p",
+      "type": null,
+      "role": "paragraph",
+      "name": null,
+      "text": "Late section seen",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 40,
+        "y": 3459,
+        "width": 1360,
+        "height": 24
+      },
+      "style": {
+        "width": "1360px",
+        "height": "24px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "static",
         "zIndex": "auto",
         "cursor": "auto"
       }
@@ -776,23 +911,37 @@
       "id": null,
       "data": {}
     },
-    "e21": {
+    "e22": {
       "classes": [
         "pill"
       ],
       "id": null,
       "data": {}
     },
-    "e25": {
+    "e26": {
       "classes": [
         "page-filler"
       ],
       "id": null,
       "data": {}
     },
-    "e26": {
+    "e27": {
       "classes": [
         "sliding-block"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e28": {
+      "classes": [
+        "bottom-sentinel"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e31": {
+      "classes": [
+        "late-status"
       ],
       "id": null,
       "data": {}

@@ -62,7 +62,7 @@ async function capturePage(page, target, outDir) {
   // the bottom a viewport at a time and back, and then left to go quiet. A
   // late image would otherwise be missing from the picture, and a late section
   // would move every box below it after the boxes were measured.
-  await scrollThrough(page);
+  await scrollThrough(page, network);
   await network.idle();
   await page.evaluate(() => document.fonts.ready);
 
@@ -72,7 +72,7 @@ async function capturePage(page, target, outDir) {
   await page.evaluate(freezeAnimations);
 
   // At scroll position 0, so fixed and sticky elements sit where their boxes say.
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   const screenshot = name + ".png";
   await page.screenshot({ path: path.join(outDir, screenshot), fullPage: true, animations: "disabled", scale: "css" });
 
@@ -117,21 +117,21 @@ async function capturePage(page, target, outDir) {
  */
 function trackNetwork(page) {
   const inFlight = new Set();
-  const start = (req) => inFlight.add(req);
-  const end = (req) => inFlight.delete(req);
+  // Set by every start and every finish, so a request that comes and goes
+  // between two checks still resets the quiet interval.
+  let lastActivity = Date.now();
+  const start = (req) => { inFlight.add(req); lastActivity = Date.now(); };
+  const end = (req) => { inFlight.delete(req); lastActivity = Date.now(); };
   page.on("request", start);
   page.on("requestfinished", end);
   page.on("requestfailed", end);
   return {
     // Quiet for half a second, as Playwright defines idle; given up on after
-    // fifteen, so a page that polls forever is captured rather than hung.
+    // the timeout, so a page that polls forever is captured rather than hung.
     async idle(quietMs = 500, timeoutMs = 15000) {
       const deadline = Date.now() + timeoutMs;
-      let quietSince = inFlight.size ? null : Date.now();
       while (Date.now() < deadline) {
-        if (inFlight.size) quietSince = null;
-        else if (quietSince === null) quietSince = Date.now();
-        else if (Date.now() - quietSince >= quietMs) return true;
+        if (!inFlight.size && Date.now() - lastActivity >= quietMs) return true;
         await page.waitForTimeout(50);
       }
       return false;
@@ -144,19 +144,44 @@ function trackNetwork(page) {
   };
 }
 
-/** Down a viewport at a time to the bottom, then back to the top. */
-async function scrollThrough(page) {
+/**
+ * Down a viewport at a time to the bottom, then back to the top.
+ *
+ * Instant scrolling, since a page with scroll-behavior: smooth would otherwise
+ * still be on its way when the position is read. At the bottom the network is
+ * given time to settle and the bottom is checked again: content appended there
+ * is swept through too, not just loaded.
+ */
+async function scrollThrough(page, network) {
+  const step = (height) => page.evaluate((h) => {
+    const before = window.scrollY;
+    window.scrollBy({ top: h, behavior: "instant" });
+    return window.scrollY !== before;
+  }, height);
   // Capped, so an infinite feed ends; forty viewports is 36,000 px of page.
-  for (let step = 0; step < 40; step++) {
-    const done = await page.evaluate((height) => {
-      const before = window.scrollY;
-      window.scrollBy(0, height);
-      return window.scrollY === before;
-    }, VIEWPORT.height);
-    await page.waitForTimeout(100);
-    if (done) break;
+  for (let i = 0; i < 40; i++) {
+    if (await step(VIEWPORT.height)) { await page.waitForTimeout(100); continue; }
+    await network.idle(500, 5000);
+    await heightSettles(page);
+    if (!(await step(VIEWPORT.height))) break;
   }
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+}
+
+/**
+ * Until the page has kept the same height for a second, or five seconds pass.
+ * Content appended by a timer or a slow script makes no request to wait on.
+ */
+async function heightSettles(page, stableMs = 1000, timeoutMs = 5000) {
+  const height = () => page.evaluate(() => document.documentElement.scrollHeight);
+  const deadline = Date.now() + timeoutMs;
+  let last = await height();
+  let since = Date.now();
+  while (Date.now() < deadline && Date.now() - since < stableMs) {
+    await page.waitForTimeout(100);
+    const now = await height();
+    if (now !== last) { last = now; since = Date.now(); }
+  }
 }
 
 /**
@@ -191,7 +216,8 @@ function freezeAnimations() {
  * straight after its host. "Visible" means all of: a box at least one pixel
  * each way; not display: none; not visibility: hidden; opacity above zero once
  * every ancestor's opacity is applied, since opacity is not inherited and a
- * transparent wrapper hides everything in it; and some part inside the page.
+ * transparent wrapper hides everything in it (one with display: contents has
+ * no box, and hides nothing); and some part inside the page.
  * aria-hidden elements are visible, so they are kept, and their aria-hidden is
  * recorded.
  *
@@ -227,7 +253,11 @@ function walk() {
   const effectiveOpacity = (el) => {
     if (!el) return 1;
     if (opacity.has(el)) return opacity.get(el);
-    const value = Number(getComputedStyle(el).opacity) * effectiveOpacity(renderedParent(el));
+    // A display: contents element has no box for its opacity to apply to, so
+    // its children paint as if it were not there.
+    const style = getComputedStyle(el);
+    const own = style.display === "contents" ? 1 : Number(style.opacity);
+    const value = own * effectiveOpacity(renderedParent(el));
     opacity.set(el, value);
     return value;
   };

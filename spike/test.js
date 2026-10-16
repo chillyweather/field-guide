@@ -123,6 +123,11 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
       .filter((t) => record.elements.some((e) => e.text === t || e.name === t));
     check("hidden elements are absent: display, visibility, an opacity-0 ancestor, off the page", hidden.join(", "));
 
+    check("a display: contents wrapper with opacity 0 hides nothing",
+      !find("Shown through contents", "button") && "the button is missing");
+    check("lazy content appended at the bottom is loaded and swept through",
+      !find("Late section seen", "p") && JSON.stringify(record.elements.filter((e) => /^Late|^Waiting/.test(e.text)).map((e) => e.text)));
+
     const banner = find("Releases ship on Tuesdays", "div");
     check("a fixed banner is recorded where the picture shows it",
       (!banner || banner.style.position !== "fixed" || banner.box.y !== 0 || banner.box.x !== 1040) && JSON.stringify(banner && banner.box));
