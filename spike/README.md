@@ -35,9 +35,30 @@ The key is read from the repository's `.env.local` (`TYPESAFE_API_KEY=`), as
 
 ```
 node capture.js <url-or-path>...       # captures/<slug>.json + .png, several pages per run
+node run.js --dry-run                  # what is missing, and what it should cost
 node run.js                            # fixtures/candidates.json → fixtures/responses.json
 node report.js                         # accuracy per setup
 ```
+
+The runner sends every candidate through each setup twice, four calls at a
+time from one queue. Before any call it counts the calls still missing and
+estimates their cost. The estimate uses the input tokens this fixture has
+already measured per setup, or the ~7,200 tokens a region cost in #1, priced
+at `JEV_PRICE_IN` from `src-request.js`. The runner refuses to start above
+`--budget` (default $1.00). It also refuses when a capture or screenshot is
+missing, or when the capture on disk isn't the one a candidate's saved
+answers came from.
+
+Each setup's calls go one at a time until the first response arrives, and
+that response is checked against the fields `weigh()` reads. A difference
+stops the run after at most one call per setup, and the message names the
+fields. A refused key or an empty balance also stops the run. Each result is
+written the moment it arrives, keyed by `(candidate, setup, run)`. It holds
+the raw body, the `weigh()` output, ms, input tokens, timestamp, model, guide
+version and hash, the capture it came from, and the request with every
+image replaced by its file name and sha256. A failed call is saved with the
+API's reason. A rerun skips what is done and retries only what is missing or
+failed, so failures count as missing, never as wrong.
 
 `--candidates` and `--responses` point the runner and the report at another
 pair of fixtures. `fixtures/test-page/` holds one candidate on the local test

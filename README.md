@@ -195,8 +195,9 @@ $0.0306 — vision $0.0300 (11,840 in / 430 out), jev $0.0006 (13,400 in)
 ```
 
 The split is the point. **The vision step costs roughly fifty times the
-identification it exists to feed** — the hyped model is about 2% of the bill. Prices
-live in `PRICES` at the top of the script; edit them if a tariff moves.
+identification it exists to feed** — the hyped model is about 2% of the bill. Vision
+prices live in `VISION_PRICES` at the top of the script, and Jev's in `JEV_PRICE_IN`
+in `src-request.js`; edit them if a tariff moves.
 
 ## The run record
 

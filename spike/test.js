@@ -277,6 +277,144 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
       Object.values(saved.body.assets).some((a) => !a.file || !/^[0-9a-f]{64}$/.test(a.sha256)) && JSON.stringify(saved.body.assets));
   }
 
+  // The runner, offline: a fake Jev, no key, no browser.
+  {
+    const { planJobs, estimateCost, checkBudget, runJobs } = require("./runner");
+    const { taxonomy, responseKey } = require("./common");
+    const BIG = "iVBORw0KGgo" + "A".repeat(4000);
+    const candidates = [
+      { page: "https://example.com/a", element: "e1", label: "Button" },
+      { page: "https://example.com/b", element: "e7", label: "Link" },
+    ];
+    const answer = { "e1": "Button", "e7": "Link" };
+    const evidenceFor = async (c) => ({
+      origin: "web", capturedAt: "2026-10-16T00:00:00.000Z",
+      crop: { b64: BIG + "c", file: "out/evidence/" + c.element + "-crop.png", sha256: "1".repeat(64), padded: true },
+      context: { b64: BIG + "w", file: "out/evidence/" + c.element + "-window.png", sha256: "2".repeat(64), scale: 1,
+        outline: { colour: "magenta", width: 3 } },
+      geometry: "for " + c.element,
+      dom: { tag: "a", role: "link", name: c.element, style: {}, children: {} },
+    });
+    const answers = (choice, bend) => {
+      const a = {
+        component: { type: "choice", choice, confidence: 0.95, probabilities: { [choice]: 0.97, Other: 0.03 } },
+        family: { type: "choice", choice: taxonomy.components[choice].family, confidence: 0.9, probabilities: {} },
+      };
+      for (const id of Object.keys(taxonomy.probes)) a[id] = { type: "noul", noul: 0.1 };
+      if (bend) delete a.component.probabilities;
+      return a;
+    };
+    // Answers by what the request is about, after a random delay, so results
+    // finish out of order.
+    const fakeJev = (opts = {}) => {
+      const sent = [];
+      let inFlight = 0, most = 0;
+      const send = async (request) => {
+        const element = /for (e\d+)/.exec(request.body.state.geometry)[1];
+        sent.push(request);
+        inFlight++; most = Math.max(most, inFlight);
+        await new Promise((r) => setTimeout(r, Math.random() * 15));
+        inFlight--;
+        if (opts.fail && opts.fail(sent.length, request)) throw Object.assign(new Error(opts.reason || "HTTP 429 — slow down"), { status: opts.status || 429 });
+        return { body: { model: "jev-1.13.0", answers: answers(answer[element], opts.bend), usage: { input_tokens: 5000 } }, ms: 7 };
+      };
+      return { send, sent, most: () => most };
+    };
+    const quiet = { save: () => {} };
+
+    const all = planJobs(candidates, {});
+    check("a run plans every candidate through every setup twice", all.length !== 12 && all.length + " jobs");
+
+    {
+      const entries = {};
+      const jev = fakeJev();
+      await runJobs({ jobs: all, entries, send: jev.send, evidenceFor, ...quiet });
+      const misplaced = Object.entries(entries).filter(([key, e]) => e.status !== "ok" ||
+        e.weighed.answer !== answer[key.split("|")[0].split("/").pop()]);
+      check("four in flight from one queue, and every result under its own key",
+        (jev.most() > 4 || jev.sent.length !== 12 || Object.keys(entries).length !== 12 || misplaced.length) &&
+        "most " + jev.most() + ", sent " + jev.sent.length + ", misplaced " + misplaced.map(([k]) => k).join(", "));
+      const json = JSON.stringify(entries);
+      check("saved requests hold no base64", (json.includes(BIG.slice(0, 200)) || json.includes("data_base64")) && "base64 found");
+      const e = entries[all[0].key];
+      check("each entry records the guide version and the model",
+        (e.guideVersion !== taxonomy.version || !/^[0-9a-f]{64}$/.test(e.guideSha256) || e.model !== "jev-1.13.0" ||
+          !e.requestedModel || typeof e.ms !== "number" || e.inputTokens !== 5000 || !e.at || !e.body || !e.weighed) &&
+        JSON.stringify(Object.keys(e)));
+    }
+
+    {
+      // Interrupted: the key is refused on the fifth call. Resumed: only what
+      // is missing or failed goes out.
+      const entries = {};
+      const first = fakeJev({ fail: (n) => n >= 5, status: 401, reason: "HTTP 401 — bad key" });
+      let stopped = "";
+      try { await runJobs({ jobs: planJobs(candidates, entries), entries, send: first.send, evidenceFor, ...quiet }); }
+      catch (error) { stopped = error.message; }
+      const saved = Object.values(entries).filter((e) => e.status === "ok").length;
+      const resume = planJobs(candidates, entries);
+      const again = fakeJev();
+      await runJobs({ jobs: resume, entries, send: again.send, evidenceFor, ...quiet });
+      const sentKeys = again.sent.map((r) => /for (e\d+)/.exec(r.body.state.geometry)[1]);
+      check("an interrupted run, resumed, sends only the calls missing or failed",
+        (!/Stopped/.test(stopped) || saved < 1 || resume.length !== 12 - saved || again.sent.length !== resume.length ||
+          Object.values(entries).some((e) => e.status !== "ok") || sentKeys.length !== resume.length) &&
+        JSON.stringify({ stopped, saved, resume: resume.length, sent: again.sent.length }));
+    }
+
+    {
+      // A failed call is kept with the API's reason, and is missing, not wrong.
+      const entries = {};
+      const flaky = fakeJev({ fail: (n, request) => /for e7/.test(request.body.state.geometry) && request.body.assets === undefined });
+      await runJobs({ jobs: planJobs(candidates, entries), entries, send: flaky.send, evidenceFor, ...quiet });
+      const failedOnes = Object.entries(entries).filter(([, e]) => e.status === "failed");
+      const retry = planJobs(candidates, entries);
+      const acc = accuracy(candidates, entries).dom;
+      check("a failed call is saved with its reason and planned again",
+        (failedOnes.length !== 2 || !failedOnes.every(([, e]) => /slow down/.test(e.error) && e.httpStatus === 429) ||
+          retry.length !== 2 || !retry.every((j) => j.retry)) && JSON.stringify(failedOnes.map(([k, e]) => [k, e.error])));
+      check("and the report counts it as missing, not wrong", (acc.counted !== 1 || acc.right !== 1) && JSON.stringify(acc));
+    }
+
+    {
+      // The API changed shape: one call per setup, then a stop that names the fields.
+      const entries = {};
+      const bent = fakeJev({ bend: true });
+      let message = "";
+      try { await runJobs({ jobs: planJobs(candidates, entries), entries, send: bent.send, evidenceFor, ...quiet }); }
+      catch (error) { message = error.message; }
+      check("a response with the wrong shape stops the run after at most one call per setup, naming the fields",
+        (bent.sent.length > 3 || !/answers\.component\.probabilities missing/.test(message)) &&
+        bent.sent.length + " calls: " + message);
+    }
+
+    {
+      // 50 candidates, 300 calls, at the measured figure: about $0.09.
+      const fifty = Array.from({ length: 50 }, (_, i) => ({ page: "https://example.com/p", element: "e" + (i + 1) }));
+      const estimate = estimateCost(planJobs(fifty, {}), {});
+      let refused = "";
+      try { checkBudget(estimate, 0.05); } catch (error) { refused = error.message; }
+      let allowed = true;
+      try { checkBudget(estimate, 1); } catch (error) { allowed = false; }
+      check("the estimate prices the missing calls at the measured figure",
+        (estimate.calls !== 300 || estimate.usd < 0.05 || estimate.usd > 0.15) && JSON.stringify(estimate));
+      check("a cost above the ceiling is refused, and one below is not", (!/above the budget/.test(refused) || !allowed) && refused);
+
+      // The command line, with a key that would be refused if anything were sent.
+      const dir = path.join(OUT, "budget");
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, "candidates.json"), JSON.stringify({ candidates: fifty }));
+      let code = 0, said = "";
+      try {
+        execFileSync(process.execPath, ["run.js", "--candidates", path.join(dir, "candidates.json"),
+          "--responses", path.join(dir, "responses.json"), "--budget", "0.01"],
+        { cwd: SPIKE, env: Object.assign({}, process.env, { TYPESAFE_API_KEY: "sk-not-a-key" }), stdio: "pipe" });
+      } catch (error) { code = error.status; said = String(error.stderr); }
+      check("run.js stops above the ceiling before any call",
+        (code !== 1 || !/above the budget/.test(said) || fs.existsSync(path.join(dir, "responses.json"))) && code + " " + said);
+    }
+  }
+
   console.log(failed ? "\n" + failed + " failing" : "\nall passing");
   process.exit(failed ? 1 : 0);
 })().catch((error) => { console.error(error); process.exit(1); });

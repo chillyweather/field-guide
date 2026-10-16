@@ -9,6 +9,11 @@
 // pictures (src-images.js), words the geometry (src-geometry.js), and supplies
 // the tag that makes the image references unique.
 
+// Dollars per million input tokens for jev-latest; output is not metered.
+// Edit if the tariff moves. The plugin's tally and the spike's budget guard
+// both price their measured tokens with it.
+const JEV_PRICE_IN = 0.042;
+
 // Jev refuses images unless the request opts in with this header.
 const JEV_IMAGE_HEADER = "TypeSafe-Danger-Zone-Images";
 
@@ -168,5 +173,5 @@ function questionsFor(taxonomy, subject) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { buildJevRequest, domFacts, JEV_IMAGE_HEADER, SETUPS };
+  module.exports = { buildJevRequest, domFacts, JEV_IMAGE_HEADER, JEV_PRICE_IN, SETUPS };
 }

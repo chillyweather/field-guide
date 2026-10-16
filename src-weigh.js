@@ -82,6 +82,29 @@ function weigh(answers, taxonomy) {
   };
 }
 
+/**
+ * Every field weigh() and the UI read, named individually where a response
+ * differs. The docs describe the shape; only a live response knows it, so the
+ * probe and the DOM spike check the first one before trusting the rest.
+ */
+function checkShape(answers, taxonomy) {
+  const complaints = [];
+  if (!answers || typeof answers !== "object") return ["answers missing"];
+  const c = answers.component;
+  if (!c) complaints.push("answers.component missing");
+  else {
+    if (typeof c.choice !== "string") complaints.push("answers.component.choice is not a string");
+    if (!c.probabilities || typeof c.probabilities !== "object") complaints.push("answers.component.probabilities missing");
+    if (typeof c.confidence !== "number") complaints.push("answers.component.confidence is not a number");
+  }
+  if (!answers.family) complaints.push("answers.family missing");
+  for (const id of Object.keys(taxonomy.probes)) {
+    if (!answers[id]) complaints.push("probe " + id + " missing");
+    else if (typeof answers[id].noul !== "number") complaints.push("probe " + id + " has no numeric .noul");
+  }
+  return complaints;
+}
+
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { weigh, ACT_ALONE, NEEDS_HUMAN, CONTESTED_FLOOR, PROBE_FLOOR };
+  module.exports = { weigh, checkShape, ACT_ALONE, NEEDS_HUMAN, CONTESTED_FLOOR, PROBE_FLOOR };
 }

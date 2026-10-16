@@ -8,7 +8,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const { weigh } = require("./src-weigh");
+const { weigh, checkShape } = require("./src-weigh");
+const { JEV_PRICE_IN } = require("./src-request");
 
 /**
  * Keys come from .env.local, which is gitignored and never printed.
@@ -75,24 +76,6 @@ async function ask(name) {
   return { body: JSON.parse(text), ms: Date.now() - started };
 }
 
-/** Every field the plugin actually reads, named individually when it differs. */
-function checkShape(answers) {
-  const complaints = [];
-  const c = answers && answers.component;
-  if (!c) complaints.push("answers.component missing");
-  else {
-    if (typeof c.choice !== "string") complaints.push("answers.component.choice is not a string");
-    if (!c.probabilities || typeof c.probabilities !== "object") complaints.push("answers.component.probabilities missing");
-    if (typeof c.confidence !== "number") complaints.push("answers.component.confidence is not a number");
-  }
-  if (!answers.family) complaints.push("answers.family missing");
-  for (const id of Object.keys(taxonomy.probes)) {
-    if (!answers[id]) complaints.push("probe " + id + " missing");
-    else if (typeof answers[id].noul !== "number") complaints.push("probe " + id + " has no numeric .noul");
-  }
-  return complaints;
-}
-
 (async () => {
   const names = only ? [only] : Object.keys(CASES);
   const saved = {};
@@ -113,7 +96,7 @@ function checkShape(answers) {
 
     const answers = out.body.answers;
     if (!checked) {
-      const complaints = checkShape(answers);
+      const complaints = checkShape(answers, taxonomy);
       checked = true;
       if (complaints.length) {
         console.log("\nShape differs from what src-weigh.js and the UI read:");
@@ -155,7 +138,7 @@ function checkShape(answers) {
   fs.writeFileSync(livePath, JSON.stringify({ ...previous, ...saved }, null, 2) + "\n");
 
   console.log("-".repeat(86));
-  console.log(names.length + " calls, " + tokens + " input tokens, about $" + (tokens / 1e6 * 0.042).toFixed(5));
+  console.log(names.length + " calls, " + tokens + " input tokens, about $" + (tokens / 1e6 * JEV_PRICE_IN).toFixed(5));
   console.log("saved fixtures/jev-live.json");
   console.log(
     spread === 0
