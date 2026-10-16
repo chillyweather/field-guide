@@ -20,6 +20,7 @@ const pieces = [
   { marker: "/* __VISION__ */", source: ["src-vision.js"], json: false },
   { marker: "/* __IMAGES__ */", source: ["src-images.js"], json: false },
   { marker: "/* __GEOMETRY__ */", source: ["src-geometry.js"], json: false },
+  { marker: "/* __REQUEST__ */", source: ["src-request.js"], json: false },
 ];
 
 let html = read("src-ui.html");
@@ -36,7 +37,7 @@ for (const piece of pieces) {
   html = html.replace(piece.marker, body.trim());
 }
 
-if (/__TAXONOMY__|__FIXTURES__|__WEIGH__|__VOCABULARY__|__QUESTIONS__|__VISION__|__IMAGES__|__GEOMETRY__/.test(html)) {
+if (/__TAXONOMY__|__FIXTURES__|__WEIGH__|__VOCABULARY__|__QUESTIONS__|__VISION__|__IMAGES__|__GEOMETRY__|__REQUEST__/.test(html)) {
   console.error("build: a marker survived the splice");
   process.exit(1);
 }

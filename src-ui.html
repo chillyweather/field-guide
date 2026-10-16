@@ -198,6 +198,8 @@ const visionShapes = {};
 
 /* __GEOMETRY__ */
 
+/* __REQUEST__ */
+
 // Which pipeline a run uses. A setting rather than a fork of the code, so the
 // two are compared on the same selection, exports, questions and weighing —
 // the only thing that differs is what Jev is shown.
@@ -567,28 +569,30 @@ async function askJev(description, geometry) {
  * images a call are far inside the 32 MiB limit.
  */
 async function askJevWithImages(cropFit, contextFit, geometry) {
-  // Unique per call and unlike any word, since Jev swaps a reference for its
-  // image wherever the string appears.
-  const tag = Math.random().toString(36).slice(2, 10);
-  const refs = { crop: "fg-region-" + tag, context: contextFit ? "fg-screen-" + tag : null };
-  const assets = {};
-  assets[refs.crop] = { type: "image", format: "png", data_base64: cropFit.b64 };
-  if (contextFit) assets[refs.context] = { type: "image", format: "png", data_base64: contextFit.b64 };
-  return postJev({
+  // Built by the same function the DOM spike uses (src-request.js), so the
+  // spike's image-only setup is this request and not a copy of it.
+  const request = buildJevRequest({
+    evidence: {
+      origin: "figma",
+      crop: { b64: cropFit.b64, padded: cropFit.padded },
+      context: contextFit ? { b64: contextFit.b64, scale: contextFit.scale } : null,
+      geometry,
+    },
+    setup: "image",
+    taxonomy: TAXONOMY,
+    subject: "pictured",
     model: JEV_MODEL,
-    state: buildImageState(refs, geometry, {
-      cropPadded: cropFit.padded,
-      contextScale: contextFit ? contextFit.scale : 1,
-    }),
-    assets,
-    questions: buildQuestions(TAXONOMY, "pictured"),
-  }, true);
+    // Unique per call and unlike any word, since Jev swaps a reference for its
+    // image wherever the string appears.
+    tag: Math.random().toString(36).slice(2, 10),
+  });
+  return postJev(request.body, request.imageHeader);
 }
 
 async function postJev(payload, withImages) {
   const base = (keys.jevBase || DEFAULT_JEV_BASE).replace(/\/+$/, "");
   const headers = { "content-type": "application/json", authorization: "Bearer " + keys.jev };
-  if (withImages) headers["TypeSafe-Danger-Zone-Images"] = "true";
+  if (withImages) headers[JEV_IMAGE_HEADER] = "true";
   let res;
   try {
     res = await fetch(base + "/v1/systemone", { method: "POST", headers, body: JSON.stringify(payload) });

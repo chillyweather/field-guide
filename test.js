@@ -173,7 +173,7 @@ for (const c of shapes) {
 
 // Jev refuses an image outside its limits and fails the whole request, so
 // every size a Figma export can come out at has to land inside them.
-const { fitForJev, jevAccepts, buildImageState } = require('./src-images');
+const { fitForJev, jevAccepts } = require('./src-images');
 const sizes = [
   { why: '2x icon button, padded not enlarged', w: 48, h: 48, padded: true, scale: 1 },
   { why: 'wide thin divider', w: 1200, h: 4, padded: true, scale: 1 },
@@ -190,11 +190,108 @@ for (const c of sizes) {
   if (wrong) { failed++; console.log('FAIL  fit ' + c.why + ': ' + JSON.stringify(f)); }
   else console.log('ok    fit ' + (c.w + 'x' + c.h + ' -> ' + f.canvasW + 'x' + f.canvasH).padEnd(38) + c.why);
 }
+// The Jev request, built by one shared function for the plugin and the spike.
+const { buildJevRequest, JEV_IMAGE_HEADER } = require('./src-request');
+const { buildQuestions } = require('./src-questions');
 {
-  const st = buildImageState({ crop: 'fg-region-x', context: null }, '48x48 px', { cropPadded: true, contextScale: 1 });
-  if (st.region !== 'fg-region-x' || st.screen || !st.region_note || !/alone/.test(st.screen_note)) {
-    failed++; console.log('FAIL  image state: ' + JSON.stringify(st));
-  } else console.log('ok    image state references the crop, notes the margin and the missing screen');
+  const check = (why, wrong) => {
+    if (wrong) { failed++; console.log('FAIL  request ' + why + (wrong === true ? '' : '\n        ' + wrong)); }
+    else console.log('ok    request ' + why);
+  };
+
+  // Pinned to the request the plugin's Jev-only survey sent before the
+  // builder existed: the same state keys, in the same order, word for word.
+  const figma = (context, padded) => buildJevRequest({
+    evidence: { origin: 'figma', crop: { b64: 'CROP', padded }, context, geometry: '48x48 px; aspect ratio 1.00' },
+    setup: 'image', taxonomy, subject: 'pictured', model: 'jev-latest', tag: 'x',
+  });
+  const pinned = (state, assets) => JSON.stringify({
+    model: 'jev-latest', state, assets, questions: buildQuestions(taxonomy, 'pictured'),
+  });
+  {
+    const got = figma({ b64: 'SCREEN', scale: 0.26 }, true);
+    const want = pinned({
+      task: 'A region of a user interface, marked by a designer, to be identified.',
+      region: 'fg-region-x',
+      geometry: 'From the design file: 48x48 px; aspect ratio 1.00',
+      region_note: 'The region is drawn at its true size on a flat white margin; the margin is not part of it.',
+      screen: 'fg-screen-x',
+      screen_note: 'The whole screen the region sits on, for context only. Shown at 26% of its size.',
+    }, {
+      'fg-region-x': { type: 'image', format: 'png', data_base64: 'CROP' },
+      'fg-screen-x': { type: 'image', format: 'png', data_base64: 'SCREEN' },
+    });
+    check('figma + image, padded crop on a shrunk screen, as the plugin sent it',
+      JSON.stringify(got.body) !== want ? 'got ' + JSON.stringify(got.body.state) : got.imageHeader !== true && 'no image header');
+  }
+  {
+    const got = figma(null, false);
+    const want = pinned({
+      task: 'A region of a user interface, marked by a designer, to be identified.',
+      region: 'fg-region-x',
+      geometry: 'From the design file: 48x48 px; aspect ratio 1.00',
+      screen_note: 'No surrounding screen was found; judge from the region alone.',
+    }, { 'fg-region-x': { type: 'image', format: 'png', data_base64: 'CROP' } });
+    check('figma + image, no screen, as the plugin sent it', JSON.stringify(got.body) !== want && 'got ' + JSON.stringify(got.body.state));
+  }
+  check('image header name', JEV_IMAGE_HEADER !== 'TypeSafe-Danger-Zone-Images' && JEV_IMAGE_HEADER);
+
+  // A web candidate with its labelling-only names planted everywhere they could
+  // ride along: on the facts object, beside it, and on the evidence itself.
+  const planted = ['cds--btn--primary', 'hero-cta-7f3a', 'data-track-signup-q4'];
+  const dom = {
+    tag: 'a', role: 'link', name: 'Get started', text: 'Get started', href: '/start',
+    aria: { expanded: 'false' },
+    style: { width: '160px', height: '48px', borderRadius: '0px', backgroundColor: 'rgb(15, 98, 254)',
+      border: '0px none rgb(255, 255, 255)', position: 'static', zIndex: 'auto', cursor: 'pointer' },
+    parent: { tag: 'div', role: 'generic' }, children: {},
+    classes: [planted[0]], id: planted[1], data: { track: planted[2] },
+    labelling: { classes: [planted[0]], id: planted[1], data: { 'data-track': planted[2] } },
+  };
+  const web = (setup) => buildJevRequest({
+    evidence: {
+      origin: 'web', crop: { b64: 'CROP', padded: true },
+      context: { b64: 'WINDOW', scale: 1, outline: { colour: 'magenta', width: 3 } },
+      geometry: '160x48 px; aspect ratio 3.33; spans 11% of the screen width; positioned top left of the screen',
+      dom, labelling: dom.labelling,
+    },
+    setup, taxonomy, subject: 'given', model: 'jev-latest', tag: 'y',
+  });
+  const A = web('image'), B = web('dom'), C = web('image+dom');
+  const says = (r, text) => JSON.stringify(r.body).includes(text);
+
+  check('dom carries no assets and no header flag', ('assets' in B.body || B.imageHeader !== false) && JSON.stringify(B.body.state));
+  check('dom does not point at a picture', (says(B, 'fg-region') || says(B, 'fg-screen')) && 'an image reference survived');
+  check('image carries no DOM facts', (A.body.state.dom !== undefined || says(A, 'Get started') || says(A, '/start')) && JSON.stringify(A.body.state));
+  check('image+dom carries both', (!C.body.assets || !C.body.assets['fg-region-y'] || !C.body.assets['fg-screen-y'] ||
+    !C.imageHeader || !/href: present, "\/start"/.test(C.body.state.dom)) && JSON.stringify(C.body.state));
+  check('dom and image+dom carry the same facts', B.body.state.dom !== C.body.state.dom && 'they differ');
+  {
+    const q = [A, B, C].map((r) => JSON.stringify(r.body.questions));
+    check('questions byte-identical across the three setups', (q[0] !== q[1] || q[1] !== q[2]) && 'they differ');
+  }
+  {
+    const leaks = [];
+    for (const [name, r] of [['image', A], ['dom', B], ['image+dom', C]]) {
+      for (const value of planted) if (says(r, value)) leaks.push(name + ' carries ' + value);
+    }
+    check('class names, id and data-* reach no request', leaks.join('; '));
+  }
+  {
+    const claims = [['image', A], ['dom', B], ['image+dom', C]]
+      .filter(([, r]) => /design file|designer/i.test(JSON.stringify(r.body))).map(([name]) => name);
+    check('web never claims a design file or a designer', claims.length && 'claimed in ' + claims.join(', '));
+  }
+  {
+    const refused = [];
+    const tryIt = (why, args) => { try { buildJevRequest(args); refused.push(why + ' was accepted'); } catch (e) { /* expected */ } };
+    tryIt('figma + dom', { evidence: { origin: 'figma', geometry: 'g', dom }, setup: 'dom', taxonomy, model: 'm' });
+    tryIt('image without a crop', { evidence: { origin: 'web', geometry: 'g', dom }, setup: 'image+dom', taxonomy, model: 'm', tag: 't' });
+    tryIt('web window without its outline', { evidence: { origin: 'web', geometry: 'g', crop: { b64: 'C' }, context: { b64: 'W', scale: 1 } },
+      setup: 'image', taxonomy, model: 'm', tag: 't' });
+    tryIt('an unknown setup', { evidence: { origin: 'web', geometry: 'g', dom }, setup: 'both', taxonomy, model: 'm' });
+    check('refuses evidence a setup cannot truthfully send', refused.join('; '));
+  }
 }
 
 // The geometry sentence, pinned to what code.js said before it moved into
