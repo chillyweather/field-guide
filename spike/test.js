@@ -9,6 +9,8 @@ const { SPIKE, ROOT, SETUPS, slug } = require("./common");
 const { capture } = require("./capture");
 const { buildEvidence, contextWindow, cropRect } = require("./evidence");
 const { requestFor, savedRequest } = require("./jev");
+const { domFor } = require("./evidence");
+const { domFacts } = require("../src-request");
 
 let failed = 0;
 function check(name, problem) {
@@ -88,6 +90,85 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
   {
     const bottom = contextWindow({ x: 600, y: 1780, width: 100, height: 10 }, record.viewport, { width: 1440, height: 1792 });
     check("and one on the bottom edge is clamped the other way", (bottom.y !== 1792 - 900 || bottom.height !== 900) && JSON.stringify(bottom));
+  }
+
+  // Fidelity: what the browser rendered and exposes, not what the markup says.
+  {
+    const find = (text, tag) => record.elements.find((e) => e.text === text && (!tag || e.tag === tag));
+    const want = [
+      { text: "Get started", tag: "a", role: "link", name: "Get started", href: "/start" },
+      { text: "Save", tag: "button", role: "button", name: "Save", href: null },
+      { text: "documentation", tag: "a", role: "link", name: "documentation", href: "/docs" },
+      { text: "", tag: "input", role: "checkbox", name: "Email me updates", href: null },
+      { text: "Dark mode", tag: "div", role: "switch", name: "Dark mode", href: null },
+      { text: "Read the guide", tag: "a", role: "link", name: "Read the guide", href: "/type" },
+      { text: "Typography", tag: "h3", role: "heading", name: "Typography", href: null },
+    ];
+    const wrong = [];
+    for (const w of want) {
+      const e = find(w.text, w.tag);
+      if (!e) wrong.push("no <" + w.tag + "> " + JSON.stringify(w.text));
+      else if (e.role !== w.role || e.name !== w.name || e.href !== w.href) {
+        wrong.push("<" + w.tag + "> " + JSON.stringify(w.text) + ": " + JSON.stringify({ role: e.role, name: e.name, href: e.href }));
+      }
+    }
+    check("roles, accessible names and href come from the browser", wrong.join("; "));
+
+    const sw = find("Dark mode", "div");
+    check("aria-checked is recorded where present", (!sw || sw.aria.checked !== "true") && JSON.stringify(sw && sw.aria));
+    const star = find("★", "span");
+    check("aria-hidden elements are kept, and marked", (!star || star.aria.hidden !== "true") && JSON.stringify(star));
+
+    const hidden = ["Hidden by display", "Hidden by visibility", "Hidden by opacity", "Off the page"]
+      .filter((t) => record.elements.some((e) => e.text === t || e.name === t));
+    check("hidden elements are absent: display, visibility, an opacity-0 ancestor, off the page", hidden.join(", "));
+
+    check("a display: contents wrapper with opacity 0 hides nothing",
+      !find("Shown through contents", "button") && "the button is missing");
+    check("an open popover inside an opacity-0 wrapper is kept",
+      !record.elements.some((e) => e.text === "Popover note") && "the popover is missing");
+    check("lazy content appended at the bottom is loaded and swept through",
+      !find("Late section seen", "p") && JSON.stringify(record.elements.filter((e) => /^Late|^Waiting/.test(e.text)).map((e) => e.text)));
+
+    const banner = find("Releases ship on Tuesdays", "div");
+    check("a fixed banner is recorded where the picture shows it",
+      (!banner || banner.style.position !== "fixed" || banner.box.y !== 0 || banner.box.x !== 1040) && JSON.stringify(banner && banner.box));
+
+    // The card's links sit in a display: contents wrapper, which has no box and
+    // is not recorded. Their parent is the card itself.
+    const byId = new Map(record.elements.map((e) => [e.id, e]));
+    const chain = [];
+    for (let e = find("Read the guide", "a"); e && e.parent; e = byId.get(e.parent)) chain.push(byId.get(e.parent).tag);
+    check("a link in the card climbs article, main, body, html", chain.join(" > ") !== "article > main > body > html" && chain.join(" > "));
+
+    const pill = record.elements.find((e) => e.tag === "status-pill");
+    const beta = find("Beta", "span");
+    const dismiss = find("Dismiss", "button");
+    const slotted = find("Slotted note", "span");
+    check("elements in an open shadow root are present and marked",
+      (!pill || !beta || !dismiss || !beta.shadow || !dismiss.shadow || beta.role !== "status" ||
+        beta.parent !== pill.id || dismiss.parent !== pill.id) && JSON.stringify({ beta, dismiss }));
+    check("a slotted light-DOM element is not marked, and hangs off its host",
+      (!slotted || slotted.shadow || slotted.parent !== pill.id) && JSON.stringify(slotted));
+    const sealed = record.elements.find((e) => e.tag === "sealed-widget");
+    check("a closed shadow root is noted", (!sealed || !sealed.closedShadowRoot || record.closedShadowRoots !== 1) &&
+      JSON.stringify({ sealed, count: record.closedShadowRoots }));
+
+    const cta = find("Get started", "a");
+    const names = record.labelling[cta.id] || {};
+    const planted = [...(names.classes || []), names.id, ...Object.values(names.data || {})];
+    const facts = domFacts(domFor(record.elements, cta)).join("\n");
+    check("the labelling block holds the classes, id and data-*",
+      (!(names.classes || []).includes("cds--btn") || names.id !== "hero-signup" || names.data["data-track"] !== "signup-hero") &&
+      JSON.stringify(names));
+    check("and the DOM facts list holds none of them", planted.filter((v) => facts.includes(v)).join(", "));
+    const elementsJson = JSON.stringify(record.elements);
+    check("and the elements list holds none of them either", planted.filter((v) => elementsJson.includes(v)).join(", "));
+  }
+  {
+    const again = await capture(["test/page.html"], path.join(OUT, "again"));
+    const same = (r) => JSON.stringify({ page: r.page, closed: r.closedShadowRoots, elements: r.elements, labelling: r.labelling });
+    check("two captures of the same page give the same element record", same(again[0]) !== same(record) && "they differ");
   }
 
   // The requests, as the runner builds and saves them.

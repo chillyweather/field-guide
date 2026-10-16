@@ -34,7 +34,7 @@ The key is read from the repository's `.env.local` (`TYPESAFE_API_KEY=`), as
 ## Running it
 
 ```
-node capture.js <url-or-path>...       # captures/<slug>.json + .png
+node capture.js <url-or-path>...       # captures/<slug>.json + .png, several pages per run
 node run.js                            # fixtures/candidates.json → fixtures/responses.json
 node report.js                         # accuracy per setup
 ```
@@ -48,6 +48,27 @@ node capture.js test/page.html
 node run.js    --candidates fixtures/test-page/candidates.json --responses fixtures/test-page/responses.json
 node report.js --candidates fixtures/test-page/candidates.json --responses fixtures/test-page/responses.json
 ```
+
+## What capture records
+
+Capture uses Chromium at 1440 × 900 and device pixel ratio 1. It waits for fonts,
+scrolls to the bottom and back to trigger lazy loading, waits for the network
+to go quiet, and freezes animations. It then takes the full-page screenshot at
+scroll position 0 and records every visible element.
+
+- **Visible** means all of these: a box of at least 1 px each way, not
+  `display: none`, not `visibility: hidden`, opacity above zero once every
+  ancestor's opacity is applied, and some part inside the page. `aria-hidden`
+  elements are visible, so they are kept, and their `aria-hidden` is recorded.
+- **Role and accessible name** come from Chromium's accessibility tree (over
+  CDP), not from a reimplementation. `aria-checked`, `aria-pressed`,
+  `aria-expanded` and `aria-hidden` are recorded where the page declares them.
+- **Parent** is the nearest recorded ancestor in the rendered tree. A slotted
+  element hangs off its slot's host, and skipped wrappers
+  (`display: contents`, zero-size) don't break the chain.
+- **Shadow DOM**: open roots are walked and their elements marked
+  `shadow: true`. A closed root can't be walked. Its host is marked
+  `closedShadowRoot: true` and the page counts them.
 
 ## What is committed
 

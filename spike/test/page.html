@@ -8,6 +8,8 @@
 <title>Field Guide capture test page</title>
 <style>
   * { box-sizing: border-box; }
+  /* Smooth, so a capture that scrolls without saying "instant" stops after one step. */
+  html { scroll-behavior: smooth; }
   body { margin: 0; font: 16px/24px -apple-system, "Helvetica Neue", Arial, sans-serif; color: #161616; background: #ffffff; }
   main { padding: 0 40px; }
   .hero-signup-link { position: absolute; left: 40px; top: 0; display: block; width: 160px; height: 48px; padding: 12px 16px;
@@ -20,6 +22,18 @@
      and picture and record must agree on where it is. */
   .sliding-block { position: absolute; left: 600px; top: 300px; width: 80px; height: 40px; background: #da1e28;
                    animation: slide 2s linear -1s infinite; }
+  .settings { display: flex; gap: 24px; align-items: center; margin: 24px 0; }
+  .settings label { display: inline-flex; gap: 8px; align-items: center; }
+  .theme-switch { display: inline-block; width: 120px; height: 32px; padding: 4px 12px; border-radius: 16px;
+                  background: #24a148; color: #ffffff; cursor: pointer; }
+  .notice-bar { position: fixed; top: 0; right: 0; width: 400px; height: 40px; padding: 8px 16px;
+                background: #393939; color: #ffffff; z-index: 10; }
+  .guide-card { width: 320px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px; margin: 24px 0; }
+  .guide-card h3 { margin: 0 0 8px; font-size: 20px; }
+  .card-links { display: contents; }
+  .guide-card a { display: block; }
+  .stray { position: absolute; left: -400px; top: 400px; width: 100px; height: 20px; }
+  .see-through { opacity: 0; }
   @keyframes slide { from { transform: translateX(0); } to { transform: translateX(400px); } }
 </style>
 </head>
@@ -30,8 +44,71 @@
     <button type="button">Save</button>
     <p>Read the <a href="/docs">documentation</a> first.</p>
   </div>
+  <div class="settings">
+    <label><input type="checkbox" checked> Email me updates</label>
+    <div class="theme-switch" role="switch" aria-checked="true" tabindex="0">Dark mode</div>
+    <span class="decoration" aria-hidden="true">★</span>
+  </div>
+  <div class="notice-bar">Releases ship on Tuesdays</div>
+  <article class="guide-card">
+    <h3>Typography</h3>
+    <p>Type scale and tokens.</p>
+    <div class="card-links">
+      <a href="/type">Read the guide</a>
+      <a href="/type/tokens">See the tokens</a>
+    </div>
+  </article>
+  <button style="display: none">Hidden by display</button>
+  <button style="visibility: hidden">Hidden by visibility</button>
+  <div class="see-through"><button>Hidden by opacity</button></div>
+  <div class="see-through" style="display: contents"><button>Shown through contents</button></div>
+  <div class="see-through">
+    <div class="floating-note" popover="manual" style="inset: auto; left: 900px; top: 300px; margin: 0">Popover note</div>
+  </div>
+  <div class="stray">Off the page</div>
+  <status-pill><span>Slotted note</span></status-pill>
+  <sealed-widget></sealed-widget>
   <div class="page-filler"></div>
   <div class="sliding-block"></div>
+  <div class="bottom-sentinel" style="height: 1px"></div>
 </main>
+<script>
+  // An open shadow root, holding its own elements and a slotted one from the
+  // light DOM; and a closed one, which page script cannot reach.
+  customElements.define("status-pill", class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" }).innerHTML =
+        '<style>.pill { display: inline-block; padding: 2px 8px; border-radius: 12px; background: #d0e2ff; }</style>' +
+        '<span class="pill" role="status">Beta</span> <button type="button">Dismiss</button> <slot></slot>';
+    }
+  });
+  customElements.define("sealed-widget", class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "closed" }).innerHTML = '<p style="margin: 0">Sealed content</p>';
+    }
+  });
+
+  // Opened into the top layer, where its wrapper's opacity cannot reach it.
+  document.querySelector(".floating-note").showPopover();
+
+  // Lazy content, the slow kind: reaching the bottom appends a section after a
+  // pause, and that section only finishes loading once it is itself scrolled to.
+  new IntersectionObserver((entries, observer) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    observer.disconnect();
+    setTimeout(() => {
+      const late = document.createElement("section");
+      late.innerHTML = '<div style="height: 1200px">Late section loaded</div><p class="late-status">Waiting</p>';
+      document.querySelector("main").appendChild(late);
+      new IntersectionObserver((seen, o) => {
+        if (!seen.some((e) => e.isIntersecting)) return;
+        o.disconnect();
+        late.querySelector(".late-status").textContent = "Late section seen";
+      }).observe(late.querySelector(".late-status"));
+    }, 400);
+  }).observe(document.querySelector(".bottom-sentinel"));
+</script>
 </body>
 </html>
