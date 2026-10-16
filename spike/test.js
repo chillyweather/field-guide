@@ -457,6 +457,28 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     }
 
     {
+      // A worker still building evidence when the run is told to stop does not
+      // send afterwards.
+      const entries = {};
+      const jev = fakeJev();
+      let message = "";
+      try {
+        await runJobs({ jobs: planJobs(candidates, entries), entries, ...quiet,
+          evidenceFor: async (c) => {
+            if (c.element === "e7") await new Promise((r) => setTimeout(r, 60));
+            return evidenceFor(c);
+          },
+          send: async (request) => {
+            const out = await jev.send(request);
+            return jev.sent.length > 3 ? Object.assign(out, { body: null }) : out;
+          } });
+      } catch (error) { message = error.message; }
+      const late = jev.sent.filter((r) => /for e7/.test(r.body.state.geometry)).length;
+      check("nothing is sent once the run has been told to stop", (late || !/Stopped/.test(message)) &&
+        late + " calls for the slow candidate: " + message);
+    }
+
+    {
       // The API changed shape: one call per setup, then a stop that names the fields.
       const entries = {};
       const bent = fakeJev({ bend: true });

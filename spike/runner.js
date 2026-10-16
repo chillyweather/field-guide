@@ -106,6 +106,9 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
       stop = stop || new Error("Stopped: could not prepare " + job.key + ": " + (error.message || error));
       return { responded: false, shape: [] };
     }
+    // The run may have been told to stop while this job's evidence was being
+    // built. Then it is not sent: it stays missing for the next run.
+    if (stop) return { responded: false, shape: [] };
     const base = {
       candidate: candidateKey(job.candidate), setup: job.setup, run: job.run,
       capturedAt: ev.capturedAt || null, requestedModel: MODEL,
