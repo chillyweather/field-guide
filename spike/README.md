@@ -49,6 +49,35 @@ node run.js    --candidates fixtures/test-page/candidates.json --responses fixtu
 node report.js --candidates fixtures/test-page/candidates.json --responses fixtures/test-page/responses.json
 ```
 
+## Choosing and labelling candidates
+
+```
+node select.js                                  # out/proposals.json: one proposal per visual group
+node candidates.js pick 3 7 12 --pair "Button / Link"
+node candidates.js add <page-url> <element-id> --note "missed by selection"
+node sheet.js                                   # out/sheet.html: open it in a browser
+```
+
+`select.js` groups the elements of every captured page by a coarse visual
+signature (tag, role, size rounded to 8 px, corner radius, background,
+border) and proposes one representative per group, biggest group first.
+`candidates.js` adds candidates to `fixtures/candidates.json`, either from
+the proposals or by element id. The sheet shows each candidate's fitted crop,
+its outlined context window, the geometry and DOM facts exactly as Jev gets
+them, and the class-name hint. It is read-only.
+
+Each candidate holds `page`, `element`, `pair` (the hard pair it tests, if
+any), `hint`, `label`, an optional `looks_like`, and `note`. Labels are typed
+into the fixture by a person. No tool writes `label` or `looks_like`, and a
+label that isn't a guide entry is refused when the fixture loads.
+
+**The labelling rule.** `label` is the guide entry that the guide's own
+definitions give when everything about the element is known, including what
+activating it does. When the picture alone would earn a different entry,
+that entry goes in `looks_like`. An `<a href>` styled as a filled button is
+`label: Link`, `looks_like: Button`. Leave `label` out if you can't decide:
+an unlabelled candidate counts towards stability, never towards accuracy.
+
 ## What capture records
 
 Capture uses Chromium at 1440 × 900 and device pixel ratio 1. It waits for fonts,

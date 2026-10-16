@@ -9,24 +9,13 @@
 
 const path = require("path");
 const fs = require("fs");
-const { SPIKE, taxonomy, SETUPS, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs } = require("./common");
+const { SPIKE, taxonomy, SETUPS, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs, loadCaptures } = require("./common");
+const { loadCandidates } = require("./candidates");
 
 loadEnv();
 const { weigh } = require("../src-weigh");
 const { buildEvidence } = require("./evidence");
 const { requestFor, savedRequest, send, MODEL } = require("./jev");
-
-/** Capture records by URL, from every record in the captures directory. */
-function loadCaptures(dir) {
-  const byUrl = new Map();
-  if (!fs.existsSync(dir)) return byUrl;
-  for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".json")) continue;
-    const record = readJson(path.join(dir, file));
-    byUrl.set(record.url, { record, screenshot: path.join(dir, record.screenshot) });
-  }
-  return byUrl;
-}
 
 async function evidenceFor(candidate, captures) {
   const found = captures.get(candidate.page);
@@ -52,7 +41,7 @@ async function main() {
     process.exit(2);
   }
 
-  const { candidates } = readJson(candidatesFile, { candidates: [] });
+  const { candidates } = loadCandidates(candidatesFile);
   const fixture = readJson(responsesFile, { entries: {} });
   let calls = 0, tokens = 0;
 
@@ -101,6 +90,6 @@ async function main() {
   console.log(calls + " calls, " + tokens + " input tokens → " + path.relative(SPIKE, responsesFile));
 }
 
-module.exports = { loadCaptures, evidenceFor };
+module.exports = { evidenceFor };
 
 if (require.main === module) main().catch((error) => { console.error(error.message || error); process.exit(1); });

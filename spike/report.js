@@ -7,6 +7,7 @@
 
 const path = require("path");
 const { SPIKE, SETUPS, LETTER, responseKey, readJson, parseArgs } = require("./common");
+const { loadCandidates, isLabelled } = require("./candidates");
 
 /** Per setup: right, out of how many labelled candidates with a completed call. */
 function accuracy(candidates, entries) {
@@ -14,7 +15,7 @@ function accuracy(candidates, entries) {
   for (const setup of SETUPS) {
     let right = 0, counted = 0;
     for (const candidate of candidates) {
-      if (!candidate.label) continue;
+      if (!isLabelled(candidate)) continue;
       const entry = entries[responseKey(candidate, setup, 1)];
       if (!entry || entry.status !== "ok") continue;
       counted++;
@@ -27,7 +28,7 @@ function accuracy(candidates, entries) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const { candidates } = readJson(path.resolve(SPIKE, args.candidates || "fixtures/candidates.json"), { candidates: [] });
+  const { candidates } = loadCandidates(path.resolve(SPIKE, args.candidates || "fixtures/candidates.json"));
   const { entries } = readJson(path.resolve(SPIKE, args.responses || "fixtures/responses.json"), { entries: {} });
   const result = accuracy(candidates, entries);
   console.log("setup            right / labelled   accuracy");
