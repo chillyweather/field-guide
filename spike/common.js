@@ -80,6 +80,19 @@ function loadEnv() {
   }
 }
 
+/** Capture records by URL, from every record in a captures directory, with their screenshot paths. */
+function loadCaptures(dir) {
+  const byUrl = new Map();
+  if (!fs.existsSync(dir)) return byUrl;
+  for (const file of fs.readdirSync(dir).sort()) {
+    if (!file.endsWith(".json")) continue;
+    const record = readJson(path.join(dir, file));
+    if (!record || typeof record.url !== "string" || !Array.isArray(record.elements) || !record.screenshot) continue;
+    byUrl.set(record.url, { record, screenshot: path.join(dir, record.screenshot) });
+  }
+  return byUrl;
+}
+
 /** `--name value` and `--flag` pairs, plus the bare arguments in order. */
 function parseArgs(argv) {
   const args = { _: [] };
@@ -96,5 +109,5 @@ function parseArgs(argv) {
 
 module.exports = {
   SPIKE, ROOT, taxonomy, SETUPS, LETTER, SUBJECT,
-  slug, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs,
+  slug, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs, loadCaptures,
 };

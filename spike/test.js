@@ -11,6 +11,10 @@ const { buildEvidence, contextWindow, cropRect } = require("./evidence");
 const { requestFor, savedRequest } = require("./jev");
 const { domFor } = require("./evidence");
 const { domFacts } = require("../src-request");
+const crypto = require("crypto");
+const { groupElements } = require("./select");
+const { addCandidate, loadCandidates, LABELLING_RULE } = require("./candidates");
+const { accuracy } = require("./report");
 
 let failed = 0;
 function check(name, problem) {
@@ -169,6 +173,85 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     const again = await capture(["test/page.html"], path.join(OUT, "again"));
     const same = (r) => JSON.stringify({ page: r.page, closed: r.closedShadowRoots, elements: r.elements, labelling: r.labelling });
     check("two captures of the same page give the same element record", same(again[0]) !== same(record) && "they differ");
+  }
+
+  // Selection: identical-looking elements collapse into one group, and every
+  // element is in exactly one.
+  {
+    const groups = groupElements([record]);
+    const of = (text) => record.elements.find((e) => e.text === text && e.tag === "a").id;
+    const home = (id) => groups.filter((g) => g.representative.element === id || g.others.some((o) => o.element === id));
+    const a = home(of("Read the guide")), b = home(of("See the tokens"));
+    check("identical-looking links collapse into one group",
+      (a.length !== 1 || b.length !== 1 || a[0] !== b[0] || a[0].count < 2) && JSON.stringify(a.map((g) => g.signature)));
+    const total = groups.reduce((n, g) => n + g.count, 0);
+    const sigs = new Set(groups.map((g) => JSON.stringify(g.signature)));
+    check("one proposal per visual group, covering every element",
+      (total !== record.elements.length || sigs.size !== groups.length) && total + " of " + record.elements.length);
+    check("the save button and the shadow dismiss button look different and stay apart",
+      home(record.elements.find((e) => e.text === "Save").id)[0] === home(record.elements.find((e) => e.text === "Dismiss").id)[0] && "one group");
+  }
+
+  // The candidate fixture: tools add, people label.
+  {
+    const ctaHint = record.labelling[cta.id].classes.join(" ");
+    const labelled = { page: "test/page.html", element: cta.id, pair: "Button / Link", hint: ctaHint, label: "Link", looks_like: "Button", note: "typed by a person" };
+    const start = { rule: LABELLING_RULE, candidates: [labelled] };
+    const save = record.elements.find((e) => e.text === "Save");
+    const next = addCandidate(start, record, save.id, { pair: "Button / Link", label: "Button", looks_like: "Link" });
+    const added = next.candidates[1];
+    check("adding a candidate keeps every existing entry exactly, labels included",
+      JSON.stringify(next.candidates[0]) !== JSON.stringify(labelled) && JSON.stringify(next.candidates[0]));
+    check("a new candidate never has label or looks_like, whatever is passed",
+      ("label" in added || "looks_like" in added || added.element !== save.id) && JSON.stringify(added));
+    let refused = 0;
+    try { addCandidate(next, record, save.id); } catch (e) { refused++; }
+    try { addCandidate(next, record, "e9999"); } catch (e) { refused++; }
+    check("a duplicate or an unknown element id is refused", refused !== 2 && refused + " of 2 refused");
+
+    // The command-line tool on a file, with an element no proposal offered.
+    const file = path.join(OUT, "candidates.json");
+    fs.writeFileSync(file, JSON.stringify(start, null, 2));
+    const pill = record.elements.find((e) => e.tag === "status-pill");
+    execFileSync(process.execPath, ["candidates.js", "add", "test/page.html", pill.id, "--label", "Badge",
+      "--candidates", file, "--captures", OUT], { cwd: SPIKE, stdio: "ignore" });
+    const written = JSON.parse(fs.readFileSync(file, "utf8"));
+    check("the add command appends by id and writes no label",
+      (written.candidates.length !== 2 || JSON.stringify(written.candidates[0]) !== JSON.stringify(labelled) ||
+        written.candidates[1].element !== pill.id || "label" in written.candidates[1]) && JSON.stringify(written.candidates));
+
+    let rejected = false;
+    fs.writeFileSync(path.join(OUT, "bad.json"), JSON.stringify({ candidates: [{ page: "p", element: "e1", label: "Buton" }] }));
+    try { loadCandidates(path.join(OUT, "bad.json")); } catch (e) { rejected = /not a guide entry/.test(e.message); }
+    check("a label that is not a guide entry is refused on load", !rejected && "accepted");
+
+    // The sheet, from that file: read-only, and showing what Jev gets.
+    const before = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+    execFileSync(process.execPath, ["sheet.js", "--candidates", file, "--captures", OUT, "--out", path.join(OUT, "sheet", "sheet.html")],
+      { cwd: SPIKE, stdio: "ignore" });
+    const after = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+    const html = fs.readFileSync(path.join(OUT, "sheet", "sheet.html"), "utf8");
+    const imgs = [...html.matchAll(/<img src="([^"]+)"/g)].map((m) => m[1]);
+    const missing = imgs.filter((src) => !fs.existsSync(path.join(OUT, "sheet", src)));
+    const ev = await buildEvidence({ record, elementId: cta.id, screenshot, name: "t-sheet", outDir: OUT });
+    const domText = requestFor(ev, "dom").body.state.dom;
+    const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    check("the sheet shows crop and window for every candidate, from local files",
+      (imgs.length !== 4 || missing.length || /https?:/.test(imgs.join())) && JSON.stringify({ imgs, missing }));
+    check("the sheet shows the DOM facts exactly as Jev gets them, and the hint",
+      (!html.includes(esc(domText)) || !html.includes(esc(ctaHint)) || !html.includes("The labelling rule")) && "missing");
+    check("making the sheet leaves the candidate fixture untouched", before !== after && "the file changed");
+
+    // Runner and report take the format, unlabelled candidates included.
+    const fixture = loadCandidates(file);
+    const entry = (answer) => ({ status: "ok", weighed: { answer } });
+    const keyOf = (c, setup) => require("./common").responseKey(c, setup, 1);
+    const entries = {
+      [keyOf(fixture.candidates[0], "image")]: entry("Link"),
+      [keyOf(fixture.candidates[1], "image")]: entry("Badge"),
+    };
+    const acc = accuracy(fixture.candidates, entries).image;
+    check("an unlabelled candidate never counts towards accuracy", (acc.counted !== 1 || acc.right !== 1) && JSON.stringify(acc));
   }
 
   // The requests, as the runner builds and saves them.
