@@ -58,6 +58,21 @@ if (missing.length) { failed++; console.log("FAIL  probes absent from fixtures: 
 else console.log("ok    all " + Object.keys(taxonomy.probes).length + " probes carried through");
 
 
+// The shape check the probe and the spike run on a first live response.
+{
+  const { checkShape } = require('./src-weigh');
+  const good = checkShape(cases[0].answers, taxonomy);
+  const bent = JSON.parse(JSON.stringify(cases[0].answers));
+  delete bent.component.probabilities;
+  bent.component.confidence = '0.98';
+  delete bent.is_dismissible;
+  const named = checkShape(bent, taxonomy).join('; ');
+  const wantNamed = ['answers.component.probabilities missing', 'answers.component.confidence is not a number', 'probe is_dismissible missing'];
+  if (good.length || wantNamed.some((w) => !named.includes(w))) {
+    failed++; console.log('FAIL  shape check: live case ' + JSON.stringify(good) + ', bent case ' + named);
+  } else console.log('ok    shape check passes a live response and names each field a bent one lacks');
+}
+
 // A component's required probes. Synthetic: the shape of the corner panel that
 // came back Modal Dialog at 0.92 on an undimmed page, then the same answer with
 // the overlay probe passing. Only the probe differs between the two.

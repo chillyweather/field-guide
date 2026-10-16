@@ -163,9 +163,6 @@ const VISION_PRICES = {
   "gpt-6.1-sol": { in: 2.0, out: 10.0 },
   "gpt-6-luna":  { in: 0.1, out: 0.5 },
 };
-const PRICES = {
-  jevIn: 0.042,    // jev-latest; output is not metered
-};
 
 /** The vision cost of a spend at this model's price, or null when it is not set. */
 function visionCost(spend) {
@@ -199,6 +196,13 @@ const visionShapes = {};
 /* __GEOMETRY__ */
 
 /* __REQUEST__ */
+
+// Jev's price lives with its request (src-request.js), where the DOM spike's
+// budget guard reads it too. Here, below the splice, because a const cannot be
+// read before the line that declares it.
+const PRICES = {
+  jevIn: JEV_PRICE_IN,
+};
 
 // Which pipeline a run uses. A setting rather than a fork of the code, so the
 // two are compared on the same selection, exports, questions and weighing —

@@ -1,32 +1,55 @@
-// The spike runner: every candidate, through each setup, to Jev.
+// The spike runner: every candidate, through each setup, twice, to Jev.
 //
 //   node run.js [--candidates fixtures/candidates.json] [--responses fixtures/responses.json]
-//               [--captures captures]
+//               [--captures captures] [--budget 1.00] [--dry-run]
 //
-// Each answer is weighed by the plugin's own weigh() and saved with its raw
-// response, keyed by (candidate, setup, run), as soon as it arrives. A key
-// already saved is not asked again.
+// Before any call it counts what is missing, estimates the cost, prints it,
+// and refuses to start above the budget. Each answer is weighed by the
+// plugin's own weigh() and saved with its raw response the moment it arrives,
+// keyed by (candidate, setup, run). A rerun sends only what is missing or
+// failed. The logic is in runner.js; this file is the disk, the key and the
+// network.
 
 const path = require("path");
 const fs = require("fs");
-const { SPIKE, taxonomy, SETUPS, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs, loadCaptures } = require("./common");
+const { SPIKE, LETTER, candidateKey, evidenceName, readJson, writeJson, loadEnv, parseArgs, loadCaptures } = require("./common");
 const { loadCandidates } = require("./candidates");
 
 loadEnv();
-const { weigh } = require("../src-weigh");
-const { buildEvidence } = require("./evidence");
-const { requestFor, savedRequest, send, MODEL } = require("./jev");
+const { send } = require("./jev");
+const { planJobs, estimateCost, checkBudget, runJobs, RUNS, DEFAULT_BUDGET } = require("./runner");
+const { JEV_PRICE_IN } = require("../src-request");
 
-async function evidenceFor(candidate, captures) {
-  const found = captures.get(candidate.page);
-  if (!found) throw new Error("No capture of " + candidate.page + ". Run: node capture.js " + candidate.page);
-  if (!fs.existsSync(found.screenshot)) {
-    throw new Error("The screenshot for " + candidate.page + " is missing (screenshots are not committed). Recapture it.");
+/**
+ * Refuses, before anything is sent, a candidate whose capture is missing, whose
+ * screenshot is gone, or whose capture is not the one its saved answers came
+ * from. Every answer for a candidate must come from one capture: a page
+ * recaptured part way through would compare setups on different pages.
+ */
+function preflight(jobs, entries, captures) {
+  const problems = [];
+  const seen = new Set();
+  for (const { candidate } of jobs) {
+    const key = candidateKey(candidate);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const found = captures.get(candidate.page);
+    if (!found) { problems.push(key + ": no capture of " + candidate.page + " (node capture.js " + candidate.page + ")"); continue; }
+    if (!found.record.elements.some((e) => e.id === candidate.element)) problems.push(key + ": no such element in the capture");
+    if (!fs.existsSync(found.screenshot)) problems.push(key + ": the screenshot is missing (screenshots are not committed); recapture the page");
+    const earlier = Object.values(entries).find((e) => e.candidate === key && e.status === "ok" && e.capturedAt);
+    if (earlier && earlier.capturedAt !== found.record.capturedAt) {
+      problems.push(key + ": saved answers come from the capture of " + earlier.capturedAt + ", the capture on disk is from " +
+        found.record.capturedAt + "; restore that capture, or delete the candidate's answers to start it again");
+    }
   }
-  return buildEvidence({
-    record: found.record, elementId: candidate.element, screenshot: found.screenshot,
-    name: evidenceName(candidate, found.record.capturedAt),
-  });
+  if (problems.length) throw new Error("Nothing was sent:\n  " + problems.join("\n  "));
+}
+
+function summary(stats, ms, file) {
+  return stats.calls + " calls (" + stats.ok + " ok, " + stats.failed + " failed), " + stats.tokens.toLocaleString() +
+    " input tokens, $" + ((stats.tokens / 1e6) * JEV_PRICE_IN).toFixed(4) + ", " + Math.round(ms / 1000) + "s → " +
+    path.relative(SPIKE, file);
 }
 
 async function main() {
@@ -34,62 +57,67 @@ async function main() {
   const candidatesFile = path.resolve(SPIKE, args.candidates || "fixtures/candidates.json");
   const responsesFile = path.resolve(SPIKE, args.responses || "fixtures/responses.json");
   const captures = loadCaptures(path.resolve(SPIKE, args.captures || "captures"));
-
-  const key = process.env.TYPESAFE_API_KEY;
-  if (!key) {
-    console.error("No key. Put TYPESAFE_API_KEY in the repository's .env.local (gitignored, never printed).");
-    process.exit(2);
-  }
+  const budget = args.budget !== undefined ? Number(args.budget) : DEFAULT_BUDGET;
+  if (!(budget >= 0)) throw new Error("--budget takes a number of dollars.");
 
   const { candidates } = loadCandidates(candidatesFile);
   const fixture = readJson(responsesFile, { entries: {} });
-  let calls = 0, tokens = 0;
+  const entries = fixture.entries;
 
-  for (const candidate of candidates) {
-    const run = 1;
-    // Only what is still missing. A candidate with every answer saved needs no
-    // screenshot, and rebuilding its pictures would overwrite the files its
-    // saved requests point at.
-    const pending = SETUPS.filter((setup) => {
-      const entry = fixture.entries[responseKey(candidate, setup, run)];
-      return !entry || entry.status !== "ok";
-    });
-    if (!pending.length) continue;
-    // Every setup of a candidate must see the same capture. A page recaptured
-    // between a saved answer and the rest would compare setups on different
-    // pages, and rebuilding would overwrite the pictures the saved answers name.
-    const found = captures.get(candidate.page);
-    const earlier = SETUPS.map((setup) => fixture.entries[responseKey(candidate, setup, run)])
-      .find((entry) => entry && entry.status === "ok");
-    if (found && earlier && earlier.capturedAt !== found.record.capturedAt) {
-      throw new Error(candidateKey(candidate) + " has answers from the capture of " + earlier.capturedAt +
-        ", but the capture on disk is from " + found.record.capturedAt + ". Restore that capture, or delete the " +
-        "candidate's saved answers to start it again.");
-    }
-    const evidence = await evidenceFor(candidate, captures);
-    for (const setup of pending) {
-      const k = responseKey(candidate, setup, run);
-
-      const request = requestFor(evidence, setup, Math.random().toString(36).slice(2, 10));
-      const out = await send(request, key);
-      calls++;
-      const inputTokens = (out.body.usage && out.body.usage.input_tokens) || 0;
-      tokens += inputTokens;
-      const weighed = weigh(out.body.answers, taxonomy);
-      fixture.entries[k] = {
-        candidate: candidateKey(candidate), setup, run, status: "ok", capturedAt: found.record.capturedAt,
-        at: new Date().toISOString(), ms: out.ms, inputTokens,
-        model: out.body.model || null, requestedModel: MODEL, guideVersion: taxonomy.version,
-        weighed, body: out.body, request: savedRequest(request, evidence),
-      };
-      writeJson(responsesFile, fixture);
-      console.log(k.padEnd(48) + String(weighed.answer).padEnd(14) + weighed.verdict.padEnd(10) +
-        weighed.confidence.toFixed(2) + "  " + out.ms + "ms " + inputTokens + " in");
-    }
+  const jobs = planJobs(candidates, entries);
+  if (!candidates.length) {
+    console.log("No candidates in " + path.relative(SPIKE, candidatesFile) + " yet. See node select.js and node candidates.js.");
+    return;
   }
-  console.log(calls + " calls, " + tokens + " input tokens → " + path.relative(SPIKE, responsesFile));
+  if (!jobs.length) {
+    console.log("Nothing missing: " + candidates.length + " candidates × 3 setups × " + RUNS + " runs are all saved.");
+    return;
+  }
+
+  const estimate = estimateCost(jobs, entries);
+  const retries = jobs.filter((j) => j.retry).length;
+  console.log(jobs.length + " calls missing" + (retries ? " (" + retries + " of them retrying a failure)" : "") +
+    ", about " + estimate.tokens.toLocaleString() + " input tokens, estimated $" + estimate.usd.toFixed(4) +
+    " against a budget of $" + budget.toFixed(2) + ".");
+  for (const [setup, b] of Object.entries(estimate.basis)) {
+    console.log("  " + LETTER[setup] + " " + setup.padEnd(10) + b.tokens.toLocaleString().padStart(7) + " tokens a call, from " + b.from);
+  }
+  checkBudget(estimate, budget);
+  if (args["dry-run"]) return;
+
+  preflight(jobs, entries, captures);
+  const key = process.env.TYPESAFE_API_KEY;
+  if (!key) throw new Error("No key. Put TYPESAFE_API_KEY in the repository's .env.local (gitignored, never printed).");
+
+  const { buildEvidence } = require("./evidence");
+  const startedAt = Date.now();
+  let stats;
+  try {
+    stats = await runJobs({
+      jobs,
+      entries,
+      send: (request) => send(request, key),
+      evidenceFor: async (candidate) => {
+        const found = captures.get(candidate.page);
+        const evidence = await buildEvidence({
+          record: found.record, elementId: candidate.element, screenshot: found.screenshot,
+          name: evidenceName(candidate, found.record.capturedAt),
+        });
+        return Object.assign(evidence, { capturedAt: found.record.capturedAt });
+      },
+      save: () => writeJson(responsesFile, fixture),
+      log: (job, entry) => console.log(job.key.padEnd(56) + (entry.status === "ok"
+        ? String(entry.weighed.answer).padEnd(14) + entry.weighed.verdict.padEnd(10) + entry.weighed.confidence.toFixed(2) +
+          "  " + entry.ms + "ms " + entry.inputTokens + " in"
+        : "FAILED  " + entry.error.split("\n")[0].slice(0, 120))),
+    });
+  } catch (error) {
+    if (error.stats) console.log(summary(error.stats, Date.now() - startedAt, responsesFile));
+    throw error;
+  }
+  console.log(summary(stats, Date.now() - startedAt, responsesFile));
 }
 
-module.exports = { evidenceFor };
+module.exports = { preflight };
 
 if (require.main === module) main().catch((error) => { console.error(error.message || error); process.exit(1); });
