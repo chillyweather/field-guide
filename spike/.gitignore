@@ -1,0 +1,5 @@
+node_modules/
+out/
+# Pictures of pages, crops and context windows: regenerable, and for a public
+# site, pictures of someone else's pages.
+*.png

@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- The capture test's page. Static, no network, system fonts only, so a
+     capture of it is the same on every machine and every run. Boxes are whole
+     pixels, so a crop can be compared to its element exactly. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Field Guide capture test page</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/24px -apple-system, "Helvetica Neue", Arial, sans-serif; color: #161616; background: #ffffff; }
+  main { padding: 0 40px; }
+  .hero-signup-link { position: absolute; left: 40px; top: 0; display: block; width: 160px; height: 48px; padding: 12px 16px;
+         background: #0f62fe; color: #ffffff; text-decoration: none; }
+  .action-row { padding-top: 96px; }
+  button { width: 120px; height: 40px; border: 1px solid #8d8d8d; border-radius: 4px; background: #f4f4f4; font: inherit; }
+  .page-filler { height: 1600px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="hero-signup-link cds--btn cds--btn--primary" id="hero-signup" data-track="signup-hero" href="/start">Get started</a>
+  <div class="action-row">
+    <button type="button">Save</button>
+    <p>Read the <a href="/docs">documentation</a> first.</p>
+  </div>
+  <div class="page-filler"></div>
+</main>
+</body>
+</html>

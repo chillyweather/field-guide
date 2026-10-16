@@ -248,6 +248,14 @@ would have to cross postMessage again for no gain, and the nodes are right there
   high confidence. Nothing upstream asks whether the region is a component before asking
   which one.
 
+## The DOM spike
+
+`spike/` asks whether DOM facts help Jev where a picture cannot decide (Button
+against Link, Checkbox against Toggle). It captures web pages with Playwright
+and sends hand-labelled candidates three ways: image, DOM, and both. It reuses
+the plugin's own request builder, geometry, image fitting, questions and
+`weigh()`. Its dependencies stay in `spike/`. See `spike/README.md`.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
