@@ -133,10 +133,14 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
     const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
     const inputTokens = (body.usage && body.usage.input_tokens) || 0;
     stats.tokens += inputTokens;
-    const shape = body === raw ? checkShape(body.answers, taxonomy) : ["the response body is not a JSON object"];
+    const shape = out && typeof out.unparsable === "string" ? ["the response is not JSON"]
+      : body === raw ? checkShape(body.answers, taxonomy) : ["the response body is not a JSON object"];
     const at = now().toISOString();
     const kept = { ms: out && out.ms, inputTokens, model: body.model || null, body: raw === undefined ? null : raw, request: savedRequest(request, ev) };
+    if (out && typeof out.unparsable === "string") kept.unparsable = out.unparsable;
     if (shape.length) {
+      // Known bad: nothing more goes out, and the calls in flight still land.
+      stop = stop || new Error("Stopped: the response to " + job.key + " differs from what weigh() reads: " + shape.join("; "));
       stats.failed++;
       entries[job.key] = Object.assign(base, { status: "failed", at,
         error: "Response shape differs from what weigh() reads: " + shape.join("; ") }, kept);
@@ -186,14 +190,11 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
 
   // Then the rest, from one queue. Each result lands under its own key, so
   // the order things finish in does not matter. A wrong shape now still stops
-  // the run; it would mean the API changed in the middle of it.
+  // the run (see one()); it would mean the API changed in the middle of it.
   const rest = jobs.filter((j) => !tried.has(j));
   let cursor = 0;
   const workers = Array.from({ length: Math.min(concurrency, rest.length) }, async () => {
-    while (!stop && cursor < rest.length) {
-      const result = await one(rest[cursor++]);
-      if (result.shape.length) stop = stop || new Error("Stopped: a response's shape changed mid-run: " + result.shape.join("; "));
-    }
+    while (!stop && cursor < rest.length) await one(rest[cursor++]);
   });
   await Promise.all(workers);
   if (stop) throw Object.assign(stop, { stats });

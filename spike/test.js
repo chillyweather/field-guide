@@ -410,6 +410,53 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     }
 
     {
+      // Malformed JSON after the first responses passed: saved with its text,
+      // and the queue stops once the calls in flight have landed.
+      const entries = {};
+      const jev = fakeJev();
+      let message = "";
+      try {
+        await runJobs({ jobs: planJobs(candidates, entries), entries, ...quiet, evidenceFor,
+          send: async (request) => {
+            const out = await jev.send(request);
+            return jev.sent.length > 3 ? { body: undefined, unparsable: "<html>502</html>", ms: 3 } : out;
+          } });
+      } catch (error) { message = error.message; }
+      const kept = Object.values(entries).filter((e) => e.unparsable === "<html>502</html>");
+      check("a success that is not JSON is kept with its text and stops the queue",
+        (!/not JSON/.test(message) || jev.sent.length > 3 + 4 || !kept.length || jev.sent.length !== Object.keys(entries).length) &&
+        jev.sent.length + " sent, " + kept.length + " kept: " + message);
+    }
+
+    {
+      // One setup's first response is bent while another's call keeps failing:
+      // the bent one stops the other's retries at once.
+      const entries = {};
+      const sent = [];
+      let message = "";
+      try {
+        await runJobs({ jobs: planJobs(candidates, entries), entries, ...quiet, evidenceFor,
+          send: async (request) => {
+            sent.push(request);
+            if (request.body.assets === undefined) {
+              await new Promise((r) => setTimeout(r, 20));
+              throw Object.assign(new Error("HTTP 429 — slow down"), { status: 429 });
+            }
+            return { body: null, ms: 1 };
+          } });
+      } catch (error) { message = error.message; }
+      check("a bent first response stops the other setups' retries", (sent.length > 3 || !/not a JSON object/.test(message)) &&
+        sent.length + " sent: " + message);
+    }
+    {
+      const realFetch = global.fetch;
+      global.fetch = async () => ({ ok: true, status: 200, text: async () => "<html>502</html>" });
+      const { send } = require("./jev");
+      const out = await send({ body: {}, imageHeader: false }, "k").finally(() => { global.fetch = realFetch; });
+      check("send hands back a 2xx that is not JSON instead of throwing", out.unparsable !== "<html>502</html>" && JSON.stringify(out));
+    }
+
+    {
       // The API changed shape: one call per setup, then a stop that names the fields.
       const entries = {};
       const bent = fakeJev({ bend: true });

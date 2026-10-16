@@ -29,7 +29,11 @@ function savedRequest(request, evidence) {
   return { imageHeader: request.imageHeader, body };
 }
 
-/** Sends one request. Resolves with the raw body and timing, or throws with the API's reason. */
+/**
+ * Sends one request. Resolves with the parsed body and timing (or, for a
+ * success that is not JSON, `unparsable` holding its text), or throws with the
+ * API's reason and HTTP status.
+ */
 async function send(request, key) {
   const headers = { "content-type": "application/json", authorization: "Bearer " + key };
   if (request.imageHeader) headers[JEV_IMAGE_HEADER] = "true";
@@ -42,7 +46,14 @@ async function send(request, key) {
     error.status = res.status;
     throw error;
   }
-  return { body: JSON.parse(text), ms };
+  // A success that is not JSON is not a transport failure to retry: it is the
+  // API answering in a shape nothing here can read. Returned, with its text,
+  // for the runner to save and stop on.
+  try {
+    return { body: JSON.parse(text), ms };
+  } catch (error) {
+    return { body: undefined, unparsable: text, ms };
+  }
 }
 
 module.exports = { requestFor, savedRequest, send, ENDPOINT, MODEL };
