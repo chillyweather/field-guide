@@ -123,13 +123,13 @@
             "fg-region-vfjqnuhr": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-6f1c47eb-e4-crop.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-crop.png",
               "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
             },
             "fg-screen-vfjqnuhr": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-6f1c47eb-e4-window.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-window.png",
               "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
             }
           },
@@ -732,13 +732,13 @@
             "fg-region-eblxi8qu": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-6f1c47eb-e4-crop.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-crop.png",
               "sha256": "a1602be873247e289e5eb421eccb95264ca375295406297457281c63188b6ba5"
             },
             "fg-screen-eblxi8qu": {
               "type": "image",
               "format": "png",
-              "file": "out/evidence/test-page-html-6f1c47eb-e4-window.png",
+              "file": "out/evidence/test-page-html-6f1c47eb-e4-da8f214f-window.png",
               "sha256": "c4205d67fa4130ac29135f1f6ab5b3c22bcb17e76cc5670c9bfe7ca04ad6a6aa"
             }
           },

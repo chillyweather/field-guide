@@ -38,9 +38,14 @@ function candidateKey(candidate) {
   return slug(candidate.page) + "/" + candidate.element;
 }
 
-/** A file name for a candidate's pictures; the element id survives however long the page slug is. */
-function evidenceName(candidate) {
-  return slug(candidate.page) + "-" + slug(candidate.element);
+/**
+ * A file name for a candidate's pictures from one capture. The element id
+ * survives however long the page slug is, and the capture is part of the name,
+ * so pictures from a recapture never overwrite the ones a saved request names.
+ */
+function evidenceName(candidate, capturedAt) {
+  const capture = crypto.createHash("sha256").update(String(capturedAt)).digest("hex").slice(0, 8);
+  return slug(candidate.page) + "-" + String(candidate.element).replace(/[^a-z0-9]+/gi, "-") + "-" + capture;
 }
 
 function responseKey(candidate, setup, run) {

@@ -7,7 +7,7 @@ const { execFileSync } = require("child_process");
 const sharp = require("sharp");
 const { SPIKE, ROOT, SETUPS, slug } = require("./common");
 const { capture } = require("./capture");
-const { buildEvidence, contextWindow } = require("./evidence");
+const { buildEvidence, contextWindow, cropRect } = require("./evidence");
 const { requestFor, savedRequest } = require("./jev");
 
 let failed = 0;
@@ -46,6 +46,22 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
       (meta.width !== record.page.width || meta.height !== record.page.height) &&
       meta.width + "x" + meta.height + " against a page of " + record.page.width + "x" + record.page.height);
   }
+
+  // An animation that never ends. Frozen at its start for the screenshot and
+  // for the walk alike, so the record's box is where the picture shows it.
+  {
+    const block = record.elements.find((e) => e.style.backgroundColor === "rgb(218, 30, 40)");
+    const { data, info } = await sharp(screenshot).raw().toBuffer({ resolveWithObject: true });
+    const red = (x, y) => {
+      const i = (y * info.width + x) * info.channels;
+      return data[i] === 218 && data[i + 1] === 30 && data[i + 2] === 40;
+    };
+    check("a running animation is recorded and pictured in the same place",
+      (!block || block.box.x !== 600 || !red(640, 320) || red(1040, 320)) &&
+      JSON.stringify(block && block.box) + " / red at its box: " + red(640, 320));
+  }
+  check("an element wholly outside the screenshot has no crop",
+    cropRect({ x: 1500, y: 10, width: 40, height: 40 }, { width: 1440, height: 1792 }) !== null && "got a crop");
 
   const cta = byText(record, "a", "Get started");
   const save = byText(record, "button", "Save");

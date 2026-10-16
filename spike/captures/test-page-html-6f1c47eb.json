@@ -1,6 +1,6 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T11:28:27.072Z",
+  "capturedAt": "2026-10-16T11:54:21.518Z",
   "viewport": {
     "width": 1440,
     "height": 900
@@ -253,6 +253,33 @@
         "zIndex": "auto",
         "cursor": "auto"
       }
+    },
+    {
+      "id": "e10",
+      "parent": "e3",
+      "tag": "div",
+      "type": null,
+      "role": "generic",
+      "name": null,
+      "text": "",
+      "href": null,
+      "aria": {},
+      "box": {
+        "x": 600,
+        "y": 300,
+        "width": 80,
+        "height": 40
+      },
+      "style": {
+        "width": "80px",
+        "height": "40px",
+        "borderRadius": "0px",
+        "backgroundColor": "rgb(218, 30, 40)",
+        "border": "0px none rgb(22, 22, 22)",
+        "position": "absolute",
+        "zIndex": "auto",
+        "cursor": "auto"
+      }
     }
   ],
   "labelling": {
@@ -277,6 +304,13 @@
     "e9": {
       "classes": [
         "page-filler"
+      ],
+      "id": null,
+      "data": {}
+    },
+    "e10": {
+      "classes": [
+        "sliding-block"
       ],
       "id": null,
       "data": {}

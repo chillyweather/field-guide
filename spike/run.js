@@ -36,7 +36,7 @@ async function evidenceFor(candidate, captures) {
   }
   return buildEvidence({
     record: found.record, elementId: candidate.element, screenshot: found.screenshot,
-    name: evidenceName(candidate),
+    name: evidenceName(candidate, found.record.capturedAt),
   });
 }
 

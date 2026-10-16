@@ -56,6 +56,11 @@ async function capturePage(page, target, outDir) {
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo(0, 0));
 
+  // Frozen here rather than by the screenshot alone: Playwright's own freeze is
+  // lifted again when the screenshot returns, and the walk that follows would
+  // then measure an animation in a different place from the one pictured.
+  await page.evaluate(freezeAnimations);
+
   const screenshot = name + ".png";
   await page.screenshot({ path: path.join(outDir, screenshot), fullPage: true, animations: "disabled", scale: "css" });
 
@@ -82,6 +87,23 @@ async function capturePage(page, target, outDir) {
   };
   writeJson(path.join(outDir, name + ".json"), record);
   return record;
+}
+
+/**
+ * Runs in the page. Stops every running animation and leaves it stopped, the way
+ * Playwright's screenshot option does for its own duration: a finite one jumps
+ * to its end, an infinite one is cancelled back to where it started.
+ */
+function freezeAnimations() {
+  for (const animation of document.getAnimations()) {
+    try {
+      const timing = animation.effect && animation.effect.getComputedTiming();
+      if (timing && timing.endTime === Infinity) animation.cancel();
+      else animation.finish();
+    } catch (error) {
+      animation.cancel();
+    }
+  }
 }
 
 /**

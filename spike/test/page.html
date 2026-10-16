@@ -15,6 +15,12 @@
   .action-row { padding-top: 96px; }
   button { width: 120px; height: 40px; border: 1px solid #8d8d8d; border-radius: 4px; background: #f4f4f4; font: inherit; }
   .page-filler { height: 1600px; }
+  /* Runs forever, and starts half-way along (the negative delay), so an animation that
+     restarts between the screenshot and the walk is caught at once. Capture must freeze it,
+     and picture and record must agree on where it is. */
+  .sliding-block { position: absolute; left: 600px; top: 300px; width: 80px; height: 40px; background: #da1e28;
+                   animation: slide 2s linear -1s infinite; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(400px); } }
 </style>
 </head>
 <body>
@@ -25,6 +31,7 @@
     <p>Read the <a href="/docs">documentation</a> first.</p>
   </div>
   <div class="page-filler"></div>
+  <div class="sliding-block"></div>
 </main>
 </body>
 </html>

@@ -22,13 +22,17 @@ const { SPIKE } = require("./common");
 // Named in the state, so Jev can tell the outline from a focus ring or a border.
 const OUTLINE = { colour: "magenta", hex: "#ff00ff", width: 3, gap: 2 };
 
-/** The element's box as whole pixels, rounded outward and kept inside the image. */
+/**
+ * The element's box as whole pixels, rounded outward and kept inside the image,
+ * or null when no part of it is inside the image.
+ */
 function cropRect(box, image) {
   const left = Math.max(0, Math.floor(box.x));
   const top = Math.max(0, Math.floor(box.y));
   const right = Math.min(image.width, Math.ceil(box.x + box.width));
   const bottom = Math.min(image.height, Math.ceil(box.y + box.height));
-  return { left, top, width: Math.max(1, right - left), height: Math.max(1, bottom - top) };
+  if (right <= left || bottom <= top) return null;
+  return { left, top, width: right - left, height: bottom - top };
 }
 
 /**
@@ -116,6 +120,10 @@ async function buildEvidence({ record, elementId, screenshot, name, outDir }) {
   const image = await shot.metadata();
 
   const rect = cropRect(element.box, image);
+  if (!rect) {
+    throw new Error("Element " + elementId + " on " + record.url + " lies outside the screenshot (" +
+      JSON.stringify(element.box) + " on " + image.width + "x" + image.height + "); there is nothing to crop.");
+  }
   const crop = await sharp(screenshot).extract(rect).png().toBuffer();
 
   const win = contextWindow(element.box, record.viewport, image);
