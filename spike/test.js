@@ -395,6 +395,21 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     }
 
     {
+      // A success that is not a JSON object: saved as a shape failure, and the
+      // run stops only after the calls in flight have landed.
+      const entries = {};
+      const jev = fakeJev();
+      let message = "";
+      try {
+        await runJobs({ jobs: planJobs(candidates, entries), entries, ...quiet, evidenceFor,
+          send: async (request) => { const out = await jev.send(request); return Object.assign(out, { body: null }); } });
+      } catch (error) { message = error.message; }
+      check("a null response body is saved as a shape failure, and nothing paid for is lost",
+        (!/not a JSON object/.test(message) || jev.sent.length !== Object.keys(entries).length || jev.sent.length > 3) &&
+        jev.sent.length + " sent, " + Object.keys(entries).length + " saved: " + message);
+    }
+
+    {
       // The API changed shape: one call per setup, then a stop that names the fields.
       const entries = {};
       const bent = fakeJev({ bend: true });

@@ -128,22 +128,29 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
       }
       return { responded: false, shape: [] };
     }
-    const inputTokens = (out.body.usage && out.body.usage.input_tokens) || 0;
+    // Anything that is not a JSON object is a shape failure like any other.
+    const raw = out ? out.body : undefined;
+    const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const inputTokens = (body.usage && body.usage.input_tokens) || 0;
     stats.tokens += inputTokens;
-    const shape = checkShape(out.body.answers, taxonomy);
+    const shape = body === raw ? checkShape(body.answers, taxonomy) : ["the response body is not a JSON object"];
+    const at = now().toISOString();
+    const kept = { ms: out && out.ms, inputTokens, model: body.model || null, body: raw === undefined ? null : raw, request: savedRequest(request, ev) };
     if (shape.length) {
       stats.failed++;
-      entries[job.key] = Object.assign(base, {
-        status: "failed", at: now().toISOString(), ms: out.ms, inputTokens, model: out.body.model || null,
-        error: "Response shape differs from what weigh() reads: " + shape.join("; "),
-        body: out.body, request: savedRequest(request, ev),
-      });
+      entries[job.key] = Object.assign(base, { status: "failed", at,
+        error: "Response shape differs from what weigh() reads: " + shape.join("; ") }, kept);
     } else {
-      stats.ok++;
-      entries[job.key] = Object.assign(base, {
-        status: "ok", at: now().toISOString(), ms: out.ms, inputTokens, model: out.body.model || null,
-        weighed: weigh(out.body.answers, taxonomy), body: out.body, request: savedRequest(request, ev),
-      });
+      try {
+        entries[job.key] = Object.assign(base, { status: "ok", at, weighed: weigh(body.answers, taxonomy) }, kept);
+        stats.ok++;
+      } catch (error) {
+        // Kept, paid for, and a reason to stop: weigh() met something the
+        // shape check did not anticipate.
+        stats.failed++;
+        entries[job.key] = Object.assign(base, { status: "failed", at, error: "weigh() failed: " + (error.message || error) }, kept);
+        stop = stop || new Error("Stopped: weigh() failed on " + job.key + ": " + (error.message || error));
+      }
     }
     save(entries);
     log(job, entries[job.key]);
