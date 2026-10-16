@@ -9,7 +9,7 @@
 
 const path = require("path");
 const fs = require("fs");
-const { SPIKE, taxonomy, SETUPS, slug, candidateKey, responseKey, readJson, writeJson, loadEnv, parseArgs } = require("./common");
+const { SPIKE, taxonomy, SETUPS, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs } = require("./common");
 
 loadEnv();
 const { weigh } = require("../src-weigh");
@@ -36,7 +36,7 @@ async function evidenceFor(candidate, captures) {
   }
   return buildEvidence({
     record: found.record, elementId: candidate.element, screenshot: found.screenshot,
-    name: slug(candidateKey(candidate)),
+    name: evidenceName(candidate),
   });
 }
 
@@ -57,11 +57,18 @@ async function main() {
   let calls = 0, tokens = 0;
 
   for (const candidate of candidates) {
+    const run = 1;
+    // Only what is still missing. A candidate with every answer saved needs no
+    // screenshot, and rebuilding its pictures would overwrite the files its
+    // saved requests point at.
+    const pending = SETUPS.filter((setup) => {
+      const entry = fixture.entries[responseKey(candidate, setup, run)];
+      return !entry || entry.status !== "ok";
+    });
+    if (!pending.length) continue;
     const evidence = await evidenceFor(candidate, captures);
-    for (const setup of SETUPS) {
-      const run = 1;
+    for (const setup of pending) {
       const k = responseKey(candidate, setup, run);
-      if (fixture.entries[k] && fixture.entries[k].status === "ok") continue;
 
       const request = requestFor(evidence, setup, Math.random().toString(36).slice(2, 10));
       const out = await send(request, key);

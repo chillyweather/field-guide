@@ -32,6 +32,11 @@ function candidateKey(candidate) {
   return slug(candidate.page) + "/" + candidate.element;
 }
 
+/** A file name for a candidate's pictures; the element id survives however long the page slug is. */
+function evidenceName(candidate) {
+  return slug(candidate.page) + "-" + slug(candidate.element);
+}
+
 function responseKey(candidate, setup, run) {
   return candidateKey(candidate) + "|" + setup + "|" + run;
 }
@@ -80,5 +85,5 @@ function parseArgs(argv) {
 
 module.exports = {
   SPIKE, ROOT, taxonomy, SETUPS, LETTER, SUBJECT,
-  slug, candidateKey, responseKey, readJson, writeJson, loadEnv, parseArgs,
+  slug, candidateKey, evidenceName, responseKey, readJson, writeJson, loadEnv, parseArgs,
 };

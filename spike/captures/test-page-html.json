@@ -1,6 +1,6 @@
 {
   "url": "test/page.html",
-  "capturedAt": "2026-10-16T11:22:18.255Z",
+  "capturedAt": "2026-10-16T11:25:58.634Z",
   "viewport": {
     "width": 1440,
     "height": 900
@@ -20,6 +20,7 @@
       "name": null,
       "text": "Get started Save Read the documentation first.",
       "href": null,
+      "aria": {},
       "box": {
         "x": 0,
         "y": 0,
@@ -46,6 +47,7 @@
       "name": null,
       "text": "Get started Save Read the documentation first.",
       "href": null,
+      "aria": {},
       "box": {
         "x": 0,
         "y": 0,
@@ -72,6 +74,7 @@
       "name": null,
       "text": "Get started Save Read the documentation first.",
       "href": null,
+      "aria": {},
       "box": {
         "x": 0,
         "y": 0,
@@ -98,6 +101,7 @@
       "name": "Get started",
       "text": "Get started",
       "href": "/start",
+      "aria": {},
       "box": {
         "x": 40,
         "y": 0,
@@ -124,6 +128,7 @@
       "name": null,
       "text": "Save Read the documentation first.",
       "href": null,
+      "aria": {},
       "box": {
         "x": 40,
         "y": 0,
@@ -150,6 +155,7 @@
       "name": "Save",
       "text": "Save",
       "href": null,
+      "aria": {},
       "box": {
         "x": 40,
         "y": 96,
@@ -176,6 +182,7 @@
       "name": null,
       "text": "Read the documentation first.",
       "href": null,
+      "aria": {},
       "box": {
         "x": 40,
         "y": 152,
@@ -202,6 +209,7 @@
       "name": "documentation",
       "text": "documentation",
       "href": "/docs",
+      "aria": {},
       "box": {
         "x": 109.06,
         "y": 155,
@@ -228,6 +236,7 @@
       "name": null,
       "text": "",
       "href": null,
+      "aria": {},
       "box": {
         "x": 40,
         "y": 192,

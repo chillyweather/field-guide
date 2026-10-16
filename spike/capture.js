@@ -65,7 +65,7 @@ async function capturePage(page, target, outDir) {
   const elements = walked.elements.map((e, i) => Object.assign(
     { id: e.id, parent: e.parent, tag: e.tag, type: e.type },
     roles[i] || { role: null, name: null },
-    { text: e.text, href: e.href, box: e.box, style: e.style },
+    { text: e.text, href: e.href, aria: e.aria, box: e.box, style: e.style },
   ));
 
   const record = {
@@ -126,6 +126,7 @@ function walk() {
       type: el.getAttribute("type"),
       text: text.length > 160 ? text.slice(0, 159) + "…" : text,
       href: el.hasAttribute("href") ? el.getAttribute("href") : null,
+      aria: ariaStates(el),
       box: { x: round(r.x + scrollX), y: round(r.y + scrollY), width: round(r.width), height: round(r.height) },
       style: {
         width: style.width,
@@ -143,6 +144,15 @@ function walk() {
     const names = { classes: [...el.classList], id: el.id || null, data: {} };
     for (const attr of el.attributes) if (attr.name.startsWith("data-")) names.data[attr.name] = attr.value;
     if (names.classes.length || names.id || Object.keys(names.data).length) labelling[id] = names;
+  }
+
+  // The ARIA states a control can declare, only where the page declares them.
+  function ariaStates(el) {
+    const states = {};
+    for (const key of ["checked", "pressed", "expanded", "hidden"]) {
+      if (el.hasAttribute("aria-" + key)) states[key] = el.getAttribute("aria-" + key);
+    }
+    return states;
   }
 
   window.__fgElements = kept;
