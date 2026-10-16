@@ -373,7 +373,25 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
       check("a failed call is saved with its reason and planned again",
         (failedOnes.length !== 2 || !failedOnes.every(([, e]) => /slow down/.test(e.error) && e.httpStatus === 429) ||
           retry.length !== 2 || !retry.every((j) => j.retry)) && JSON.stringify(failedOnes.map(([k, e]) => [k, e.error])));
-      check("and the report counts it as missing, not wrong", (acc.counted !== 1 || acc.right !== 1) && JSON.stringify(acc));
+      check("and the report counts it as missing, not wrong",
+        (acc.counted !== 2 || acc.right !== 2 || acc.runs[1].counted !== 1 || acc.runs[2].counted !== 1) && JSON.stringify(acc));
+    }
+
+    {
+      // A candidate whose evidence cannot be built: nothing more is taken from
+      // the queue, and every call already in flight is saved before the stop.
+      const many = Array.from({ length: 6 }, (_, i) => ({ page: "https://example.com/m", element: "e" + (i + 1) }));
+      for (const c of many) answer[c.element] = "Button";
+      const entries = {};
+      const jev = fakeJev();
+      let message = "";
+      try {
+        await runJobs({ jobs: planJobs(many, entries), entries, send: jev.send, ...quiet,
+          evidenceFor: async (c) => { if (c.element === "e3") throw new Error("corrupt screenshot"); return evidenceFor(c); } });
+      } catch (error) { message = error.message; }
+      check("a preparation error stops the queue but keeps every paid call",
+        (!/corrupt screenshot/.test(message) || jev.sent.length !== Object.keys(entries).length) &&
+        jev.sent.length + " sent, " + Object.keys(entries).length + " saved: " + message);
     }
 
     {

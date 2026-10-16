@@ -96,8 +96,16 @@ async function runJobs({ jobs, entries, send, evidenceFor, save, concurrency = C
   let stop = null;
 
   async function one(job) {
-    const ev = await evidenceOnce(job.candidate);
-    const request = requestFor(ev, job.setup, crypto.randomBytes(6).toString("hex"));
+    let ev, request;
+    try {
+      ev = await evidenceOnce(job.candidate);
+      request = requestFor(ev, job.setup, crypto.randomBytes(6).toString("hex"));
+    } catch (error) {
+      // Nothing was sent for this job. Stop taking new ones, but let the calls
+      // already in flight land and be saved: they are paid for.
+      stop = stop || new Error("Stopped: could not prepare " + job.key + ": " + (error.message || error));
+      return { responded: false, shape: [] };
+    }
     const base = {
       candidate: candidateKey(job.candidate), setup: job.setup, run: job.run,
       capturedAt: ev.capturedAt || null, requestedModel: MODEL,
