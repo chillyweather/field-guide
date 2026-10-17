@@ -179,6 +179,30 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     check("two captures of the same page give the same element record", same(again[0]) !== same(record) && "they differ");
   }
 
+  // An analytics beacon that is never answered, as GitHub's collector is in
+  // headless Chromium. Served from 127.0.0.1, since a file page can't send one.
+  // Waiting on it would cost the full quiet-network timeout at every wait.
+  {
+    const http = require("http");
+    const server = http.createServer((req, res) => {
+      if (req.url === "/collect") return; // never answered
+      res.setHeader("content-type", "text/html");
+      res.end("<!doctype html><button>Star</button><script>navigator.sendBeacon('/collect', 'x')</script>");
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const url = "http://127.0.0.1:" + server.address().port + "/";
+    const started = Date.now();
+    let problem = "";
+    try {
+      const [beaconed] = await capture([url], path.join(OUT, "beacon"));
+      if (!byText(beaconed, "button", "Star")) problem = "the button is missing";
+    } catch (error) { problem = error.message.split("\n")[0]; }
+    const ms = Date.now() - started;
+    server.closeAllConnections();
+    server.close();
+    check("a beacon that is never answered doesn't hold up the capture", (problem || ms > 8000) && (problem || ms + " ms"));
+  }
+
   // Selection: identical-looking elements collapse into one group, and every
   // element is in exactly one.
   {
