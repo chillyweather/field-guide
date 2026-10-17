@@ -55,7 +55,11 @@ async function capture(targets, outDir) {
 async function capturePage(page, target, outDir) {
   const name = slug(target);
   const network = trackNetwork(page);
-  await page.goto(resolveUrl(target), { waitUntil: "networkidle" });
+  // To the load event, then quiet by the tracker's own measure: Playwright's
+  // "networkidle" waits on beacons too, and a page whose beacon is never
+  // answered never gets there.
+  await page.goto(resolveUrl(target), { waitUntil: "load" });
+  await network.idle();
   await page.evaluate(() => document.fonts.ready);
 
   // Lazy content loads when it scrolls into view, so the page is scrolled to
@@ -120,7 +124,9 @@ function trackNetwork(page) {
   // Set by every start and every finish, so a request that comes and goes
   // between two checks still resets the quiet interval.
   let lastActivity = Date.now();
-  const start = (req) => { inFlight.add(req); lastActivity = Date.now(); };
+  // Beacons (sendBeacon, <a ping>) are not counted: nothing on the page waits
+  // for their answer, and GitHub's collector never sends one in headless Chromium.
+  const start = (req) => { if (req.resourceType() === "ping") return; inFlight.add(req); lastActivity = Date.now(); };
   const end = (req) => { inFlight.delete(req); lastActivity = Date.now(); };
   page.on("request", start);
   page.on("requestfinished", end);
