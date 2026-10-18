@@ -66,8 +66,10 @@ function addCandidate(fixture, record, elementId, extra = {}) {
   stub.pair = extra.pair || null;
   stub.hint = (names.classes || []).join(" ") || null;
   stub.note = extra.note || "";
+  // The rule as written here, never the copy the file was made with, so a
+  // fixture started under an older rule shows the current one once it is added to.
   return Object.assign({}, fixture, {
-    rule: fixture.rule || LABELLING_RULE,
+    rule: LABELLING_RULE,
     candidates: [...fixture.candidates, stub],
   });
 }

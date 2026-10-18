@@ -310,6 +310,12 @@
             }
           }
         }
+      },
+      "element": {
+        "tag": "a",
+        "role": "link",
+        "type": null,
+        "href": "/start"
       }
     },
     "test-page-html-6f1c47eb/e4|dom|1": {
@@ -606,6 +612,12 @@
             }
           }
         }
+      },
+      "element": {
+        "tag": "a",
+        "role": "link",
+        "type": null,
+        "href": "/start"
       }
     },
     "test-page-html-6f1c47eb/e4|image+dom|1": {
@@ -919,6 +931,12 @@
             }
           }
         }
+      },
+      "element": {
+        "tag": "a",
+        "role": "link",
+        "type": null,
+        "href": "/start"
       }
     }
   }
