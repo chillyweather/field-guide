@@ -92,12 +92,22 @@ any), `hint`, `label`, an optional `looks_like`, and `note`. Labels are typed
 into the fixture by a person. No tool writes `label` or `looks_like`, and a
 label that isn't a guide entry is refused when the fixture loads.
 
-**The labelling rule.** `label` is the guide entry that the guide's own
-definitions give when everything about the element is known, including what
-activating it does. When the picture alone would earn a different entry,
-that entry goes in `looks_like`. An `<a href>` styled as a filled button is
-`label: Link`, `looks_like: Button`. Leave `label` out if you can't decide:
-an unlabelled candidate counts towards stability, never towards accuracy.
+**The labelling rule.** `label` is the guide entry for the design-system
+component the element is: the component a designer would place for it in
+Figma, whatever tag renders it. The class-name hint often names it. A
+design-system Button rendered as `<a href>` (Primer's "Sign in") is
+`label: Button`, and a design-system Link rendered as `<button>` is
+`label: Link`. The report puts those tag mismatches in their own group
+(answer 6), so the Button / Link breakout measures whether the DOM misleads
+Jev there. When the picture alone would earn a different entry, that entry
+goes in `looks_like`. Leave `label` out if you can't decide: an unlabelled
+candidate counts towards stability, never towards accuracy.
+
+The plugin works on Figma frames, where there is no tag or `href`, so the
+component is the answer it has to give. An earlier version of this rule
+labelled by what activating the element does (`<a href>` styled as a button
+was `label: Link`, `looks_like: Button`); it was changed before any real
+candidate was labelled.
 
 ## What capture records
 
