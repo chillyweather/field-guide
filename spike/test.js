@@ -236,6 +236,8 @@ const byText = (record, tag, text) => record.elements.find((e) => e.tag === tag 
     try { addCandidate(next, record, save.id); } catch (e) { refused++; }
     try { addCandidate(next, record, "e9999"); } catch (e) { refused++; }
     check("a duplicate or an unknown element id is refused", refused !== 2 && refused + " of 2 refused");
+    const old = addCandidate({ rule: "an older rule", candidates: [] }, record, save.id);
+    check("a fixture made under an older rule gets the current one when added to", old.rule !== LABELLING_RULE && old.rule);
 
     // The command-line tool on a file, with an element no proposal offered.
     const file = path.join(OUT, "candidates.json");

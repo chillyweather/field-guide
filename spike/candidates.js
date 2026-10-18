@@ -15,10 +15,11 @@ const { SPIKE, taxonomy, candidateKey, readJson, writeJson, parseArgs, loadCaptu
 // Shown in the fixture, on the labelling sheet and in the README: wherever the
 // labeller is when they decide.
 const LABELLING_RULE =
-  "label is the guide entry (taxonomy/components.json) that the guide's own definitions give when " +
-  "everything about the element is known, including what activating it does. When the picture alone " +
-  "would earn a different entry, write that entry in looks_like. For example, an <a href> styled as a " +
-  "filled button is label: Link, looks_like: Button. Leave label out when you cannot decide: an " +
+  "label is the guide entry (taxonomy/components.json) for the design-system component the element is: " +
+  "the component a designer would place for it in Figma, whatever tag renders it. The class-name hint " +
+  "often names it: a design-system Button rendered as <a href> is label: Button, and a design-system " +
+  "Link rendered as <button> is label: Link. The report finds those tag mismatches itself. When the " +
+  "picture alone would earn a different entry, write that entry in looks_like. Leave label out when you cannot decide: an " +
   "unlabelled candidate counts towards stability, never towards accuracy. Tools never write label or looks_like.";
 
 /** Reads a candidate fixture and refuses one a run could misread. */
@@ -65,8 +66,10 @@ function addCandidate(fixture, record, elementId, extra = {}) {
   stub.pair = extra.pair || null;
   stub.hint = (names.classes || []).join(" ") || null;
   stub.note = extra.note || "";
+  // The rule as written here, never the copy the file was made with, so a
+  // fixture started under an older rule shows the current one once it is added to.
   return Object.assign({}, fixture, {
-    rule: fixture.rule || LABELLING_RULE,
+    rule: LABELLING_RULE,
     candidates: [...fixture.candidates, stub],
   });
 }
