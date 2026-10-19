@@ -1,4 +1,404 @@
 {
-  "rule": "label is the guide entry (taxonomy/components.json) that the guide's own definitions give when everything about the element is known, including what activating it does. When the picture alone would earn a different entry, write that entry in looks_like. For example, an <a href> styled as a filled button is label: Link, looks_like: Button. Leave label out when you cannot decide: an unlabelled candidate counts towards stability, never towards accuracy. Tools never write label or looks_like.",
-  "candidates": []
+  "rule": "label is the guide entry (taxonomy/components.json) for the design-system component the element is: the component a designer would place for it in Figma, whatever tag renders it. The class-name hint often names it: a design-system Button rendered as <a href> is label: Button, and a design-system Link rendered as <button> is label: Link. The report finds those tag mismatches itself. When the picture alone would earn a different entry, write that entry in looks_like. Leave label out when you cannot decide: an unlabelled candidate counts towards stability, never towards accuracy. Tools never write label or looks_like.",
+  "candidates": [
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e56",
+      "pair": "Button / Link",
+      "hint": "Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--subtle___F7pEE Primer_Brand__Button-module__Button--size-small___zQrEw cta__xkenoh desktopActionGap__qkQEsb hiddenBelowLg__f0ML96",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e59",
+      "pair": "Button / Link",
+      "hint": "Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--secondary___gHnw_ Primer_Brand__Button-module__Button--size-small___zQrEw cta__xkenoh",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e415",
+      "pair": "Button / Link",
+      "hint": "btn btn-primary",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e261",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e181",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e229",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk Button__AyoG5z",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e295",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk d-none d-lg-flex linkButton__rBg5F1 flex-items-center fgColor-default",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e352",
+      "pair": "Button / Link",
+      "hint": "Button--invisible Button--small Button Button--invisible-noVisuals ml-0 tmp-ml-0 ml-md-2 tmp-ml-md-2",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pulls",
+      "element": "e166",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1237",
+      "pair": "Button / Link",
+      "hint": "Link--secondary underline-on-hover border-0 p-0 color-bg-transparent",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1240",
+      "pair": "Button / Link",
+      "hint": "Link--secondary underline-on-hover border-0 p-0 color-bg-transparent text-left",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e590",
+      "pair": "Button / Link",
+      "hint": "filterLink__ywNfwR authorLink__jEE_DC Link__H3GvIl",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e310",
+      "pair": "Button / Link",
+      "hint": "ellipsis-expander js-details-target btn",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e254",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e174",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e374",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk ListFilterButton__ccIaF1",
+      "note": "",
+      "label": "Select"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e393",
+      "pair": "Button / Link",
+      "hint": "js-details-target btn-sm btn float-right",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e22",
+      "pair": "Button / Link",
+      "hint": "button__qiVZaY",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e46",
+      "pair": "Button / Link",
+      "hint": "navLink__HiENMw",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e1413",
+      "pair": "Button / Link",
+      "hint": "prc-Pagination-Page-Etgqf",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e290",
+      "pair": "Button / Link",
+      "hint": "Link--secondary prc-Link-Link-9ZwDx",
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e628",
+      "pair": "Button / Link",
+      "hint": null,
+      "note": "",
+      "label": "Link"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e199",
+      "pair": "Button / Link",
+      "hint": "prc-Button-ButtonBase-9n-Xk IconOnlyWhenNarrow__FbBSx0",
+      "note": "Star: link to /login styled as a button",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e281",
+      "pair": "Icon Button / Button",
+      "hint": "prc-Button-ButtonBase-9n-Xk IconButton__9oMQ5T prc-Button-IconButton-fyge7",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e724",
+      "pair": "Icon Button / Button",
+      "hint": "ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 d-flex flex-justify-center flex-items-center",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e62",
+      "pair": "Icon Button / Button",
+      "hint": "Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--subtle___F7pEE Primer_Brand__Button-module__Button--size-small___zQrEw trigger__VWDtQ2",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e309",
+      "pair": "Icon Button / Button",
+      "hint": "prc-Button-ButtonBase-9n-Xk IconButton_0__SSIi47 prc-Button-IconButton-fyge7",
+      "note": "",
+      "label": "Search Field"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e386",
+      "pair": "Icon Button / Button",
+      "hint": "prc-SegmentedControl-Button-E48xz prc-SegmentedControl-IconButton-tlzDE",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e245",
+      "pair": "Icon Button / Button",
+      "hint": "timeline-comment-action Link--secondary Button--link Button--medium Button",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1214",
+      "pair": "Icon Button / Button",
+      "hint": "footer-octicon mr-2",
+      "note": "",
+      "label": "Icon Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1023",
+      "pair": "Chip / Badge",
+      "hint": "prc-TopicTag-TopicTag-LS-jX",
+      "note": "",
+      "label": "Chip"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e170",
+      "pair": "Chip / Badge",
+      "hint": "mr-1 v-align-middle prc-Label-Label-qG-Zu",
+      "note": "",
+      "label": "Badge"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1112",
+      "pair": "Chip / Badge",
+      "hint": "latestLabel__3A88x2 prc-Label-Label-qG-Zu",
+      "note": "",
+      "label": "Badge"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e102",
+      "pair": "Chip / Badge",
+      "hint": "prc-CounterLabel-CounterLabel-X-kRU",
+      "note": "",
+      "label": "Badge"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e834",
+      "pair": "Chip / Badge",
+      "hint": "filterLink__ywNfwR",
+      "note": "",
+      "label": "Chip"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues/7490",
+      "element": "e598",
+      "pair": "Chip / Badge",
+      "hint": "labelLink__AJlImc prc-Link-Link-9ZwDx",
+      "note": "",
+      "label": "Chip"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues/7490",
+      "element": "e182",
+      "pair": "Chip / Badge",
+      "hint": "prc-StateLabel-StateLabel-Iawzp stateLabel__opcfNS",
+      "note": "",
+      "label": "Badge"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e167",
+      "pair": "Chip / Badge",
+      "hint": "prc-StateLabel-StateLabel-Iawzp flex-self-start",
+      "note": "",
+      "label": "Badge"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e253",
+      "pair": "Search Field / Text Input",
+      "hint": "prc-components-Input-IwWrt",
+      "note": "",
+      "label": "Search Field"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e305",
+      "pair": "Search Field / Text Input",
+      "hint": "Box_4__0ZM1Bz",
+      "note": "",
+      "label": "Search Field"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e49",
+      "pair": "Search Field / Text Input",
+      "hint": "Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--subtle___F7pEE Primer_Brand__Button-module__Button--size-small___zQrEw trigger__A07fH5",
+      "note": "",
+      "label": "Search Field"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e216",
+      "pair": "Select / Button",
+      "hint": "prc-Button-ButtonBase-9n-Xk overview-ref-selector width-full RefSelectorOverlayBtn__KrS-QJ",
+      "note": "",
+      "label": "Select"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e332",
+      "pair": "Select / Button",
+      "hint": "prc-Button-ButtonBase-9n-Xk ListFilterButton__ccIaF1",
+      "note": "",
+      "label": "Button"
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e199",
+      "pair": null,
+      "hint": "TabNavLink__LGP-9p selected__NLIm71 position-relative flex-shrink-0 text-normal overrideLineHeight__GtbvBn",
+      "note": "",
+      "label": "Tabs"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e141",
+      "pair": null,
+      "hint": "prc-components-UnderlineItem-7fP-n",
+      "note": "",
+      "label": "Tabs"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e589",
+      "pair": null,
+      "hint": "prc-components-UnderlineItem-7fP-n",
+      "note": "",
+      "label": "Tabs"
+    },
+    {
+      "page": "https://github.com/expressjs/express/issues",
+      "element": "e151",
+      "pair": null,
+      "hint": "sidebar__uzUvS_ expandedSmall__b0TNj8 Sidebar__z_2QrT",
+      "note": "",
+      "label": "Sidebar"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e1011",
+      "pair": null,
+      "hint": "sidebarSection__oqw6Y8 HideWhenNarrow__nfGOuR border-0",
+      "note": ""
+    },
+    {
+      "page": "https://github.com/expressjs/express/pull/7512",
+      "element": "e229",
+      "pair": null,
+      "hint": "TimelineItem TimelineItem--condensed pt-0 js-comment-container js-socket-channel js-updatable-content js-command-palette-pull-body",
+      "note": "",
+      "label": "Card"
+    },
+    {
+      "page": "https://github.com/expressjs/express",
+      "element": "e915",
+      "pair": null,
+      "hint": null,
+      "note": "",
+      "label": "Other"
+    }
+  ]
 }
